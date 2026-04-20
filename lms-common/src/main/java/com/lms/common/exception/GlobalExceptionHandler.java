@@ -1,0 +1,48 @@
+package com.lms.common.exception;
+
+import com.lms.common.dto.response.ApiResponse;
+import io.micrometer.tracing.Tracer;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+@RequiredArgsConstructor
+public class GlobalExceptionHandler {
+    private final Tracer tracer;
+
+    @ExceptionHandler(value= AppException.class)
+    public ResponseEntity<ApiResponse<?>> handlingAppException (AppException e){
+        String traceId = tracer.currentSpan() != null ? tracer.currentSpan().context().traceId() : null;
+        ApiResponse<?> response = ApiResponse.builder()
+                .code(e.getErrorCode().getCode())
+                .message(e.getErrorCode().getMessage())
+                .traceId(traceId)
+                .build();
+        return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(response);
+    }
+
+    @ExceptionHandler(value=Exception.class)
+    public ResponseEntity<ApiResponse<?>> handlingException (Exception e){
+        CommonErrorCode errorCode = CommonErrorCode.UNCATEGORIZED_EXCEPTION;
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
+    }
+
+    @ExceptionHandler(value= MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<?>> handlingValidation (MethodArgumentNotValidException e){
+        String messgage = e.getBindingResult().getFieldError().getDefaultMessage();
+
+        ApiResponse<?> response = ApiResponse.builder()
+                .code(400)
+                .message(messgage)
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+}

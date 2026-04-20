@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: lms_mysql
+    restart: always
+    environment:
+      MYSQL_USERNAME: root
+      MYSQL_ROOT_PASSWORD: 1234
+      TZ: Asia/HoChiMinh
+    ports:
+      - "3306:3306"
+    volumes:
+      - lms-mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: lms_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - lms-redis-data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: lms_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"     # for internal services
+      - "15672:15672"   # for management UI
+    volumes:
+      - lms-rabbitmq-data:/var/lib/rabbitmq
+
+  minio:
+    image: minio/minio
+    container_name: lms_minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    ports:
+      - "9000:9000"     # for API calling
+      - "9001:9001"     # for console interface
+    volumes:
+      - lms-minio-data:/data
+    command: server /data --console-address ":9001"
+
+
+volumes:
+  lms-mysql-data:
+  lms-redis-data:
+  lms-rabbitmq-data:
+  lms-minio-data:
