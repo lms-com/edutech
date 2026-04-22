@@ -31,6 +31,7 @@
         <module>api-gateway</module>
 
         <module>iam-service</module>
+        <module>course-service</module>
     </modules>
 
     <dependencyManagement>
