@@ -1,5 +1,15 @@
 spring:
   application:
     name: iam-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true
+      retry:
+        max-attempts: 5
   config:
-    import: "optional:configserver:http://localhost:8888"
+    import: "configserver:http://localhost:8888"
+# Thêm cái này để chắc chắn log hiện đúng tên kể cả khi chưa kịp lấy config từ server
+logging:
+  pattern:
+    level: "%5p [iam-service]"

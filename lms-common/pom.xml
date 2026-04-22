@@ -11,7 +11,7 @@
     <name>lms-common</name>
 
     <dependencies>
-        <dependency>
+        <dependency> <!-- Lay @RestControllerAdvice cho GlobalExceptionHandler -->
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
