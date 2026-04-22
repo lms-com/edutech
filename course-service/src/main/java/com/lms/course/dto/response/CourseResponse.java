@@ -10,7 +10,11 @@ public class CourseResponse {
     private String id;
     private String title;
     private String slug;
+    private String description;
+    private String thumbnailUrl;
+    private String level;
     private String instructorId;
+    private String categoryId;
     private String categoryName;
     private BigDecimal basePrice;
     private String currencyCode;

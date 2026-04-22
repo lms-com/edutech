@@ -39,6 +39,9 @@ public class Course extends AuditableEntity {
     @Column(nullable = false)
     private String description;
 
+    @Column(nullable = false)
+    private String thumbnailUrl;
+
     @Column(length = 50)
     private String level;
 
