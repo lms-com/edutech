@@ -12,14 +12,27 @@ spring:
         - id: iam-service
           uri: lb://iam-service
           predicates:
-            - Path=/api/v1/auth/**, /api/v1/user/**, /api/v1/admin/**
+            - Path=/iam-service/api/v1/auth/**, /iam-service/api/v1/user/**, /iam-service/api/v1/admin/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html
+          filters:
+            - StripPrefix=1
         - id: config-server
           uri: lb://config-server
           predicates:
             - Path=/config-server/**
             - RemoteAddr=127.0.0.1/32
-          filters:
-            - StripPrefix=1
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            maxAge: 3600
 
 eureka:
   client:
@@ -29,8 +42,9 @@ eureka:
 management:
   endpoints:
     web:
+      base-path: /actuator
       exposure:
-        include: "refresh,health,info,env"
+        include: "*" # "refresh,health,info,env"
 
 springdoc:
   swagger-ui:

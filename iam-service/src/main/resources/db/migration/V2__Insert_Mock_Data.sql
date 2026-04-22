@@ -57,7 +57,7 @@ INSERT INTO role_permissions (id, role_id, permission_id) VALUES
 -- Mật khẩu Bcrypt của 123456 là: $2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1ipc9WeVFibcVSlO
 -- ==============================================================================
 INSERT INTO users (id, email, password_hash, full_name, status) VALUES
-    ('user-admin-01', 'admin@lms.com', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1ipc9WeVFibcVSlO', 'System Admin', 'ACTIVE'),
+    ('user-admin-01', 'admin@lms.com', '$2a$10$hKDVYxLefVhv/Etu6GzS9O.Z2O8O2m7S7.GueuKEn9Z1.0sF1Oa2u', 'System Admin', 'ACTIVE'),
     ('user-inst-01', 'giangvien@lms.com', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1ipc9WeVFibcVSlO', 'Tran Giang Vien', 'ACTIVE'),
     ('user-learn-01', 'hocvien@lms.com', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1ipc9WeVFibcVSlO', 'Nguyen Hoc Vien', 'ACTIVE');
 
