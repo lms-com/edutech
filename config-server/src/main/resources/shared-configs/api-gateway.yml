@@ -6,15 +6,22 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true
+          enabled: false
           lower-case-service-id: true
       routes:
-        - id: iam-service
+        - id: iam-service-public
           uri: lb://iam-service
           predicates:
-            - Path=/iam-service/api/v1/auth/**, /iam-service/api/v1/user/**, /iam-service/api/v1/admin/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html
+            - Path=/iam-service/api/v1/auth/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html
           filters:
             - StripPrefix=1
+        - id: iam-service-secured
+          uri: lb://iam-service
+          predicates:
+            - Path=/iam-service/api/v1/admin/**, /iam-service/api/v1/user/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
         - id: config-server
           uri: lb://config-server
           predicates:
@@ -33,6 +40,10 @@ spring:
               - OPTIONS
             allowedHeaders: "*"
             maxAge: 3600
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 eureka:
   client:
@@ -45,6 +56,11 @@ management:
       base-path: /actuator
       exposure:
         include: "*" # "refresh,health,info,env"
+
+application:
+  security:
+    jwt:  # Luu secret-key de decode Token
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
 
 springdoc:
   swagger-ui:
