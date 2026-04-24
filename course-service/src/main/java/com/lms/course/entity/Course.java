@@ -45,27 +45,33 @@ public class Course extends AuditableEntity {
     @Column(length = 50)
     private String level;
 
+    // ... các trường phía trên giữ nguyên ...
+
     @Column(name = "base_price", precision = 15, scale = 2, nullable = false)
     private BigDecimal basePrice;
 
-    @Column(name = "currency_code", precision = 15, scale = 2, nullable = false)
+    // Đã FIX: String thì dùng length, không dùng precision/scale
+    @Column(name = "currency_code", length = 3, nullable = false)
     private String currencyCode;
 
-    @Column(length = 50,nullable = false)
+    @Column(length = 50, nullable = false)
     private String status;
 
     @Column(name = "override_commission_rate", precision = 3, scale = 2)
     private BigDecimal overrideCommissionRate;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
+    // Đã FIX: Bỏ chữ "is" ở tên biến Java để Lombok sinh đúng setDeleted() và getDeleted()
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean deleted;
 
     @PrePersist
     public void prePersist() {
         if(this.basePrice == null) this.basePrice = BigDecimal.ZERO;
         if(this.currencyCode == null) this.currencyCode = "VND";
         if(this.status == null) this.status = "DRAFT";
-        if(this.isDeleted == null) this.isDeleted = false;
+        // Cập nhật lại tên biến trong hàm này
+        if(this.deleted == null) this.deleted = false;
     }
+
 
 }
