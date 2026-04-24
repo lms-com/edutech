@@ -30,7 +30,4 @@ public class User extends AuditableEntity {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     Userstatus status;
-    @Column(name = "is_deleted")
-    boolean isDeleted;
-
 }
