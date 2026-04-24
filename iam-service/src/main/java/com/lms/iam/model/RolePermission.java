@@ -18,9 +18,9 @@ public class RolePermission extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
     @Column(name = "role_id", nullable = false)
-    String role_id;
+    String roleId;
     @Column(name = "permission_id", nullable = false)
-    String permission_id;
+    String permissionId;
     @Column(name = "is_deleted")
     boolean isDeleted;
 }

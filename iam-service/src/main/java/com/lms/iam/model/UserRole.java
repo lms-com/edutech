@@ -18,7 +18,7 @@ public class UserRole extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
     @Column(name = "user_id", nullable = false)
-    String user_id;
+    String userId;
     @Column(name = "role_id", nullable = false)
-    String role_id;
+    String roleId;
 }
