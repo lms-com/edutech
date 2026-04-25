@@ -23,7 +23,12 @@ public interface UserRepository extends JpaRepository<User, String> {
     Set<String> findPermissionKeysByUserId (@Param("userId") String userId);
 
     @Query("""
-        SELECT p. FROM Permission p
-""")
+        SELECT r.roleName FROM Role r
+        JOIN UserRole ur ON r.id = ur.roleId
+        WHERE ur.userId = :userId AND r.isDeleted = FALSE
+    """)
     Set<String> findRoleNamesByUserId (@Param("userId") String userId);
+
+
+    Optional<User> findUserById(String id);
 }

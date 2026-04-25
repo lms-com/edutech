@@ -36,7 +36,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             log.info(">>>> ĐÃ CHẠM VÀO FILTER RỒI NÈ!"); // Thêm dòng này
-            System.out.println("❗❗❗ Da cham vao FILTER roi ne");
             ServerHttpRequest request = exchange.getRequest();
 
             // Kiem tra request co Authentication trong Header va Authentication co thuoc dang Bearer khong
@@ -60,7 +59,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 return redisTemplate.opsForZSet().score(redisKey, deviceFingerPrint)
                         .switchIfEmpty(Mono.error(new RuntimeException("DEVICE_NOT_FOUND")))
                         .flatMap(score -> {
-                            System.out.println("❗❗❗ Tim thay user:device trong REDIS roi: " + userId);
                             log.info("Device {} of user {} is valid", deviceFingerPrint, userId);
                             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                                     .header("X-User-Id", userId)
