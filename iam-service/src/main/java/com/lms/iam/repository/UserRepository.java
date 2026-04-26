@@ -16,9 +16,19 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     @Query("""
         SELECT p.permissionKey FROM Permission p
-        JOIN RolePermission rp ON p.id = rp.permission_id
-        JOIN UserRole ur ON rp.role_id = ur.role_id
-        where ur.user_id = :userId AND p.isDeleted = FALSE AND rp.isDeleted = FALSE
+        JOIN RolePermission rp ON p.id = rp.permissionId
+        JOIN UserRole ur ON rp.roleId = ur.roleId
+        where ur.userId = :userId AND p.isDeleted = FALSE AND rp.isDeleted = FALSE
     """)
     Set<String> findPermissionKeysByUserId (@Param("userId") String userId);
+
+    @Query("""
+        SELECT r.roleName FROM Role r
+        JOIN UserRole ur ON r.id = ur.roleId
+        WHERE ur.userId = :userId AND r.isDeleted = FALSE
+    """)
+    Set<String> findRoleNamesByUserId (@Param("userId") String userId);
+
+
+    Optional<User> findUserById(String id);
 }

@@ -11,4 +11,5 @@ import lombok.experimental.FieldDefaults;
 public class RegisterResponse {
     String email;
     String userId;
+    String message;
 }

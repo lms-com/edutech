@@ -14,7 +14,11 @@ public enum IamErrorCode implements ErrorCode {
     EMAIL_ALREADY_EXISTS(2003, "Email already exists", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD_FORMAT(2004, "Invalid password format", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(2005, "Failed to authenticate", HttpStatus.UNAUTHORIZED),
-    DEVICE_FINGERPRINT_REQUIRED(2006, "Device fingerprint required", HttpStatus.BAD_REQUEST)
+    DEVICE_FINGERPRINT_REQUIRED(2006, "Device fingerprint required", HttpStatus.BAD_REQUEST),
+    ROLE_ALREADY_EXISTS(2007, "Role already exists", HttpStatus.BAD_REQUEST),
+    ROLE_NOT_FOUND(2008, "Role not found", HttpStatus.NOT_FOUND),
+    LEARNER_PROFILE_NOT_FOUND(2009, "Learner profile not found", HttpStatus.NOT_FOUND),
+    INSTRUCTOR_PROFILE_NOT_FOUND(2010, "Instructor profile not found", HttpStatus.NOT_FOUND),
     ;
 
     private final int code;

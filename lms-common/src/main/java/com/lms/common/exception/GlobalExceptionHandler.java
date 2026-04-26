@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
         String traceId = tracer.currentSpan() != null ? tracer.currentSpan().context().traceId() : null;
         ApiResponse<?> response = ApiResponse.builder()
                 .code(e.getErrorCode().getCode())
-                .message(e.getErrorCode().getMessage())
+                .message(e.getErrorMessage())
                 .traceId(traceId)
                 .build();
         return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(response);
