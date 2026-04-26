@@ -9,19 +9,19 @@ spring:
           enabled: false
           lower-case-service-id: true
       routes:
+        - id: iam-service-secured
+          uri: lb://iam-service
+          predicates:
+            - Path=/iam-service/api/v1/admin/**, /iam-service/api/v1/user/**, /iam-service/api/v1/auth/logout
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
         - id: iam-service-public
           uri: lb://iam-service
           predicates:
             - Path=/iam-service/api/v1/auth/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html
           filters:
             - StripPrefix=1
-        - id: iam-service-secured
-          uri: lb://iam-service
-          predicates:
-            - Path=/iam-service/api/v1/admin/**, /iam-service/api/v1/user/**
-          filters:
-            - StripPrefix=1
-            - AuthenticationFilter
         - id: config-server
           uri: lb://config-server
           predicates:
