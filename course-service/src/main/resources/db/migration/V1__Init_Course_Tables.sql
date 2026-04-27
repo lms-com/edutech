@@ -15,7 +15,8 @@ CREATE TABLE categories (
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                             created_by VARCHAR(36),
-                            updated_by VARCHAR(36)
+                            updated_by VARCHAR(36),
+                            version BIGINT NOT NULL DEFAULT 0
 );
 CREATE INDEX idx_category_parent ON categories(parent_id);
 
@@ -40,6 +41,7 @@ CREATE TABLE courses (
                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                          created_by VARCHAR(36),
                          updated_by VARCHAR(36),
+                         version BIGINT NOT NULL DEFAULT 0,
 
                          CONSTRAINT fk_course_category FOREIGN KEY (category_id) REFERENCES categories(id)
 );
@@ -52,12 +54,14 @@ CREATE TABLE sections (
                           course_id VARCHAR(36) NOT NULL,
                           title VARCHAR(255) NOT NULL,
                           order_index INT NOT NULL DEFAULT 0,
+                          is_deleted BOOLEAN DEFAULT FALSE, -- ĐÃ BỔ SUNG
 
     -- Audit Columns
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                           created_by VARCHAR(36),
                           updated_by VARCHAR(36),
+                          version BIGINT NOT NULL DEFAULT 0,
 
                           CONSTRAINT fk_section_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
@@ -70,12 +74,14 @@ CREATE TABLE lessons (
                          type VARCHAR(20) NOT NULL, -- VIDEO, QUIZ, DOC
                          order_index INT NOT NULL DEFAULT 0,
                          is_free_preview BOOLEAN DEFAULT FALSE,
+                         is_deleted BOOLEAN DEFAULT FALSE, -- ĐÃ BỔ SUNG
 
     -- Audit Columns
                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                          created_by VARCHAR(36),
                          updated_by VARCHAR(36),
+                         version BIGINT NOT NULL DEFAULT 0,
 
                          CONSTRAINT fk_lesson_section FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE
 );
@@ -103,12 +109,14 @@ CREATE TABLE questions (
                            quiz_id VARCHAR(36) NOT NULL,
                            question_text TEXT NOT NULL,
                            order_index INT NOT NULL DEFAULT 0,
+                           is_deleted BOOLEAN DEFAULT FALSE, -- ĐÃ BỔ SUNG
 
     -- Audit Columns
                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                            created_by VARCHAR(36),
                            updated_by VARCHAR(36),
+                           version BIGINT NOT NULL DEFAULT 0,
 
                            CONSTRAINT fk_question_quiz FOREIGN KEY (quiz_id) REFERENCES quizzes(lesson_id) ON DELETE CASCADE
 );
@@ -119,12 +127,14 @@ CREATE TABLE answers (
                          question_id VARCHAR(36) NOT NULL,
                          option_text TEXT NOT NULL,
                          is_correct BOOLEAN NOT NULL DEFAULT FALSE,
+                         is_deleted BOOLEAN DEFAULT FALSE, -- ĐÃ BỔ SUNG
 
     -- Audit Columns
                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                          created_by VARCHAR(36),
                          updated_by VARCHAR(36),
+                         version BIGINT NOT NULL DEFAULT 0,
 
                          CONSTRAINT fk_answer_question FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
