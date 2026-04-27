@@ -19,7 +19,7 @@ spring:
         - id: iam-service-public
           uri: lb://iam-service
           predicates:
-            - Path=/iam-service/api/v1/auth/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html
+            - Path=/iam-service/api/v1/auth/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html, /iam-service/dev/**
           filters:
             - StripPrefix=1
         - id: config-server

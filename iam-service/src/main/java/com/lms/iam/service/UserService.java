@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface UserService {
 
+    boolean existsByUserId(String userId);
+
     UserProfileReponse getUserProfile(String userId);
 
 }

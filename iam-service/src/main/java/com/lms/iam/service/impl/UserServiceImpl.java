@@ -21,7 +21,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final LearnerProfileRepository learnerProfileRepository;
     private final InstructorProfileRepository instructorProfileRepository;
-    private final StringRedisTemplate redisTemplate;
+
+    @Override
+    public boolean existsByUserId(String userId) {
+        return userRepository.existsById(userId);
+    }
+
 
     @Override
     public UserProfileReponse getUserProfile(String userId) {
