@@ -32,7 +32,7 @@ public class CourseServiceImpl implements CourseService {
         }
 
         // 2. Kiểm tra Category có tồn tại không sử dụng AppException
-        Category category = categoryRepository.findByIdAndIsDeletedFalse(request.getCategoryId())
+        Category category = categoryRepository.findByIdAndDeletedFalse(request.getCategoryId())
                 .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
 
         // 3. Map sang Entity
@@ -98,7 +98,7 @@ public class CourseServiceImpl implements CourseService {
         verifyOwnership(course, instructorId);
         //2 Nếu có đổi category phải kiểm tra category mới
         if(!course.getCategory().getId().equals(request.getCategoryId())){
-            Category category = categoryRepository.findByIdAndIsDeletedFalse(request.getCategoryId())
+            Category category = categoryRepository.findByIdAndDeletedFalse(request.getCategoryId())
                     .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
             course.setCategory(category);
         }

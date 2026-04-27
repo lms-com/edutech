@@ -9,6 +9,7 @@ CREATE TABLE categories (
                             name VARCHAR(255) NOT NULL,
                             slug VARCHAR(255) NOT NULL UNIQUE,
                             parent_id VARCHAR(36) DEFAULT NULL,
+                            order_index INT NOT NULL DEFAULT 0,
                             is_deleted BOOLEAN DEFAULT FALSE,
 
     -- Audit Columns
