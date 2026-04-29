@@ -84,5 +84,31 @@ public class DevController {
     }
 
 
+    @PatchMapping("/update/role/user")
+    public ApiResponse<?> updateRoleOfUser (@RequestBody DevUserRoleRequest request) {
+        String userId = request.getUserId();
 
+        // Kiem tra trong UserRole truoc
+        if (userRoleRepository.existsByUserIdAndRoleName(userId, request.getRoleName())) {
+            return ApiResponse.success(
+                    String.format("User {} already has set role {}", userId, request.getRoleName()));
+        }
+
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new AppException(IamErrorCode.USER_NOT_EXISTED, "Not found userId " + userId));
+
+        Role role = roleService.getRoleDetails(request.getRoleName());
+
+        UserRole newUserRole = userRoleRepository.save(
+                UserRole.builder()
+                        .userId(userId)
+                        .roleId(role.getId())
+                        .build()
+        );
+
+        return ApiResponse.success(
+                newUserRole,
+                String.format("Set new role %s for user $d successfully", request.getRoleName(), userId)
+        );
+    }
 }
