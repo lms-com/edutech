@@ -3,7 +3,9 @@ package com.lms.iam.dev;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.annotation.Profile;
 
+@Profile("dev")
 @Getter
 @Setter
 @AllArgsConstructor

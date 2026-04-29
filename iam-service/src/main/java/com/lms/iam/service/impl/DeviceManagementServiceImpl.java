@@ -107,4 +107,12 @@ public class DeviceManagementServiceImpl implements DeviceManagementService {
         String redisKey = getUserBlackListRedisKey(userId);
         redisTemplate.opsForZSet().add(redisKey, deviceFingerPrint, System.currentTimeMillis());
     }
+
+
+    @Override
+    public void deleteAllDevicesOfUser(String userId) {
+        String redisKey = getUserDeviceRedisKey(userId);
+        redisTemplate.delete(redisKey);
+        log.info("All devices of user {} were deleted successfully", userId);
+    }
 }
