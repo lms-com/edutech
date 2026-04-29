@@ -19,6 +19,8 @@ public enum IamErrorCode implements ErrorCode {
     ROLE_NOT_FOUND(2008, "Role not found", HttpStatus.NOT_FOUND),
     LEARNER_PROFILE_NOT_FOUND(2009, "Learner profile not found", HttpStatus.NOT_FOUND),
     INSTRUCTOR_PROFILE_NOT_FOUND(2010, "Instructor profile not found", HttpStatus.NOT_FOUND),
+    DEVICE_IS_BLOCKED(2012, "Device is blocked for this account", HttpStatus.BAD_REQUEST),
+    JWT_TOKEN_INVALID(2012, "JWT token invalid", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;

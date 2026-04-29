@@ -9,8 +9,10 @@ import com.lms.iam.repository.LearnerProfileRepository;
 import com.lms.iam.repository.UserRepository;
 import com.lms.iam.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -19,6 +21,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final LearnerProfileRepository learnerProfileRepository;
     private final InstructorProfileRepository instructorProfileRepository;
+
+    @Override
+    public boolean existsByUserId(String userId) {
+        return userRepository.existsById(userId);
+    }
+
 
     @Override
     public UserProfileReponse getUserProfile(String userId) {
