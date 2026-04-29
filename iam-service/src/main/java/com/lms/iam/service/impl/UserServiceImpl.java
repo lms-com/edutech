@@ -1,6 +1,7 @@
 package com.lms.iam.service.impl;
 
 import com.lms.common.exception.AppException;
+import com.lms.iam.dto.request.UpdateUserStatusRequest;
 import com.lms.iam.dto.response.UserProfileReponse;
 import com.lms.iam.dto.response.UserResponse;
 import com.lms.iam.exception.IamErrorCode;
@@ -9,6 +10,7 @@ import com.lms.iam.model.Userstatus;
 import com.lms.iam.repository.InstructorProfileRepository;
 import com.lms.iam.repository.LearnerProfileRepository;
 import com.lms.iam.repository.UserRepository;
+import com.lms.iam.service.DeviceManagementService;
 import com.lms.iam.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -25,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final LearnerProfileRepository learnerProfileRepository;
     private final InstructorProfileRepository instructorProfileRepository;
+    private final DeviceManagementService deviceManagementService;
 
     @Override
     public boolean existsByUserId(String userId) {
@@ -99,5 +103,20 @@ public class UserServiceImpl implements UserService {
                 .roles(rolesMap.getOrDefault(user.getEmail(), new HashSet<>()))
                 .build()
         );
+    }
+
+
+    @Override
+    @Transactional
+    public void updateUserStatus(String userId, UpdateUserStatusRequest request) {
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new AppException(IamErrorCode.USER_NOT_EXISTED, String.format("User id {} not found", userId)));
+
+        user.setStatus(request.getStatus());
+        userRepository.save(user);
+
+        if (!request.getStatus().equals(Userstatus.ACTIVE)) {
+            deviceManagementService.deleteAllDevicesOfUser(userId);
+        }
     }
 }

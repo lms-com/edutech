@@ -21,4 +21,6 @@ public interface DeviceManagementService {
     boolean existsInBlackList (String userId, String deviceFingerPrint);
 
     void addToBlackList (String userId, String deviceFingerPrint);
+
+    void deleteAllDevicesOfUser (String userId);
 }
