@@ -1,11 +1,15 @@
 package com.lms.iam.repository;
 
 import com.lms.iam.model.User;
+import com.lms.iam.model.Userstatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,4 +35,28 @@ public interface UserRepository extends JpaRepository<User, String> {
 
 
     Optional<User> findUserById(String id);
+
+    List<User> findAll();
+
+    @Query("""
+                SELECT DISTINCT u from User u
+                LEFT JOIN UserRole ur ON ur.userId = u.id
+                LEFT JOIN Role r ON r.id = ur.roleId
+                WHERE (:search IS NULL OR u.fullName LIKE %:search% OR u.email LIKE %:search%)
+                AND (:status IS NULL OR u.status = :status)
+                AND (:roleName IS NULL OR r.roleName = :roleName)
+""")
+    Page<User> findAllWithFilters (
+            @Param("search") String search,
+            @Param("status") Userstatus status,
+            @Param("roleName") String roleName,
+            Pageable pageable);
+
+
+    @Query("""
+            SELECT ur.userId, r.roleName FROM UserRole ur
+            JOIN Role r ON ur.roleId = r.id
+            WHERE ur.userId IN :userIds
+""")
+    List<Object[]> findRolesByUserIds (@Param("userIds") List<String> userIds);
 }

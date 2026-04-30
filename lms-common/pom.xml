@@ -8,6 +8,7 @@
         <version>1.0.0</version>
     </parent>
     <artifactId>lms-common</artifactId>
+    <packaging>jar</packaging>
     <name>lms-common</name>
 
     <dependencies>

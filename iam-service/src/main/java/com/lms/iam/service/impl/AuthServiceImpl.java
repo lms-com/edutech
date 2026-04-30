@@ -2,6 +2,7 @@ package com.lms.iam.service.impl;
 
 import com.lms.common.exception.AppException;
 import com.lms.iam.dto.request.LoginRequest;
+import com.lms.iam.dto.request.LogoutRequest;
 import com.lms.iam.dto.request.RegisterRequest;
 import com.lms.iam.dto.response.LoginResponse;
 import com.lms.iam.dto.response.RegisterResponse;
@@ -16,10 +17,9 @@ import com.lms.iam.service.AuthService;
 import com.lms.iam.service.DeviceManagementService;
 import com.lms.iam.service.RoleService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -50,10 +50,13 @@ public class AuthServiceImpl implements AuthService {
 
             // Sau khi dang nhap thanh cong, tao JWT token cho client
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            String userId = userDetails.getUser().getId();
                 // Lay, kiem tra, va them deviceFingerPrint vao claim cua Token
             String devicefingerPrint = loginRequest.getDeviceFingerPrint();
             if (devicefingerPrint == null) {
                 throw new AppException(IamErrorCode.DEVICE_FINGERPRINT_REQUIRED);
+            } else if (deviceManagementService.existsInBlackList(userId, devicefingerPrint)) {
+                throw new AppException(IamErrorCode.DEVICE_IS_BLOCKED);
             }
             String token = jwtService.generateToken(userDetails, devicefingerPrint);
 
@@ -67,7 +70,14 @@ public class AuthServiceImpl implements AuthService {
                     .email(userDetails.getUsername())
                     .permissions(userDetails.getPermissions())
                     .build();
-        } catch (UsernameNotFoundException e) {
+        }
+        catch (LockedException e) {
+            throw new AppException(IamErrorCode.USER_LOCKED, e.getMessage());
+        }
+        catch (DisabledException e) {
+            throw new AppException(IamErrorCode.USER_DISABLED, e.getMessage());
+        }
+        catch (UsernameNotFoundException e) {
             throw new AppException(IamErrorCode.USER_NOT_EXISTED);
         }
         catch (BadCredentialsException e) {
@@ -120,5 +130,11 @@ public class AuthServiceImpl implements AuthService {
                 .userId(savedUser.getId())
                 .message("Register successfully")
                 .build();
+    }
+
+    @Override
+    public void logout(String userId, LogoutRequest request) {
+        // Xoa user:device khoi redis
+        deviceManagementService.deleteUserDevice(userId, request.getDeviceFingerPrint());
     }
 }

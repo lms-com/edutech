@@ -22,7 +22,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Not found user with email: " + email));
         // Get permissions of user
         Set<String> permissions = userRepository.findPermissionKeysByUserId(user.getId());
+        // Get Roles of user
+        Set<String> roles = userRepository.findRoleNamesByUserId(user.getId());
 
-        return new CustomUserDetails(user, permissions);
+        return new CustomUserDetails(user, permissions, roles);
     }
 }
