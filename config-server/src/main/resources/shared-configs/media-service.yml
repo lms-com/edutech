@@ -1,0 +1,16 @@
+server:
+  port: 8003
+
+minio:
+  uri: http://localhost:9000
+  access-key: admin
+  secret-key: admin123
+  bucket-name: lms-media-bucket
+
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline_on_migrate: true
+    table: flyway_schema_history
+    clean-disabled: false

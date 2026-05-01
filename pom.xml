@@ -32,6 +32,7 @@
 
         <module>iam-service</module>
         <module>course-service</module>
+        <module>media-service</module>
     </modules>
 
     <dependencyManagement>
