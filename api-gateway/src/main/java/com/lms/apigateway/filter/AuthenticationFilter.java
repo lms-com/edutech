@@ -16,6 +16,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -53,8 +54,11 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 jwtUtils.validateToken(token);
                 // Lay thong tin tu token
                 String userId = jwtUtils.getUserId(token);
+                List<String> authorities = jwtUtils.getAuthorities(token);
                 String deviceFingerPrint = jwtUtils.getDeviceFingerPrint(token);
                 String redisKey = "user:" + userId + ":device";
+
+                String authoritiesStr = String.join(",", authorities);
 
                 return redisTemplate.opsForZSet().score(redisKey, deviceFingerPrint)
                         .switchIfEmpty(Mono.error(new RuntimeException("DEVICE_NOT_FOUND")))
@@ -62,6 +66,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                             log.info("Device {} of user {} is valid", deviceFingerPrint, userId);
                             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                                     .header("X-User-Id", userId)
+                                    .header("X-User-Authorities", authoritiesStr)
                                     .build();
                             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
                             return chain.filter(mutatedExchange);
