@@ -31,6 +31,9 @@ spring:
           uri: lb://media-service
           predicates:
             - Path=/media-service/**
+          filters:
+              - StripPrefix=1
+              - AuthenticationFilter
       globalcors:
         cors-configurations:
           '[/**]':

@@ -9,3 +9,10 @@ spring:
       uri: http://localhost:8888
       retry:
         max-attempts: 5
+  output: # Giu mau log chuan trem tat ca Terminal
+    ansi:
+      enabled: always
+
+logging:  # Cau hinh lai hien thi log: Removed [{trace ID}] and keep coloring log
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr(%-5level) %clr(%logger{36}){cyan} %clr(-){faint} %msg%n"

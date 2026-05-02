@@ -6,10 +6,12 @@ CREATE TABLE IF NOT EXISTS media_files (
     content_type VARCHAR(100) NOT NULL,
     file_size BIGINT NOT NULL,
     status VARCHAR(50) NOT NULL,
-    uploaded_by VARCHAR(36) NOT NULL,
+    created_by VARCHAR(36),
+    updated_by VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    version BIGINT DEFAULT 0
 );
 
 CREATE INDEX idx_media_status ON media_files(status);
-CREATE INDEX idx_media_uploaded_by ON media_files(uploaded_by);
+CREATE INDEX idx_media_created_by ON media_files(created_by);
