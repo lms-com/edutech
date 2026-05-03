@@ -20,4 +20,15 @@ public class MediaController {
                 mediaService.requestUploadUrl(request)
         );
     }
+
+    @PostMapping("/{mediaId}/confirm")
+    public ApiResponse<Void> confirm (@PathVariable("mediaId") String mediaId){
+        mediaService.confirmUploadUrl(mediaId);
+        return ApiResponse.success(null, "Confirmed successfully!");
+    }
+
+    @GetMapping("/{mediaId}/view")
+    public ApiResponse<?> getDisplayUrl (@PathVariable String mediaId){
+        return ApiResponse.success(mediaService.getDisplayUrl(mediaId));
+    }
 }

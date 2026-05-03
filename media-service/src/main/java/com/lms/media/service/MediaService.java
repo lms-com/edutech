@@ -6,4 +6,8 @@ import com.lms.media.dto.response.GetUploadUrlResponse;
 public interface MediaService {
 
     GetUploadUrlResponse requestUploadUrl (GetUploadUrlRequest request);
+
+    void confirmUploadUrl (String mediaId);
+
+    String getDisplayUrl (String mediaId);
 }

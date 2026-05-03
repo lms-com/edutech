@@ -2,17 +2,17 @@ package com.lms.media.service;
 
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
-import io.minio.errors.*;
+import io.minio.StatObjectArgs;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MinioService {
@@ -32,24 +32,39 @@ public class MinioService {
                             .expiry(15, TimeUnit.MINUTES)
                             .build()
             );
-        } catch (ErrorResponseException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
-        } catch (InsufficientDataException e) {
-            throw new RuntimeException(e);
-        } catch (InternalException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidKeyException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidResponseException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (XmlParserException e) {
-            throw new RuntimeException(e);
-        } catch (ServerException e) {
-            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean isObjectExist (String fileName) {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+
+            );
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String generatePresignedGetUrl (String fileName, int expire, TimeUnit timeUnit) {
+        try {
+            return minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .expiry(expire, timeUnit)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("❌ Error while get file {} from Minio: {}", fileName, e.getMessage());
+            throw new RuntimeException("❌ Failed to get file from Minio" ,e);
         }
     }
 }
