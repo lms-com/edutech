@@ -27,6 +27,13 @@ spring:
           predicates:
             - Path=/config-server/**
             - RemoteAddr=127.0.0.1/32
+        - id: media-service
+          uri: lb://media-service
+          predicates:
+            - Path=/media-service/**
+          filters:
+              - StripPrefix=1
+              - AuthenticationFilter
       globalcors:
         cors-configurations:
           '[/**]':
@@ -70,6 +77,8 @@ springdoc:
         url: /iam-service/v3/api-docs  # phan route den service phai dung voi khai bao tren spring.cloud.gateway.routes
       - name: 02. Course Service
         url: /course-service/v3/api-docs
+      - name: 03. Media-service
+        url: /media-service/v3/api-docs
       # Tuong tu cho cac Service khac ...
 
   api-docs:
