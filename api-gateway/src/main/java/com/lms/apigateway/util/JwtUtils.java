@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.util.List;
 
 @Component
 public class JwtUtils {
@@ -38,6 +39,11 @@ public class JwtUtils {
     // Lay UserId tu Token
     public String getUserId(String token) {
         return extractAllClaims(token).get("userId").toString();
+    }
+
+    // Lay Role va Permission (Authorities)
+    public List<String> getAuthorities(String token) {
+        return extractAllClaims(token).get("authorities", List.class);
     }
 
     // Lay Device fingerprint

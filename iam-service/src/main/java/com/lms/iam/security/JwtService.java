@@ -48,32 +48,4 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64URL.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
-
-
-    // Cac mehtod ben duoi dung cho parse du lieu tu token
-
-    private Claims extractAllClaims (String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-
-    public String userName (String token) {
-        Claims claims = extractAllClaims(token);
-        return claims.getSubject();
-    }
-
-    public String getUserId (String token) {
-        // Lay claims
-        Claims claims = extractAllClaims(token);
-        // Lay claim userId tu claims
-        return claims.get("userId").toString();
-    }
-
-    public List<String> getAuthorities (String token) {
-        Claims claims = extractAllClaims(token);
-        return claims.get("authorities", List.class);
-    }
 }
