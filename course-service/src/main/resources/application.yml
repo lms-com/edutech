@@ -1,15 +1,15 @@
 server:
-  port: 8082 # Port c?a Course Service
+  port: 8082
 
 spring:
   application:
-    name: course-service # Ghi ?è tên t? lms-common
+    name: course-service
 
-  # N?u b?n ?ang dùng Config Server, b?n c?n khai báo ???ng d?n t?i Config Server
+
   config:
     import: "optional:configserver:http://localhost:8888"
 
-  # C?u hình Database c?c b? (N?u Config Server ch?a c?p)
+
   datasource:
     url: jdbc:mysql://localhost:3306/course_db?useUnicode=true&characterEncoding=UTF-8
     username: root

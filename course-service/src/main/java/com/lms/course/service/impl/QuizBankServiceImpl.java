@@ -1,11 +1,13 @@
 package com.lms.course.service.impl;
 
+import com.lms.common.exception.AppException;
 import com.lms.course.dto.request.AnswerItemRequest;
 import com.lms.course.dto.request.QuestionItemRequest;
 import com.lms.course.dto.request.QuizBankCreateRequest;
 import com.lms.course.entity.Answer;
 import com.lms.course.entity.Question;
 import com.lms.course.entity.Quiz;
+import com.lms.course.exception.CourseErrorCode;
 import com.lms.course.repository.AnswerRepository;
 import com.lms.course.repository.QuestionRepository;
 import com.lms.course.repository.QuizRepository;
@@ -33,7 +35,7 @@ public class QuizBankServiceImpl implements QuizBankService {
     public Integer createQuizBank(QuizBankCreateRequest request) {
         // 1. Kiểm tra xem Bài Quiz có tồn tại không
         Quiz quiz = quizRepository.findById(request.getQuizId())
-                .orElseThrow(() -> new RuntimeException("Bài Quiz không tồn tại!"));
+                .orElseThrow(() -> new AppException(CourseErrorCode.LESSON_NOT_FOUND));
 
         // 2. Tạo 2 rổ rỗng để chứa câu hỏi và đáp án chờ lưu
         List<Question> questionsToSave = new ArrayList<>();

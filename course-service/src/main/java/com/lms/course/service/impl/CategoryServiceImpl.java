@@ -1,8 +1,10 @@
 package com.lms.course.service.impl;
 
+import com.lms.common.exception.AppException;
 import com.lms.course.dto.request.CategoryRequest;
 import com.lms.course.dto.response.CategoryResponse;
 import com.lms.course.entity.Category;
+import com.lms.course.exception.CourseErrorCode;
 import com.lms.course.repository.CategoryRepository;
 // Bạn nhớ tạo CategoryService interface có các hàm tương ứng nhé
 import com.lms.course.service.CategoryService;
@@ -48,7 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse getCategoryBySlug(String slug) {
         Category category = categoryRepository.findBySlugAndDeletedFalse(slug)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục!"));
+                .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
         return mapToResponse(category);
     }
 
@@ -56,7 +58,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponse createCategory(CategoryRequest request) {
         if (categoryRepository.existsBySlug(request.getSlug())) {
-            throw new RuntimeException("Slug đã tồn tại!");
+            throw new AppException(CourseErrorCode.CATEGORY_SLUG_EXISTS);
         }
 
         Category category = new Category();
@@ -73,10 +75,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponse updateCategory(String id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục!"));
+                .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
 
         if (categoryRepository.existsBySlugAndIdNot(request.getSlug(), id)) {
-            throw new RuntimeException("Slug đã tồn tại ở danh mục khác!");
+            throw new AppException(CourseErrorCode.CATEGORY_SLUG_EXISTS);
         }
 
         category.setName(request.getName());
@@ -90,7 +92,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void deleteCategory(String id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục!"));
+                .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
         // Xóa mềm
         category.setDeleted(true);
         categoryRepository.save(category);
