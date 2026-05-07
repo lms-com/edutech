@@ -14,7 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +37,7 @@ public class CourseServiceImpl implements CourseService {
         }
 
         // 2. Kiểm tra Category có tồn tại không sử dụng AppException
-        Category category = categoryRepository.findByIdAndIsDeletedFalse(request.getCategoryId())
+        Category category = categoryRepository.findByIdAndDeletedFalse(request.getCategoryId())
                 .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
 
         // 3. Map sang Entity
@@ -49,19 +54,11 @@ public class CourseServiceImpl implements CourseService {
                 .status("DRAFT")
                 .build();
 
+        // 4. Lưu
         course = courseRepository.save(course);
 
-        // 4. Trả về Response
-        return CourseResponse.builder()
-                .id(course.getId())
-                .title(course.getTitle())
-                .slug(course.getSlug())
-                .instructorId(course.getInstructorId())
-                .categoryName(category.getName())
-                .basePrice(course.getBasePrice())
-                .currencyCode(course.getCurrencyCode())
-                .status(course.getStatus())
-                .build();
+        // 5. Trả về Response bằng cách gọi hàm map dùng chung
+        return mapToResponse(course);
     }
 
     @Override
@@ -90,28 +87,65 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<CourseResponse> getAllCoursesForAdmin(Pageable pageable, String status, String instructorId) {
+        Page<Course> courses = courseRepository.findAllForAdmin(status, instructorId, pageable);
+        return courses.map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CourseResponse> getRelatedCourses(String courseId) {
+        // 1. Lấy thông tin khóa học hiện tại để biết Category
+        Course currentCourse = courseRepository.findByIdAndNotDeleted(courseId)
+                .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));
+
+        if (currentCourse.getCategory() == null) {
+            return List.of();
+        }
+
+        // 2. Tìm các khóa học cùng Category (loại trừ khóa học hiện tại)
+        // Mặc định lấy 5 khóa học liên quan để gợi ý (Cross-sale)
+        Pageable limit = PageRequest.of(0, 5);
+        Page<Course> relatedCourses = courseRepository.findRelatedCoursesByCategoryId(
+                currentCourse.getCategory().getId(),
+                courseId,
+                limit
+        );
+
+        // 3. Map sang Response
+        return relatedCourses.getContent().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public CourseResponse updateCourse(String courseId, CourseRequest request, String instructorId){
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
-        //1 chốt kiểm tra người gọi API có phải chủ sở hữu của khóa học không
+                
+        // 1. Chốt kiểm tra người gọi API có phải chủ sở hữu của khóa học không
         verifyOwnership(course, instructorId);
-        //2 Nếu có đổi category phải kiểm tra category mới
-        if(!course.getCategory().getId().equals(request.getCategoryId())){
-            Category category = categoryRepository.findByIdAndIsDeletedFalse(request.getCategoryId())
+        
+        // 2. Nếu có đổi category phải kiểm tra category mới
+        // (Xử lý an toàn hơn khi course.getCategory() có thể null)
+        if (course.getCategory() == null || !course.getCategory().getId().equals(request.getCategoryId())) {
+            Category category = categoryRepository.findByIdAndDeletedFalse(request.getCategoryId())
                     .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
             course.setCategory(category);
         }
-        //3 nếu có đổi SLug , kiểm tra trùng lặp với các course khác
+        
+        // 3. Nếu có đổi Slug , kiểm tra trùng lặp với các course khác
         if(!course.getSlug().equals(request.getSlug())){
             if(courseRepository.existsBySlugAndNotDeleted(request.getSlug())){
                 throw new AppException(CourseErrorCode.COURSE_SLUG_EXISTS);
-                }
+            }
+            course.setSlug(request.getSlug());
         }
 
-        //tạm thời code tay sau này sử dung map struct
+        // 4. Cập nhật các trường còn lại
         course.setTitle(request.getTitle());
-        course.setSlug(request.getSlug());
         course.setDescription(request.getDescription());
         course.setLevel(request.getLevel());
         course.setBasePrice(request.getBasePrice());
@@ -119,9 +153,11 @@ public class CourseServiceImpl implements CourseService {
             course.setCurrencyCode(request.getCurrencyCode());
         }
         course.setThumbnailUrl(request.getThumbnailUrl());
-        course = courseRepository.save(course);
-        return mapToResponse(course);
 
+        course = courseRepository.save(course);
+        
+        // 5. Trả về response
+        return mapToResponse(course);
     }
 
     @Override
@@ -137,12 +173,86 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
-    public void ChangeCourseStatus(String courseId, String status , String instructorId){
+    public CourseResponse cloneCourse(String courseId, String instructorId) {
+        Course originalCourse = courseRepository.findByIdAndNotDeleted(courseId)
+                .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));
+
+        verifyOwnership(originalCourse, instructorId);
+
+        // Tạo course mới (clone) - tạm thời copy các trường cơ bản, phần Section/Lesson có thể clone sau nếu cần
+        Course clonedCourse = Course.builder()
+                .title(originalCourse.getTitle() + " (Copy)")
+                .slug(originalCourse.getSlug() + "-copy-" + System.currentTimeMillis())
+                .category(originalCourse.getCategory())
+                .instructorId(instructorId)
+                .description(originalCourse.getDescription())
+                .thumbnailUrl(originalCourse.getThumbnailUrl())
+                .level(originalCourse.getLevel())
+                .basePrice(originalCourse.getBasePrice())
+                .currencyCode(originalCourse.getCurrencyCode())
+                .status("DRAFT")
+                .overrideCommissionRate(originalCourse.getOverrideCommissionRate())
+                .build();
+
+        return mapToResponse(courseRepository.save(clonedCourse));
+    }
+
+    @Override
+    @Transactional
+    public void changeCourseStatus(String courseId, String status, String instructorId) {
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
-                .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
-        //1 chốt kiểm tra người gọi API có phải chủ sở hữu của khóa học không
+                .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));
+
         verifyOwnership(course, instructorId);
+
+        // Chỉ cho phép Giảng viên chuyển sang DRAFT hoặc PENDING (xin duyệt)
+        if (!"DRAFT".equals(status) && !"PENDING".equals(status)) {
+            throw new AppException(CourseErrorCode.COURSE_INVALID_STATUS);
+        }
+
         course.setStatus(status);
+        courseRepository.save(course);
+    }
+
+    @Override
+    @Transactional
+    public void approveCourse(String courseId) {
+        Course course = courseRepository.findByIdAndNotDeleted(courseId)
+                .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));
+
+        // Nếu đã xuất bản thì ko duyệt lại
+        if ("PUBLISHED".equals(course.getStatus())) {
+             throw new AppException(CourseErrorCode.COURSE_ALREADY_APPROVED);
+        }
+
+        course.setStatus("PUBLISHED");
+        // Có thể lưu thêm lịch sử duyệt ở đây nếu có bảng riêng
+        courseRepository.save(course);
+    }
+
+    @Override
+    @Transactional
+    public void rejectCourse(String courseId, String rejectionNote) {
+        Course course = courseRepository.findByIdAndNotDeleted(courseId)
+                .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));
+
+        if ("REJECTED".equals(course.getStatus())) {
+            throw new AppException(CourseErrorCode.COURSE_ALREADY_REJECTED);
+        }
+
+        course.setStatus("REJECTED");
+        // Ghi chú từ chối có thể lưu vào DB hoặc gửi thông báo. Tạm thời chưa có field rejection_note trong Course
+        // Sau này có thể thiết kế thêm bảng CourseAuditLog hoặc thêm field vào bảng courses.
+        courseRepository.save(course);
+    }
+
+    @Override
+    @Transactional
+    public void setCourseCommission(String courseId, BigDecimal overrideCommissionRate) {
+        Course course = courseRepository.findByIdAndNotDeleted(courseId)
+                .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));
+
+        course.setOverrideCommissionRate(overrideCommissionRate);
         courseRepository.save(course);
     }
 
@@ -170,6 +280,7 @@ public class CourseServiceImpl implements CourseService {
                 // .updatedAt(course.getUpdatedAt())
                 .build();
     }
+
     // ================= HÀM HỖ TRỢ BẢO MẬT (HELPER) =================
 
     /**

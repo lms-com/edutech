@@ -1,9 +1,9 @@
 package com.lms.course.repository;
 
-import com.lms.course.entity.Section;
+import com.lms.course.entity.Quiz;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SectionRepository extends JpaRepository<Section, String> {
+public interface QuizRepository extends JpaRepository<Quiz, String> {
 }

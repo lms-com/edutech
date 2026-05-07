@@ -10,7 +10,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Question extends AuditableEntity {
 
     @Id
@@ -18,21 +17,23 @@ public class Question extends AuditableEntity {
     @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
-    // Liên kết với Quiz. Chú ý: Cột lưu trữ ID là quiz_id, trỏ về ID của Quiz (chính là lesson_id)
+    // Liên kết với Quiz (chính là Lesson ID)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
     private Quiz quiz;
 
-    @Column(name = "question_text", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
     private String questionText;
 
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean deleted;
+
     @PrePersist
     public void prePersist() {
-        if (this.orderIndex == null) {
-            this.orderIndex = 0;
-        }
+        if (this.orderIndex == null) this.orderIndex = 0;
+        if (this.deleted == null) this.deleted = false;
     }
 }
