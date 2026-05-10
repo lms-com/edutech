@@ -93,8 +93,9 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(String id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
-        // Xóa mềm
+        // Xóa mềm: đánh dấu is_deleted = true và đổi slug để giải phóng slug cho danh mục khác
         category.setDeleted(true);
+        category.setSlug(category.getSlug() + "-deleted-" + System.currentTimeMillis());
         categoryRepository.save(category);
     }
 

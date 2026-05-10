@@ -1,6 +1,7 @@
 package com.lms.course.service;
 
 import com.lms.course.dto.request.CourseRequest;
+import com.lms.course.dto.request.CourseUpdateRequest;
 import com.lms.course.dto.response.CourseResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,11 @@ public interface CourseService {
     //lấy danh sách khóa học liên quan
     List<CourseResponse> getRelatedCourses(String courseId);
 
-    CourseResponse updateCourse(String courseId, CourseRequest request, String instructorId);
+    // Cập nhật từng phần (PATCH)
+    CourseResponse updateCourse(String courseId, CourseUpdateRequest request, String instructorId);
+
+    // Cập nhật đầy đủ (PUT)
+    CourseResponse updateCourseFull(String courseId, CourseRequest request, String instructorId);
 
     void deleteCourse(String courseId, String instructorId);
 

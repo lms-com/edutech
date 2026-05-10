@@ -33,6 +33,7 @@ public class Section extends AuditableEntity {
     @PrePersist
     public void prePersist() {
         if (this.orderIndex == null) this.orderIndex = 0;
+        if (this.deleted == null) this.deleted = false;
     }
 
 }

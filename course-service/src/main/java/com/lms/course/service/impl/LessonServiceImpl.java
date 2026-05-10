@@ -1,6 +1,8 @@
 package com.lms.course.service.impl;
 
+import com.lms.common.dto.response.ApiResponse;
 import com.lms.common.exception.AppException;
+import com.lms.course.client.MediaServiceClient;
 import com.lms.course.dto.request.LessonCreateRequest;
 import com.lms.course.dto.request.LessonUpdateContentRequest;
 import com.lms.course.dto.response.LessonResponse;
@@ -29,6 +31,7 @@ public class LessonServiceImpl implements LessonService {
 
     LessonRepository lessonRepository;
     SectionRepository sectionRepository;
+    MediaServiceClient mediaServiceClient;
 
     @Override
     @Transactional
@@ -106,8 +109,9 @@ public class LessonServiceImpl implements LessonService {
     public void deleteLesson(String lessonId) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(CourseErrorCode.LESSON_NOT_FOUND));
-        // Xóa cứng theo flow hoặc xóa mềm (tùy thuộc vào thiết kế entity). Tạm thời xoá cứng
-        lessonRepository.delete(lesson);
+        
+        lesson.setDeleted(true);
+        lessonRepository.save(lesson);
     }
 
     @Override
@@ -136,6 +140,33 @@ public class LessonServiceImpl implements LessonService {
         }
         
         lessonRepository.saveAll(lessons);
+    }
+
+    @Override
+    public String getPlayUrl(String lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(CourseErrorCode.LESSON_NOT_FOUND));
+
+        if (!(lesson instanceof VideoLesson)) {
+            throw new AppException(CourseErrorCode.LESSON_INVALID_TYPE);
+        }
+
+        VideoLesson videoLesson = (VideoLesson) lesson;
+        String videoPath = videoLesson.getVideoUrl();
+
+        if (videoPath == null || videoPath.isEmpty()) {
+             throw new AppException(CourseErrorCode.LESSON_CONTENT_MISSING);
+        }
+
+        // Gọi sang Media Service thông qua FeignClient
+        ApiResponse<String> response = mediaServiceClient.getViewUrl(videoPath);
+        
+        if (response != null && response.getCode() == 200) {
+            return response.getData();
+        } else {
+             // Có thể ném lỗi từ media service nếu lấy URL thất bại
+             throw new AppException(CourseErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // Hàm phụ trợ dùng chung để map Entity -> DTO

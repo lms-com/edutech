@@ -15,4 +15,6 @@ public interface LessonService {
 
     void reorderLessons(String sectionId, List<String> orderedIds);
 
+    // API 34: Xin cấp URL Xem Video An toàn
+    String getPlayUrl(String lessonId);
 }

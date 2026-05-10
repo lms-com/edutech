@@ -2,6 +2,7 @@ package com.lms.course.service.impl;
 
 import com.lms.common.exception.AppException;
 import com.lms.course.dto.request.CourseRequest;
+import com.lms.course.dto.request.CourseUpdateRequest;
 import com.lms.course.dto.response.CourseResponse;
 import com.lms.course.entity.Category;
 import com.lms.course.entity.Course;
@@ -121,7 +122,61 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
-    public CourseResponse updateCourse(String courseId, CourseRequest request, String instructorId){
+    public CourseResponse updateCourse(String courseId, CourseUpdateRequest request, String instructorId){
+        Course course = courseRepository.findByIdAndNotDeleted(courseId)
+                .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
+                
+        // 1. Chốt kiểm tra người gọi API có phải chủ sở hữu của khóa học không
+        verifyOwnership(course, instructorId);
+        
+        // 2. Cập nhật từng trường nếu có gửi lên (Partial Update)
+        
+        if (request.getTitle() != null) {
+            course.setTitle(request.getTitle());
+        }
+        
+        if (request.getSlug() != null && !course.getSlug().equals(request.getSlug())) {
+            if(courseRepository.existsBySlugAndNotDeleted(request.getSlug())){
+                throw new AppException(CourseErrorCode.COURSE_SLUG_EXISTS);
+            }
+            course.setSlug(request.getSlug());
+        }
+        
+        if (request.getCategoryId() != null && (course.getCategory() == null || !course.getCategory().getId().equals(request.getCategoryId()))) {
+            Category category = categoryRepository.findByIdAndDeletedFalse(request.getCategoryId())
+                    .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
+            course.setCategory(category);
+        }
+        
+        if (request.getDescription() != null) {
+            course.setDescription(request.getDescription());
+        }
+        
+        if (request.getLevel() != null) {
+            course.setLevel(request.getLevel());
+        }
+        
+        if (request.getBasePrice() != null) {
+            course.setBasePrice(request.getBasePrice());
+        }
+        
+        if (request.getCurrencyCode() != null) {
+            course.setCurrencyCode(request.getCurrencyCode());
+        }
+        
+        if (request.getThumbnailUrl() != null) {
+            course.setThumbnailUrl(request.getThumbnailUrl());
+        }
+
+        course = courseRepository.save(course);
+        
+        // 3. Trả về response
+        return mapToResponse(course);
+    }
+
+    @Override
+    @Transactional
+    public CourseResponse updateCourseFull(String courseId, CourseRequest request, String instructorId){
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
                 
@@ -129,7 +184,6 @@ public class CourseServiceImpl implements CourseService {
         verifyOwnership(course, instructorId);
         
         // 2. Nếu có đổi category phải kiểm tra category mới
-        // (Xử lý an toàn hơn khi course.getCategory() có thể null)
         if (course.getCategory() == null || !course.getCategory().getId().equals(request.getCategoryId())) {
             Category category = categoryRepository.findByIdAndDeletedFalse(request.getCategoryId())
                     .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
@@ -144,14 +198,12 @@ public class CourseServiceImpl implements CourseService {
             course.setSlug(request.getSlug());
         }
 
-        // 4. Cập nhật các trường còn lại
+        // 4. Cập nhật TOÀN BỘ các trường từ request (Replace)
         course.setTitle(request.getTitle());
         course.setDescription(request.getDescription());
         course.setLevel(request.getLevel());
         course.setBasePrice(request.getBasePrice());
-        if (request.getCurrencyCode() != null) {
-            course.setCurrencyCode(request.getCurrencyCode());
-        }
+        course.setCurrencyCode(request.getCurrencyCode() != null ? request.getCurrencyCode() : "VND");
         course.setThumbnailUrl(request.getThumbnailUrl());
 
         course = courseRepository.save(course);
@@ -167,6 +219,9 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
         //1 chốt kiểm tra người gọi API có phải chủ sở hữu của khóa học không
         verifyOwnership(course, instructorId);
+        
+        // Cập nhật slug để giải phóng slug cho khóa học mới
+        course.setSlug(course.getSlug() + "-deleted-" + System.currentTimeMillis());
         course.setDeleted(true);
         courseRepository.save(course);
     }
