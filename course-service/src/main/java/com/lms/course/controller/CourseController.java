@@ -3,6 +3,7 @@ package com.lms.course.controller;
 import com.lms.common.dto.response.ApiResponse;
 import com.lms.course.dto.request.CourseRequest;
 import com.lms.course.dto.request.CourseStatusUpdateRequest;
+import com.lms.course.dto.request.CourseUpdateRequest;
 import com.lms.course.dto.request.ReorderRequest;
 import com.lms.course.dto.request.SectionCreateRequest;
 import com.lms.course.dto.response.CourseResponse;
@@ -79,15 +80,28 @@ public class CourseController {
         return ApiResponse.success(response);
     }
 
-    @Operation(summary = "13. Cập nhật khóa học", description = "Cập nhật thông tin chung (Title, price, thumbnail...)")
+    @Operation(summary = "13a. Cập nhật khóa học (Từng phần)", description = "Cập nhật một hoặc nhiều thông tin của khóa học. Chỉ cần gửi trường nào muốn sửa.")
+    @PatchMapping("/{courseId}")
+//    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
+    public ApiResponse<CourseResponse> updateCoursePartial(
+                @PathVariable String courseId,
+                @RequestBody CourseUpdateRequest request,
+                @RequestHeader("X-Instructor-Id") String instructorId) {
+
+            CourseResponse courseResponse = courseService.updateCourse(courseId, request, instructorId);
+            return ApiResponse.success(courseResponse);
+
+    }
+    
+    @Operation(summary = "13b. Cập nhật khóa học (Đầy đủ)", description = "Thay thế toàn bộ thông tin của khóa học. Bắt buộc gửi đủ các trường bắt buộc (title, slug, categoryId, basePrice).")
     @PutMapping("/{courseId}")
 //    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
-    public ApiResponse<CourseResponse> updateCourse(
+    public ApiResponse<CourseResponse> updateCourseFull(
                 @PathVariable String courseId,
                 @Valid @RequestBody CourseRequest request,
                 @RequestHeader("X-Instructor-Id") String instructorId) {
 
-            CourseResponse courseResponse = courseService.updateCourse(courseId, request, instructorId);
+            CourseResponse courseResponse = courseService.updateCourseFull(courseId, request, instructorId);
             return ApiResponse.success(courseResponse);
 
     }

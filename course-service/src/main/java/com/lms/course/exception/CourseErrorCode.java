@@ -54,17 +54,14 @@ public enum CourseErrorCode implements ErrorCode {
     private final String message;
     private final HttpStatus status;
 
-    @Override
     public int getCode() {
         return code;
     }
 
-    @Override
     public String getMessage() {
         return message;
     }
 
-    @Override
     public HttpStatus getHttpStatus() {
         return status;
     }

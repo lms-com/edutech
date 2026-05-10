@@ -33,4 +33,12 @@ public class LessonController {
         lessonService.deleteLesson(lessonId);
         return ApiResponse.success(null);
     }
+
+    @Operation(summary = "34. Xin cấp URL Xem Video An toàn", description = "Lấy URL xem video an toàn từ MinIO thông qua Media Service")
+    @GetMapping("/{lessonId}/play")
+    // @PreAuthorize("hasAuthority('COURSE_LEARN')")
+    public ApiResponse<String> getPlayUrl(@PathVariable String lessonId) {
+        String playUrl = lessonService.getPlayUrl(lessonId);
+        return ApiResponse.success(playUrl);
+    }
 }
