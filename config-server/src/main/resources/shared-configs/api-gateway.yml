@@ -9,6 +9,13 @@ spring:
           enabled: false
           lower-case-service-id: true
       routes:
+        - id: block-internal-api
+          uri: no://op # Lấy đại tên ko tồn tại nha
+          predicates:
+            - Path=/api/internal/**
+          filters:
+            - SetStatus=403
+
         - id: iam-service-secured
           uri: lb://iam-service
           predicates:
@@ -22,11 +29,13 @@ spring:
             - Path=/iam-service/api/v1/auth/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html, /iam-service/dev/**
           filters:
             - StripPrefix=1
+
         - id: config-server
           uri: lb://config-server
           predicates:
             - Path=/config-server/**
             - RemoteAddr=127.0.0.1/32
+
         - id: media-service
           uri: lb://media-service
           predicates:
