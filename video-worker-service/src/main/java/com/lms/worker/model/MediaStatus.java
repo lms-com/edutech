@@ -1,4 +1,4 @@
-package com.lms.media.model;
+package com.lms.worker.model;
 
 public enum MediaStatus {
     PENDING,

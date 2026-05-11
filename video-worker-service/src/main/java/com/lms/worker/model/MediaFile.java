@@ -1,6 +1,7 @@
-package com.lms.media.model;
+package com.lms.worker.model;
 
 import com.lms.common.model.AuditableEntity;
+import com.lms.worker.model.MediaStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
