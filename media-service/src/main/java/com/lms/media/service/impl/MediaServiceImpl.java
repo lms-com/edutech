@@ -13,9 +13,13 @@ import com.lms.media.service.MinioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -102,5 +106,39 @@ public class MediaServiceImpl implements MediaService {
         return minioService.generatePresignedGetUrl(
                 mediaFile.getStoredFileName(), 2, TimeUnit.HOURS
         );
+    }
+
+
+    @Scheduled(fixedRate = 60000)
+    @Override
+    @Transactional
+    public void autoCleanPendingFilesAfter12Hours () {
+        Instant threshold = Instant.now().minusSeconds(70);
+        mediaFileRepository.deleteByStatusAndUpdatedAtBefore(MediaStatus.PENDING, threshold);
+        log.info("🧹 Auto clean pending files after 12 hours");
+    }
+
+
+    @Override
+    @Transactional
+    public void removeFile(String mediaId) {
+        MediaFile file = mediaFileRepository.findById(mediaId)
+                        .orElseThrow(() -> {
+                            log.warn("media file {} not found.", mediaId);
+                            return null;
+                        });
+        minioService.removeFile(file.getStoredFileName());
+        mediaFileRepository.deleteById(mediaId);
+        log.info("Delete file {} from Database successfully", mediaId);
+    }
+
+
+    /**
+     * Cac Service chi danh cho Admin
+     */
+
+    @Override
+    public List<MediaFile> getAllMediaFiles() {
+        return mediaFileRepository.findAll();
     }
 }
