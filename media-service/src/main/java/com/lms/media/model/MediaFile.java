@@ -36,4 +36,7 @@ public class MediaFile extends AuditableEntity {
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     MediaStatus status;
+
+    @Column(name = "hls_manifest_url")
+    private String hlsManifestUrl;
 }
