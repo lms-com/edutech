@@ -1,5 +1,21 @@
+server:
+  port: 8082
+
 spring:
   application:
     name: course-service
+
+
   config:
     import: "optional:configserver:http://localhost:8888"
+
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/course_db?useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate

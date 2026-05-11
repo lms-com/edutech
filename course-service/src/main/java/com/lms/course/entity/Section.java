@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "courses")
+@Table(name = "sections")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,9 +27,13 @@ public class Section extends AuditableEntity {
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean deleted;
+
     @PrePersist
     public void prePersist() {
         if (this.orderIndex == null) this.orderIndex = 0;
+        if (this.deleted == null) this.deleted = false;
     }
 
 }

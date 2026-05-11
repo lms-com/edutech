@@ -1,18 +1,23 @@
-package com.lms.course.repository; // Đảm bảo đúng package
+package com.lms.course.repository;
 
 import com.lms.course.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
-@Repository // Thêm annotation này vào
+@Repository
 public interface CategoryRepository extends JpaRepository<Category, String> {
-    // ...
-    // Lấy Category theo ID và đảm bảo chưa bị xóa mềm
-    @Query("SELECT c FROM Category c WHERE c.id = :id AND c.isDeleted = false")
-    Optional<Category> findByIdAndIsDeletedFalse(@Param("id") String id);
+    // Chỉ lấy danh mục chưa bị xóa mềm, sắp xếp theo orderIndex
+    List<Category> findByDeletedFalseOrderByOrderIndexAsc();
 
+    // Lấy chi tiết theo Slug
+    Optional<Category> findBySlugAndDeletedFalse(String slug);
+
+    Optional<Category> findByIdAndDeletedFalse(String id);
+
+    // Kiểm tra trùng Slug
+    boolean existsBySlugAndIdNot(String slug, String id);
+    boolean existsBySlug(String slug);
 }
