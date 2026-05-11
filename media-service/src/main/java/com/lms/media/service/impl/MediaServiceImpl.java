@@ -1,6 +1,7 @@
 package com.lms.media.service.impl;
 
 import com.lms.common.exception.AppException;
+import com.lms.media.dto.message.VideoProcessMessage;
 import com.lms.media.dto.request.GetUploadUrlRequest;
 import com.lms.media.dto.response.GetUploadUrlResponse;
 import com.lms.media.exception.MediaErrorCode;
@@ -12,6 +13,7 @@ import com.lms.media.service.MediaService;
 import com.lms.media.service.MinioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.lms.media.config.RabbitMQConfig.MEDIA_EXCHANGE;
+import static com.lms.media.config.RabbitMQConfig.VIDEO_PROCESSING_ROUTING_KEY;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,6 +35,7 @@ public class MediaServiceImpl implements MediaService {
 
     private final MinioService minioService;
     private final MediaFileRepository mediaFileRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
@@ -89,8 +95,15 @@ public class MediaServiceImpl implements MediaService {
         }
 
         // Chuyen status thanh COMPLETED khi file ton tai
-        mediaFile.setStatus(MediaStatus.COMPLETED);
+        mediaFile.setStatus(MediaStatus.PROCESSING);
         mediaFileRepository.save(mediaFile);
+        // Gui tin nhan vao RabbitMQ
+        VideoProcessMessage videoProcessMessage = new VideoProcessMessage(mediaId, mediaFile.getStoredFileName());
+        rabbitTemplate.convertAndSend(
+                MEDIA_EXCHANGE,
+                VIDEO_PROCESSING_ROUTING_KEY,
+                videoProcessMessage
+        );
         log.info("media file {} has been confirmed", mediaId);
     }
 
