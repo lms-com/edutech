@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String VIDEO_PROCESSING_QUEUE =  "video_processing_queue";
+    public static final String VIDEO_PROCESSING_QUEUE =  "video.processing.queue";
 
     @Bean
     public MessageConverter jsonMessageConverter() {

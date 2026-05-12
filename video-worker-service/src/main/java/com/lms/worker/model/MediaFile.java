@@ -34,7 +34,7 @@ public class MediaFile extends AuditableEntity {
     @Column(name = "file_size", nullable = false)
     Long fileSize;
 
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
     MediaStatus status;
 
