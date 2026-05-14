@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -24,12 +25,19 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
     private final JwtUtils jwtUtils;
     private final ReactiveStringRedisTemplate redisTemplate;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     public AuthenticationFilter (JwtUtils jwtUtils, ReactiveStringRedisTemplate redisTemplate) {
         super(Config.class);
         this.jwtUtils = jwtUtils;
         this.redisTemplate = redisTemplate;
     }
+
+    private List<String> strictApis = List.of(
+            "/api/v1/media/secure/key/**", // Xin chìa khóa video
+            "/api/v1/user/password/change", // Đổi pass
+            "/api/v1/order/checkout"
+    );
 
     public static class Config {}
 
@@ -52,24 +60,42 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             String token = authHeader.substring(7);
 
             try {
+                // Kiem tra token
                 jwtUtils.validateToken(token);
                 // Lay thong tin tu token
                 String userId = jwtUtils.getUserId(token);
                 List<String> authorities = jwtUtils.getAuthorities(token);
                 String deviceFingerPrint = jwtUtils.getDeviceFingerPrint(token);
-                String redisKey = "user:" + userId + ":device";
 
                 String authoritiesStr = String.join(",", authorities);
+
+                // Them userId va autherities vao header
+                ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                        .header("X-User-Id", userId)
+                        .header("X-User-Authorities", authoritiesStr)
+                        .build();
+                ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+
+                // Kiem tra request thuoc api can secure qua redis (Stateful) hay khong (Stateless)
+                boolean isStrictApi = strictApis.stream().anyMatch(pattern -> pathMatcher.match(pattern, request.getURI().getPath()));
+                if (!isStrictApi) {
+                    log.info("Stateless Api was passed!");
+                    chain.filter(mutatedExchange);
+                }
+
+                log.info("Path {} is STRICT, checking Redis for device fingerprint...", request.getURI().getPath());
+                String redisKey = "user:" + userId + ":device";
 
                 return redisTemplate.opsForZSet().score(redisKey, deviceFingerPrint)
                         .switchIfEmpty(Mono.error(new RuntimeException("DEVICE_NOT_FOUND")))
                         .flatMap(score -> {
+                            // Kiem tra device fingerprint tu header de xac thuc them
+                            var headerDeviceFingerPrint = request.getHeaders().getFirst("X-Device-Fingerprint");
+                            if (headerDeviceFingerPrint == null || !headerDeviceFingerPrint.equals(deviceFingerPrint)) {
+                                log.error("Device Fingerprint missed!");
+                                return onError(exchange, "Fingerprint mismatch! Possible attack detected!", HttpStatus.FORBIDDEN);
+                            }
                             log.info("Device {} of user {} is valid", deviceFingerPrint, userId);
-                            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                                    .header("X-User-Id", userId)
-                                    .header("X-User-Authorities", authoritiesStr)
-                                    .build();
-                            ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
                             return chain.filter(mutatedExchange);
                         })
                         .onErrorResume(e -> {
