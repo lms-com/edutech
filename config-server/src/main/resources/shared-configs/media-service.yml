@@ -20,3 +20,13 @@ spring:
     baseline_on_migrate: true
     table: flyway_schema_history
     clean-disabled: false
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin123
+
+application:
+  security:
+    internal-key: RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=

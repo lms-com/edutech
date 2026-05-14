@@ -41,6 +41,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             // Kiem tra request co Authentication trong Header va Authentication co thuoc dang Bearer khong
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                log.error("❌ Request {} missed", request.getHeaders());
                 return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);

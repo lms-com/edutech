@@ -2,6 +2,7 @@ package com.lms.media.service;
 
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +66,21 @@ public class MinioService {
         } catch (Exception e) {
             log.error("❌ Error while get file {} from Minio: {}", fileName, e.getMessage());
             throw new RuntimeException("❌ Failed to get file from Minio" ,e);
+        }
+    }
+
+    public void removeFile (String fileName) {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            );
+            log.info("Removed file {} from Minio", fileName);
+        } catch (Exception e) {
+            log.error("Failed to remove file {} from Minio", fileName, e);
+            throw new RuntimeException("❌ Cannot remove file from Bucket", e);
         }
     }
 }

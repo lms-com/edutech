@@ -1,6 +1,7 @@
-package com.lms.media.model;
+package com.lms.worker.model;
 
 import com.lms.common.model.AuditableEntity;
+import com.lms.worker.model.MediaStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -33,7 +34,7 @@ public class MediaFile extends AuditableEntity {
     @Column(name = "file_size", nullable = false)
     Long fileSize;
 
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
     MediaStatus status;
 

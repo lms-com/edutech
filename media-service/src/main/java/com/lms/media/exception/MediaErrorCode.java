@@ -11,6 +11,7 @@ public enum MediaErrorCode implements ErrorCode {
     INITIALIZE_BUCKET_MINIO_FAILED(4001, "Initialize Minio Bucket Failed", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_NOT_FOUND(4002, "File Not Found", HttpStatus.NOT_FOUND),
     FILE_NOT_AVAILABLE(4003, "File Not Available", HttpStatus.SERVICE_UNAVAILABLE),
+    UNAUTHORIZED(4004, "Unauthorized", HttpStatus.UNAUTHORIZED),
     ;
 
     private final int code;
