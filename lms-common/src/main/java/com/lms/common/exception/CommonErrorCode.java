@@ -6,8 +6,8 @@ import org.springframework.http.HttpStatus;
 
 @AllArgsConstructor
 public enum CommonErrorCode implements ErrorCode {
-    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.INTERNAL_SERVER_ERROR)
-
+    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.INTERNAL_SERVER_ERROR),
+    UNAUTHORIZED(1001, "User unauthorized", HttpStatus.UNAUTHORIZED),
     // 1xxx: System error code:
 
     // 2xxx: IAM service error code:
