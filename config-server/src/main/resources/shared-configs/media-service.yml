@@ -32,6 +32,11 @@ spring:
       circuitbreaker:
         enabled: true
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 application:
   security:
     internal-key: RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=
