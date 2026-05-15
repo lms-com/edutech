@@ -2,6 +2,7 @@ package com.lms.worker.service;
 
 import com.lms.common.exception.AppException;
 import com.lms.worker.config.RabbitMQConfig;
+import com.lms.worker.dto.message.VideoCompletedMessage;
 import com.lms.worker.dto.message.VideoProcessMessage;
 import com.lms.worker.exception.VideoWorkerErrorCode;
 import com.lms.worker.model.MediaFile;
@@ -13,6 +14,7 @@ import io.minio.UploadObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.lms.worker.config.RabbitMQConfig.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class VideoProcessingWorker {
 
     private final MediaFileRepository mediaFileRepository;
     private final MinioClient minioClient;
+    private final RabbitTemplate rabbitTemplate;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
@@ -104,7 +109,18 @@ public class VideoProcessingWorker {
             mediaFile.setStatus(MediaStatus.COMPLETED);
             mediaFile.setHlsManifestUrl(minioHlsBasePath + "index.m3u8");
             mediaFileRepository.save(mediaFile);
+
             log.info("✅ [WORKER] Completed! HLS Link: {}", mediaFile.getHlsManifestUrl());
+
+            // Gui message thong bao Video was processed completedly len RabbitMQ
+            VideoCompletedMessage videoCompletedMessage =
+                    new VideoCompletedMessage(mediaId);
+            rabbitTemplate.convertAndSend(
+                    MEDIA_EXCHANGE,
+                    VIDEO_COMPLETED_ROUTING_KEY,
+                    videoCompletedMessage
+            );
+            log.info("✅ [WORKER] VIDEO COMPLETED MESSAGE WAS SENT: {}", mediaId);
 
         } catch (Exception e) {
             log.error("❌ [WORKER] Failed: {}", e.getMessage());
@@ -117,6 +133,8 @@ public class VideoProcessingWorker {
             }
         }
     }
+
+
 
     private void deleteDirectory (File directoryToBeDeleted) {
         File[] allContents = directoryToBeDeleted.listFiles();

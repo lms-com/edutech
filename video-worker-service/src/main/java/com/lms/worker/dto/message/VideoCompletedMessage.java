@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CompletedVideoMessage {
+public class VideoCompletedMessage {
     private String mediaId;  // Tuong ung videoUrl bên course-service
 }
