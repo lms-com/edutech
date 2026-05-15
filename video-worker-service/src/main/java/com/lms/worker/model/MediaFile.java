@@ -40,4 +40,7 @@ public class MediaFile extends AuditableEntity {
 
     @Column(name = "hls_manifest_url")
     private String hlsManifestUrl;
+
+    @Column(name = "encryption_key")
+    private String encryptionKey;
 }
