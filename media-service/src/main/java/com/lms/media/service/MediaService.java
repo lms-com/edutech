@@ -12,7 +12,7 @@ public interface MediaService {
 
     void confirmUploadUrl (String mediaId);
 
-    String getDisplayUrl (String mediaId);
+    String getDisplayUrl (String mediaId, String deviceFingerPrint);
 
     void autoCleanPendingFilesAfter12Hours ();
 

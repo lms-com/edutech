@@ -94,7 +94,7 @@ public class MediaServiceImpl implements MediaService {
             throw new AppException(MediaErrorCode.FILE_NOT_FOUND, "media file " + mediaId + " not found.");
         }
 
-        // Chuyen status thanh COMPLETED khi file ton tai
+        // Chuyen status thanh PROCESSING khi file ton tai
         mediaFile.setStatus(MediaStatus.PROCESSING);
         mediaFileRepository.save(mediaFile);
         // Gui tin nhan vao RabbitMQ
@@ -110,12 +110,17 @@ public class MediaServiceImpl implements MediaService {
 
     @Override
     @Transactional
-    public String getDisplayUrl(String mediaId) {
+    public String getDisplayUrl(String mediaId, String deviceFingerPrint) {
         MediaFile mediaFile = mediaFileRepository.findById(mediaId)
                 .orElseThrow(() -> new AppException(MediaErrorCode.FILE_NOT_FOUND, "media file " + mediaId + " not found."));
         if (mediaFile.getStatus() != MediaStatus.COMPLETED) {
             throw new AppException(MediaErrorCode.FILE_NOT_AVAILABLE, "media file " + mediaFile.getStoredFileName() + " has not been completed.");
         }
+
+        // Goi kiem tra user nay da mua khoa hoc cua video nay chua (Feign client: course-service)
+        /**/
+
+
         return minioService.generatePresignedGetUrl(
                 mediaFile.getStoredFileName(), 2, TimeUnit.HOURS
         );
