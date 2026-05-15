@@ -33,7 +33,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         this.redisTemplate = redisTemplate;
     }
 
-    private List<String> strictApis = List.of(
+    private final List<String> strictApis = List.of(
             "/api/v1/media/secure/key/**", // Xin chìa khóa video
             "/api/v1/user/password/change", // Đổi pass
             "/api/v1/order/checkout"
@@ -80,7 +80,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 boolean isStrictApi = strictApis.stream().anyMatch(pattern -> pathMatcher.match(pattern, request.getURI().getPath()));
                 if (!isStrictApi) {
                     log.info("Stateless Api was passed!");
-                    chain.filter(mutatedExchange);
+                    return chain.filter(mutatedExchange);
                 }
 
                 log.info("Path {} is STRICT, checking Redis for device fingerprint...", request.getURI().getPath());
