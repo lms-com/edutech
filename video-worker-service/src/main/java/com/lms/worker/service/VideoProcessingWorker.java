@@ -10,6 +10,7 @@ import com.lms.worker.model.MediaStatus;
 import com.lms.worker.repository.MediaFileRepository;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
 import io.minio.UploadObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -144,6 +145,15 @@ public class VideoProcessingWorker {
                     videoCompletedMessage
             );
             log.info("✅ [WORKER] VIDEO COMPLETED MESSAGE WAS SENT: {}", mediaId);
+
+            // Xoa file video mp4 goc trong minio
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(message.getStoredFileName())
+                            .build()
+            );
+            log.info("✅ [WORKER] ORIGINAL VIDEO {} WAS DELETED: ", mediaFile.getStoredFileName());
 
         } catch (Exception e) {
             log.error("❌ [WORKER] Failed: {}", e.getMessage());
