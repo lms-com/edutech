@@ -9,21 +9,15 @@ import com.lms.iam.exception.IamErrorCode;
 import com.lms.iam.model.Role;
 import com.lms.iam.model.User;
 import com.lms.iam.model.UserRole;
-import com.lms.iam.model.Userstatus;
 import com.lms.iam.repository.UserRepository;
 import com.lms.iam.repository.UserRoleRepository;
 import com.lms.iam.service.RoleService;
 import com.lms.iam.service.UserService;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.*;
-import lombok.experimental.FieldDefaults;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Profile("dev")
