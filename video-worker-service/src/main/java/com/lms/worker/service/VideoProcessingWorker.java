@@ -2,6 +2,7 @@ package com.lms.worker.service;
 
 import com.lms.common.exception.AppException;
 import com.lms.worker.config.RabbitMQConfig;
+import com.lms.worker.dto.message.VideoCompletedMessage;
 import com.lms.worker.dto.message.VideoProcessMessage;
 import com.lms.worker.exception.VideoWorkerErrorCode;
 import com.lms.worker.model.MediaFile;
@@ -9,10 +10,12 @@ import com.lms.worker.model.MediaStatus;
 import com.lms.worker.repository.MediaFileRepository;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
 import io.minio.UploadObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +23,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
+import java.util.Base64;
+
+import static com.lms.worker.config.RabbitMQConfig.*;
 
 @Slf4j
 @Service
@@ -28,6 +35,7 @@ public class VideoProcessingWorker {
 
     private final MediaFileRepository mediaFileRepository;
     private final MinioClient minioClient;
+    private final RabbitTemplate rabbitTemplate;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
@@ -53,6 +61,7 @@ public class VideoProcessingWorker {
             // Tien hanh tao thu muc moi
             Files.createDirectories(outputDirPath);
 
+
             log.info("⏳ [WORKER] Downloading the original file...");
             minioClient.getObject(
                     GetObjectArgs.builder()
@@ -60,6 +69,24 @@ public class VideoProcessingWorker {
                             .object(message.getStoredFileName())
                             .build()
             ).transferTo(Files.newOutputStream(inputFilePath));
+
+            // Chuan bi Key de ma hoa cac file .ts
+            log.info("⏳ [WORKER] Đang sinh khóa AES-128 ngẫu nhiên...");
+            byte[] aes = new byte[16];
+            new SecureRandom().nextBytes(aes);
+            // Chuyen aes thanh String de luu trong db
+            String base64Key = Base64.getEncoder().encodeToString(aes);
+
+            // Tao file enc.key de FFmpeg doc
+            Path keyFilePath = tempDir.resolve("enc.key");
+            Files.write( keyFilePath, aes);
+
+            // Tao file enc.infokey chua duong dan cua file enc.key
+            Path keyInfoFilePath = tempDir.resolve("enc.infokey");
+            String infoContent =
+                    "dummy_url_tam_thoi\n"
+                            + keyFilePath.toAbsolutePath().toString();
+            Files.writeString( keyInfoFilePath, infoContent);
 
             // Goi ffmpeg xu li
             log.info("⏳ [WORKER] Start operating FFmpeg (This process may take a few minutes)...");
@@ -72,6 +99,7 @@ public class VideoProcessingWorker {
                     "-start_number", "0",              // So thu tu bat dau cua cac file
                     "-hls_time", "10",                 // Do dai thoi gian cua cac file video nho sau khi xu li
                     "-hls_list_size", "0",             // Gioi han so luong file thanh pham: 0 la khong gioi han
+                    "-hls_key_info_file", keyInfoFilePath.toString(),   // file chua thong tin path den key aes
                     "-f", "hls",                       // Kieu dinh dang: dinh dang kieu hls
                     outputM3u8Path.toString()          // Duong dan cua file tong index.m3u8
             );
@@ -102,9 +130,30 @@ public class VideoProcessingWorker {
 
             // Cap nhat DB
             mediaFile.setStatus(MediaStatus.COMPLETED);
+            mediaFile.setEncryptionKey(base64Key);
             mediaFile.setHlsManifestUrl(minioHlsBasePath + "index.m3u8");
             mediaFileRepository.save(mediaFile);
+
             log.info("✅ [WORKER] Completed! HLS Link: {}", mediaFile.getHlsManifestUrl());
+
+            // Gui message thong bao Video was processed completedly len RabbitMQ
+            VideoCompletedMessage videoCompletedMessage =
+                    new VideoCompletedMessage(mediaId);
+            rabbitTemplate.convertAndSend(
+                    MEDIA_EXCHANGE,
+                    VIDEO_COMPLETED_ROUTING_KEY,
+                    videoCompletedMessage
+            );
+            log.info("✅ [WORKER] VIDEO COMPLETED MESSAGE WAS SENT: {}", mediaId);
+
+            // Xoa file video mp4 goc trong minio
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(message.getStoredFileName())
+                            .build()
+            );
+            log.info("✅ [WORKER] ORIGINAL VIDEO {} WAS DELETED: ", mediaFile.getStoredFileName());
 
         } catch (Exception e) {
             log.error("❌ [WORKER] Failed: {}", e.getMessage());
@@ -117,6 +166,8 @@ public class VideoProcessingWorker {
             }
         }
     }
+
+
 
     private void deleteDirectory (File directoryToBeDeleted) {
         File[] allContents = directoryToBeDeleted.listFiles();

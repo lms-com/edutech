@@ -12,6 +12,8 @@ public enum MediaErrorCode implements ErrorCode {
     FILE_NOT_FOUND(4002, "File Not Found", HttpStatus.NOT_FOUND),
     FILE_NOT_AVAILABLE(4003, "File Not Available", HttpStatus.SERVICE_UNAVAILABLE),
     UNAUTHORIZED(4004, "Unauthorized", HttpStatus.UNAUTHORIZED),
+    UNACCEPTABLE(4005, "Unacceptable", HttpStatus.BAD_REQUEST),
+    LACK_OF_ENCRYPTION_KEY(4006, "Lack of Encryption Key", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;

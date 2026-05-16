@@ -8,15 +8,30 @@ import java.util.List;
 
 public interface MediaService {
 
+    /**
+     * Cac Service cho Instructor
+     */
+
     GetUploadUrlResponse requestUploadUrl (GetUploadUrlRequest request);
 
     void confirmUploadUrl (String mediaId);
 
-    String getDisplayUrl (String mediaId);
-
-    void autoCleanPendingFilesAfter12Hours ();
-
     void removeFile (String mediaId);
+
+
+    /**
+     * Cac Service Learner
+     */
+
+    String getVideoManifest (String learnerId, String mediaId);
+
+    byte[] getEncryptionKey (String learnerId, String mediaId, String sessionId);
+
+
+    /**
+     * Cac service cua System
+     */
+    void autoCleanPendingFilesAfter12Hours ();
 
 
     /**

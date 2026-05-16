@@ -1,7 +1,7 @@
-package com.lms.media.security;
+package com.lms.common.security;
 
 import com.lms.common.exception.AppException;
-import com.lms.media.exception.MediaErrorCode;
+import com.lms.common.exception.CommonErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,11 +20,13 @@ import java.util.Collections;
 import java.util.List;
 
 @Slf4j
-@Component
 public class InternalApiFilter  extends OncePerRequestFilter {
 
-    @Value("${application.security.internal-key}")
     private String internalKey;
+
+    public InternalApiFilter(String internalKey) {
+        this.internalKey = internalKey;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -40,7 +42,7 @@ public class InternalApiFilter  extends OncePerRequestFilter {
         if (authHeader == null ) {
             // Header ko co thi nem loi 401
             log.error("Request {} missed header Internal Key", request.getRequestURL());
-            throw new AppException(MediaErrorCode.UNAUTHORIZED, "Internal Key Header Missed");
+            throw new AppException(CommonErrorCode.UNAUTHORIZED, "Internal Key Header Missed");
         }
         String secretKey = request.getHeader("X-Internal-Key");
         if (!authHeader.equals(internalKey)) {
@@ -50,7 +52,7 @@ public class InternalApiFilter  extends OncePerRequestFilter {
             log.error("Địa chỉ IP: {}", attackerIp);
             log.error("URL yêu cầu: {}", request.getRequestURI());
             log.error("Thời điểm: {}", LocalDateTime.now());
-            throw new AppException(MediaErrorCode.UNAUTHORIZED, "Invalid Internal Secret Key");
+            throw new AppException(CommonErrorCode.UNAUTHORIZED, "Invalid Internal Secret Key");
         }
 
         // Kiem tra hoan thanh tien hanh tao authentication cho spring security

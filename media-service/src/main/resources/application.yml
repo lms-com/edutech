@@ -16,3 +16,5 @@ spring:
 logging:  # Cau hinh lai hien thi log: Removed [{trace ID}] and keep coloring log
   pattern:
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr(%-5level) %clr(%logger{36}){cyan} %clr(-){faint} %msg%n"
+  level:
+    com.lms.media.client.course.CourseServiceFeignClient: DEBUG

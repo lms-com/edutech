@@ -1,9 +1,6 @@
 package com.lms.media.service;
 
-import io.minio.GetPresignedObjectUrlArgs;
-import io.minio.MinioClient;
-import io.minio.RemoveObjectArgs;
-import io.minio.StatObjectArgs;
+import io.minio.*;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -82,5 +80,14 @@ public class MinioService {
             log.error("Failed to remove file {} from Minio", fileName, e);
             throw new RuntimeException("❌ Cannot remove file from Bucket", e);
         }
+    }
+
+    public GetObjectResponse getFile (String fileName) throws Exception{
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            );
     }
 }

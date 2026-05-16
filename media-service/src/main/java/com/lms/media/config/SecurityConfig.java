@@ -1,8 +1,9 @@
 package com.lms.media.config;
 
 import com.lms.common.security.HeaderAuthenticationFilter;
-import com.lms.media.security.InternalApiFilter;
+import com.lms.common.security.InternalApiFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,7 +16,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final InternalApiFilter internalApiFilter;
+    @Value("${application.security.internal-key}")
+    private String internalKey;
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -29,7 +32,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(internalApiFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new InternalApiFilter(internalKey), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
