@@ -6,6 +6,7 @@ import com.lms.course.dto.response.CategoryResponse;
 import com.lms.course.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,14 +38,14 @@ public class CategoryController {
 
     @Operation(summary = "3. Tạo danh mục mới", description = "Tạo danh mục mới (Hỗ trợ parent_id).")
     @PostMapping
-    public ApiResponse<CategoryResponse> createCategory(@RequestBody CategoryRequest request){
+    public ApiResponse<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request){
         return ApiResponse.success(categoryService.createCategory(request));
 
     }
 
     @Operation(summary = "4. Cập nhật thông tin danh mục", description = "Cập nhật thông tin danh mục.")
     @PutMapping("/{id}")
-    public ApiResponse<CategoryResponse> updateCategory(@PathVariable String id, @RequestBody CategoryRequest request){
+    public ApiResponse<CategoryResponse> updateCategory(@PathVariable String id, @Valid @RequestBody CategoryRequest request){
         return ApiResponse.success(categoryService.updateCategory(id, request));
 
     }

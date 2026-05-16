@@ -3,12 +3,16 @@ package com.lms.course.service.impl;
 import com.lms.common.exception.AppException;
 import com.lms.course.dto.request.CourseRequest;
 import com.lms.course.dto.request.CourseUpdateRequest;
+import com.lms.course.dto.response.CourseDetailResponse;
 import com.lms.course.dto.response.CourseResponse;
-import com.lms.course.entity.Category;
-import com.lms.course.entity.Course;
+import com.lms.course.dto.response.LessonResponse;
+import com.lms.course.dto.response.SectionResponse;
+import com.lms.course.entity.*;
 import com.lms.course.exception.CourseErrorCode;
 import com.lms.course.repository.CategoryRepository;
 import com.lms.course.repository.CourseRepository;
+import com.lms.course.repository.LessonRepository;
+import com.lms.course.repository.SectionRepository;
 import com.lms.course.service.CourseService;
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +32,8 @@ public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
     private final CategoryRepository categoryRepository;
+    private final SectionRepository sectionRepository;
+    private final LessonRepository lessonRepository;
 
     @Override
     @Transactional
@@ -71,11 +77,45 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public CourseResponse getCourseById(String courseId){
+    public CourseDetailResponse getCourseById(String courseId){
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
-        return mapToResponse(course);
 
+        // 1. Load danh sách Sections của khóa học, sắp xếp theo orderIndex
+        List<Section> sections = sectionRepository.findByCourseIdAndDeletedFalseOrderByOrderIndexAsc(courseId);
+
+        // 2. Map từng Section sang SectionResponse kèm danh sách Lessons bên trong
+        List<SectionResponse> sectionResponses = sections.stream().map(section -> {
+            List<Lesson> lessons = lessonRepository.findBySectionIdAndDeletedFalseOrderByOrderIndexAsc(section.getId());
+            List<LessonResponse> lessonResponses = lessons.stream().map(this::mapToLessonResponse).toList();
+
+            return SectionResponse.builder()
+                    .id(section.getId())
+                    .courseId(courseId)
+                    .title(section.getTitle())
+                    .orderIndex(section.getOrderIndex())
+                    .lessons(lessonResponses)
+                    .build();
+        }).toList();
+
+        // 3. Build CourseDetailResponse kèm Curriculum tree
+        return CourseDetailResponse.builder()
+                .id(course.getId())
+                .title(course.getTitle())
+                .slug(course.getSlug())
+                .instructorId(course.getInstructorId())
+                .categoryId(course.getCategory() != null ? course.getCategory().getId() : null)
+                .categoryName(course.getCategory() != null ? course.getCategory().getName() : null)
+                .description(course.getDescription())
+                .thumbnailUrl(course.getThumbnailUrl())
+                .level(course.getLevel())
+                .basePrice(course.getBasePrice())
+                .currencyCode(course.getCurrencyCode())
+                .status(course.getStatus())
+                .rejectionNote(course.getRejectionNote())
+                .overrideCommissionRate(course.getOverrideCommissionRate())
+                .sections(sectionResponses)
+                .build();
     }
 
     @Override
@@ -281,7 +321,7 @@ public class CourseServiceImpl implements CourseService {
         }
 
         course.setStatus("PUBLISHED");
-        // Có thể lưu thêm lịch sử duyệt ở đây nếu có bảng riêng
+        course.setRejectionNote(null); // Xóa ghi chú từ chối khi duyệt thành công
         courseRepository.save(course);
     }
 
@@ -296,8 +336,7 @@ public class CourseServiceImpl implements CourseService {
         }
 
         course.setStatus("REJECTED");
-        // Ghi chú từ chối có thể lưu vào DB hoặc gửi thông báo. Tạm thời chưa có field rejection_note trong Course
-        // Sau này có thể thiết kế thêm bảng CourseAuditLog hoặc thêm field vào bảng courses.
+        course.setRejectionNote(rejectionNote);
         courseRepository.save(course);
     }
 
@@ -330,9 +369,8 @@ public class CourseServiceImpl implements CourseService {
                 .basePrice(course.getBasePrice())
                 .currencyCode(course.getCurrencyCode())
                 .status(course.getStatus())
-                // Các trường AuditableEntity (Tuỳ thuộc bạn có khai báo ở DTO không)
-                // .createdAt(course.getCreatedAt())
-                // .updatedAt(course.getUpdatedAt())
+                .rejectionNote(course.getRejectionNote())
+                .overrideCommissionRate(course.getOverrideCommissionRate())
                 .build();
     }
 
@@ -346,5 +384,28 @@ public class CourseServiceImpl implements CourseService {
             // Không phải chủ khóa học -> Ném lỗi Unathorized
             throw new AppException(CourseErrorCode.UNAUTHORIZED_ACTION);
         }
+    }
+
+    // ================= HÀM MAP LESSON ĐA HÌNH (HELPER) =================
+
+    /**
+     * Map Lesson entity (đa hình) sang LessonResponse DTO
+     */
+    private LessonResponse mapToLessonResponse(Lesson lesson) {
+        LessonResponse.LessonResponseBuilder builder = LessonResponse.builder()
+                .id(lesson.getId())
+                .title(lesson.getTitle())
+                .type(lesson.getType())
+                .orderIndex(lesson.getOrderIndex())
+                .freePreview(lesson.getFreePreview());
+
+        if (lesson instanceof VideoLesson video) {
+            builder.videoUrl(video.getVideoUrl());
+            builder.duration(video.getDuration());
+        } else if (lesson instanceof Quiz quiz) {
+            builder.passScore(quiz.getPassScore());
+        }
+
+        return builder.build();
     }
 }

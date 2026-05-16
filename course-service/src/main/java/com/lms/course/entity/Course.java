@@ -57,6 +57,9 @@ public class Course extends AuditableEntity {
     @Column(length = 50, nullable = false)
     private String status;
 
+    @Column(name = "rejection_note", columnDefinition = "TEXT")
+    private String rejectionNote;
+
     @Column(name = "override_commission_rate", precision = 3, scale = 2)
     private BigDecimal overrideCommissionRate;
 
