@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface AnswerRepository extends JpaRepository<Answer, String> {
     List<Answer> findByQuestionIdAndDeletedFalse(String questionId);
+
+    // Internal API 39: Lấy danh sách đáp án đúng cho chấm điểm tự động
+    List<Answer> findByQuestionIdAndDeletedFalseAndCorrectTrue(String questionId);
 }

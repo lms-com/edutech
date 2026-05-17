@@ -30,6 +30,11 @@ public class Section extends AuditableEntity {
     @Column(name = "is_deleted", nullable = false)
     private Boolean deleted;
 
+    @OneToMany(mappedBy = "section", fetch = FetchType.LAZY)
+    @org.hibernate.annotations.Where(clause = "is_deleted = false")
+    @OrderBy("orderIndex ASC")
+    private java.util.List<Lesson> lessons;
+
     @PrePersist
     public void prePersist() {
         if (this.orderIndex == null) this.orderIndex = 0;

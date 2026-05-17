@@ -6,6 +6,7 @@ import com.lms.course.dto.request.CourseStatusUpdateRequest;
 import com.lms.course.dto.request.CourseUpdateRequest;
 import com.lms.course.dto.request.ReorderRequest;
 import com.lms.course.dto.request.SectionCreateRequest;
+import com.lms.course.dto.response.CourseDetailResponse;
 import com.lms.course.dto.response.CourseResponse;
 import com.lms.course.dto.response.SectionResponse;
 import com.lms.course.service.CourseService;
@@ -46,8 +47,8 @@ public class CourseController {
             summary = "8. Lấy chi tiết khóa học",
             description = "Lấy chi tiết khóa học và cấu trúc chương trình học (Curriculum)")
     @GetMapping("/{courseId}")
-    public ApiResponse<CourseResponse> getCourseById(@PathVariable String courseId){
-        CourseResponse response = courseService.getCourseById(courseId);
+    public ApiResponse<CourseDetailResponse> getCourseById(@PathVariable String courseId){
+        CourseDetailResponse response = courseService.getCourseById(courseId);
         return ApiResponse.success(response);
 
     }

@@ -43,6 +43,19 @@ spring:
           filters:
               - StripPrefix=1
               - AuthenticationFilter
+        - id: course-service-public
+          uri: lb://course-service
+          predicates:
+            - Path=/course-service/api/v1/categories/**, /course-service/api/v1/courses, /course-service/api/v1/courses/*/related, /course-service/v3/api-docs
+          filters:
+            - StripPrefix=1
+        - id: course-service-secured
+          uri: lb://course-service
+          predicates:
+            - Path=/course-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
       globalcors:
         cors-configurations:
           '[/**]':

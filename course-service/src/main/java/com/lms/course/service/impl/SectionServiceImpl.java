@@ -108,6 +108,8 @@ public class SectionServiceImpl implements SectionService {
     @Override
     @Transactional
     public void reorderSections(String courseId, List<String> orderedIds){
+        if (orderedIds == null || orderedIds.isEmpty()) return;
+
         // Duyệt qua danh sách các ID đã được sắp xếp từ client
         for (int i = 0; i < orderedIds.size(); i++) {
             String id = orderedIds.get(i);

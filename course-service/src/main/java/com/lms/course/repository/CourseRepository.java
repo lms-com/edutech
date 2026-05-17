@@ -13,9 +13,14 @@ import java.util.Optional;
 
 @Repository
 public interface CourseRepository extends JpaRepository<Course, String> {
-    // 1. Lấy chi tiết Course (Dùng cho getCourseById)
+    // 1. Lấy chi tiết Course (Dùng cho getCourseById cơ bản)
     @Query("SELECT c FROM Course c WHERE c.id = :id AND c.deleted = false")
     Optional<Course> findByIdAndNotDeleted(@Param("id") String id);
+
+    // 1b. Lấy chi tiết Course kèm cấu trúc chương trình học (chống N+1 query)
+    @org.springframework.data.jpa.repository.EntityGraph(value = "course.withCurriculum", type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD)
+    @Query("SELECT c FROM Course c WHERE c.id = :id AND c.deleted = false")
+    Optional<Course> findByIdWithCurriculum(@Param("id") String id);
     // 2. tim kiem slug
     @Query("SELECT c FROM Course c WHERE c.slug = :slug AND c.deleted = false")
     Optional<Course> findBySlugAndNotDeleted(@Param("slug") String slug);
@@ -46,4 +51,8 @@ public interface CourseRepository extends JpaRepository<Course, String> {
            "AND (:status IS NULL OR c.status = :status) " +
            "AND (:instructorId IS NULL OR c.instructorId = :instructorId)")
     Page<Course> findAllForAdmin(@Param("status") String status, @Param("instructorId") String instructorId, Pageable pageable);
+
+    // 9. Internal: Lấy nhiều khóa học theo danh sách ID (batch lookup)
+    @Query("SELECT c FROM Course c WHERE c.id IN :ids AND c.deleted = false")
+    List<Course> findAllByIdInAndNotDeleted(@Param("ids") List<String> ids);
 }

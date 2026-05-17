@@ -2,6 +2,7 @@ package com.lms.course.service;
 
 import com.lms.course.dto.request.CourseRequest;
 import com.lms.course.dto.request.CourseUpdateRequest;
+import com.lms.course.dto.response.CourseDetailResponse;
 import com.lms.course.dto.response.CourseResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +13,7 @@ import java.util.List;
 public interface CourseService {
     CourseResponse createCourse(CourseRequest request, String instructorId);
     //lấy khóa học theo ID
-    CourseResponse getCourseById(String courseId);
+    CourseDetailResponse getCourseById(String courseId);
 
     Page<CourseResponse> getAllCourses(Pageable pageable);
     //lấy tất cả khóa học của 1 giảng viên

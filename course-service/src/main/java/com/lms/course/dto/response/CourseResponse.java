@@ -19,4 +19,6 @@ public class CourseResponse {
     private BigDecimal basePrice;
     private String currencyCode;
     private String status;
+    private String rejectionNote;
+    private BigDecimal overrideCommissionRate;
 }
