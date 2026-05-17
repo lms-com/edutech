@@ -7,8 +7,24 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 
+import java.util.List;
+
 @Entity
 @Table(name = "courses")
+@NamedEntityGraph(
+    name = "course.withCurriculum",
+    attributeNodes = {
+        @NamedAttributeNode(value = "sections", subgraph = "sections.lessons")
+    },
+    subgraphs = {
+        @NamedSubgraph(
+            name = "sections.lessons",
+            attributeNodes = {
+                @NamedAttributeNode("lessons")
+            }
+        )
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -66,6 +82,11 @@ public class Course extends AuditableEntity {
     // Đã FIX: Bỏ chữ "is" ở tên biến Java để Lombok sinh đúng setDeleted() và getDeleted()
     @Column(name = "is_deleted", nullable = false)
     private Boolean deleted;
+
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @org.hibernate.annotations.Where(clause = "is_deleted = false")
+    @OrderBy("orderIndex ASC")
+    private List<Section> sections;
 
     @PrePersist
     public void prePersist() {

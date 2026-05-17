@@ -78,15 +78,15 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional(readOnly = true)
     public CourseDetailResponse getCourseById(String courseId){
-        Course course = courseRepository.findByIdAndNotDeleted(courseId)
+        Course course = courseRepository.findByIdWithCurriculum(courseId)
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
 
-        // 1. Load danh sách Sections của khóa học, sắp xếp theo orderIndex
-        List<Section> sections = sectionRepository.findByCourseIdAndDeletedFalseOrderByOrderIndexAsc(courseId);
+        // 1. Tận dụng danh sách Sections đã được EntityGraph load sẵn (kèm luôn Lessons bên trong)
+        List<Section> sections = course.getSections() != null ? course.getSections() : List.of();
 
         // 2. Map từng Section sang SectionResponse kèm danh sách Lessons bên trong
         List<SectionResponse> sectionResponses = sections.stream().map(section -> {
-            List<Lesson> lessons = lessonRepository.findBySectionIdAndDeletedFalseOrderByOrderIndexAsc(section.getId());
+            List<Lesson> lessons = section.getLessons() != null ? section.getLessons() : List.of();
             List<LessonResponse> lessonResponses = lessons.stream().map(this::mapToLessonResponse).toList();
 
             return SectionResponse.builder()
