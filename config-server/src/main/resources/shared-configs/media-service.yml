@@ -47,3 +47,8 @@ resillience4j:  # Thêm cái này để bắt cac lỗi trong gọi internal api
       default:
         record-exceptions:
           - feign.FeignException
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
