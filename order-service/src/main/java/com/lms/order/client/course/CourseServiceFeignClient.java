@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
         configuration = FeignClientConfig.class,
         fallback = CourseServiceFallBack.class
 )
-public interface CouseServiceFeignClient {
+public interface CourseServiceFeignClient {
 
     // Lay info cua Course tai thoi diem hien tai:
     @GetMapping("/api/internal/v1/courses/{courseId}")

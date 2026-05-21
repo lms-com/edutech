@@ -1,4 +1,4 @@
-package com.lms.media.client;
+package com.lms.order.client;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
