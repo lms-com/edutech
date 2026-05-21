@@ -25,6 +25,6 @@ public class CreateOrderRequest {
         @NotBlank(message = "Course id cannot be blank")
         String courseId;
 
-        String promotionId;
+        String promotionCode;
     }
 }
