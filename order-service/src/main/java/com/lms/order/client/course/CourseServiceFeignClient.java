@@ -5,6 +5,10 @@ import com.lms.order.client.course.dto.CourseInternalDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 @FeignClient(
         name = "course-service",
@@ -14,6 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface CourseServiceFeignClient {
 
     // Lay info cua Course tai thoi diem hien tai:
-    @GetMapping("/api/internal/v1/courses/{courseId}")
-    CourseInternalDto getCourseById (@PathVariable String courseId);
+    @PostMapping("/api/internal/v1/courses/bulk")
+    List<CourseInternalDto> getCoursesById (@RequestBody List<String> courseId);
 }

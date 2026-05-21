@@ -4,18 +4,23 @@ import com.lms.order.client.course.dto.CourseInternalDto;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class CourseServiceFallBack implements CourseServiceFeignClient {
 
     @Override
-    public CourseInternalDto getCourseById(String courseId) {
-        return CourseInternalDto.builder()
-                .courseId(courseId)
-                .courseName("😁 Course Name for Example")
-                .currentPrice(new BigDecimal("1999000.00"))
-                .currencyCode("VND")
-                .instructorId("user-inst-01")
-                .build();
+    public List<CourseInternalDto> getCoursesById(List<String> courseIds) {
+        AtomicInteger count = new AtomicInteger(0);
+        return courseIds.stream()
+                .map(courseId -> CourseInternalDto.builder()
+                                    .courseId(courseId)
+                                    .courseName("😁 Course " + count.incrementAndGet() + " for Example")
+                                    .currentPrice(new BigDecimal("1999000.00"))
+                                    .currencyCode("VND")
+                                    .instructorId("user-inst-01")
+                                    .build()
+                ).toList();
     }
 }
