@@ -23,4 +23,7 @@ public interface InternalCourseService {
 
     /** API 39: Lấy danh sách đáp án đúng cho chấm điểm tự động */
     List<CorrectAnswerResponse> getCorrectAnswers(String lessonId);
+
+    /** API 40: Lấy thông tin cơ bản + giá của nhiều khóa học (Finance Service gọi để Revenue Split) */
+    List<CourseBulkResponse> getCourseBulk(List<String> courseIds);
 }

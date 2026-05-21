@@ -56,6 +56,19 @@ spring:
           filters:
             - StripPrefix=1
             - AuthenticationFilter
+        - id: finance-service-public
+          uri: lb://finance-service
+          predicates:
+            - Path=/finance-service/api/v1/payments/vnpay-ipn, /finance-service/v3/api-docs
+          filters:
+            - StripPrefix=1
+        - id: finance-service-secured
+          uri: lb://finance-service
+          predicates:
+            - Path=/finance-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
       globalcors:
         cors-configurations:
           '[/**]':
@@ -101,6 +114,8 @@ springdoc:
         url: /course-service/v3/api-docs
       - name: 03. Media-service
         url: /media-service/v3/api-docs
+      - name: 04. Finance Service
+        url: /finance-service/v3/api-docs
       # Tuong tu cho cac Service khac ...
 
   api-docs:
