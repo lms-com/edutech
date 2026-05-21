@@ -149,4 +149,25 @@ public class InternalCourseServiceImpl implements InternalCourseService {
                     .build();
         }).collect(Collectors.toList());
     }
+
+    // ======================== API 40 ========================
+    /**
+     * Cấp thông tin cơ bản + giá của nhiều khóa học cùng lúc.
+     * Finance Service gọi API này khi nhận event order.completed để lấy basePrice + instructorId
+     * phục vụ tính toán Revenue Split (chia hoa hồng).
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CourseBulkResponse> getCourseBulk(List<String> courseIds) {
+        List<Course> courses = courseRepository.findAllByIdInAndNotDeleted(courseIds);
+
+        return courses.stream().map(course -> CourseBulkResponse.builder()
+                .id(course.getId())
+                .title(course.getTitle())
+                .basePrice(course.getBasePrice())
+                .currencyCode(course.getCurrencyCode())
+                .instructorId(course.getInstructorId())
+                .build()
+        ).collect(Collectors.toList());
+    }
 }
