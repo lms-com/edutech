@@ -56,6 +56,5 @@ CREATE TABLE IF NOT EXISTS order_details (
     final_price DECIMAL(15, 2) NOT NULL,
 
     CONSTRAINT fk_order_details_order FOREIGN KEY (order_id) REFERENCES orders(id),
-    CONSTRAINT fk_order_details_pro FOREIGN KEY (promotion_id) REFERENCES promotions(id),
     INDEX idx_course (course_id)
 );
