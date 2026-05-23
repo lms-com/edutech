@@ -87,7 +87,7 @@ public class CourseController {
     public ApiResponse<CourseResponse> updateCoursePartial(
                 @PathVariable String courseId,
                 @RequestBody CourseUpdateRequest request,
-                @RequestHeader("X-Instructor-Id") String instructorId) {
+                @RequestHeader("X-User-Id") String instructorId) {
 
             CourseResponse courseResponse = courseService.updateCourse(courseId, request, instructorId);
             return ApiResponse.success(courseResponse);
@@ -100,7 +100,7 @@ public class CourseController {
     public ApiResponse<CourseResponse> updateCourseFull(
                 @PathVariable String courseId,
                 @Valid @RequestBody CourseRequest request,
-                @RequestHeader("X-Instructor-Id") String instructorId) {
+                @RequestHeader("X-User-Id") String instructorId) {
 
             CourseResponse courseResponse = courseService.updateCourseFull(courseId, request, instructorId);
             return ApiResponse.success(courseResponse);
@@ -112,7 +112,7 @@ public class CourseController {
 //    @PreAuthorize("hasAuthority('COURSE_CREATE')")
     public ApiResponse<CourseResponse> cloneCourse(
             @PathVariable String courseId,
-            @RequestHeader("X-Instructor-Id") String instructorId) {
+            @RequestHeader("X-User-Id") String instructorId) {
         CourseResponse response = courseService.cloneCourse(courseId, instructorId);
         return ApiResponse.success(response);
     }
@@ -123,7 +123,7 @@ public class CourseController {
     public ApiResponse<Void> changeCourseStatus(
             @PathVariable String courseId,
             @Valid @RequestBody CourseStatusUpdateRequest request,
-            @RequestHeader("X-Instructor-Id") String instructorId) {
+            @RequestHeader("X-User-Id") String instructorId) {
         courseService.changeCourseStatus(courseId, request.getStatus(), instructorId);
         return ApiResponse.success(null);
     }
@@ -135,7 +135,7 @@ public class CourseController {
 //    @PreAuthorize("hasAuthority('COURSE_DELETE')")
     public ApiResponse<Void> deleteCourse(
             @PathVariable String courseId,
-            @RequestHeader("X-Instructor-Id") String instructorId) {
+            @RequestHeader("X-User-Id") String instructorId) {
 
         courseService.deleteCourse(courseId, instructorId);
         return ApiResponse.success(null);
