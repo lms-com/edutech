@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS promotions (
     code VARCHAR(20) UNIQUE NOT NULL,
     discount_percent DECIMAL(5, 2),
     discount_amount DECIMAL(15, 2),
+    currency_code VARCHAR(3),
     start_date TIMESTAMP,
     end_date TIMESTAMP,
     usage_limit INT DEFAULT NULL,
