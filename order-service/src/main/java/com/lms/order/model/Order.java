@@ -33,9 +33,6 @@ public class Order extends AuditableEntity {
     @Builder.Default
     String currencyCode = "VND";
 
-    @Column(name = "exchange_rate", precision = 12, scale = 6, nullable = false)
-    BigDecimal exchangeRate = BigDecimal.ONE;
-
     @Enumerated(value = EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     OrderStatus status;
