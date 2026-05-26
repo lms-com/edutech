@@ -42,9 +42,9 @@ public class OrderDetail {
     @Column(name = "original_currency", length = 3, nullable = false)
     String originalCurrency;
 
-    @Column(name = "exhange_rate", precision = 12, scale = 6, nullable = false)
+    @Column(name = "exchange_rate", precision = 12, scale = 6, nullable = false)
     @Builder.Default
-    BigDecimal exhangeRate = BigDecimal.ONE;
+    BigDecimal exchangeRate = BigDecimal.ONE;
 
     @Column(name = "price_at_purchase", precision = 15, scale = 2, nullable = false)
     BigDecimal priceAtPurchase;
