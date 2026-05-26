@@ -17,8 +17,8 @@ public class CourseServiceFallBack implements CourseServiceFeignClient {
                 .map(courseId -> CourseInternalDto.builder()
                                     .courseId(courseId)
                                     .courseName("😁 Course " + count.incrementAndGet() + " for Example")
-                                    .currentPrice(new BigDecimal("1999000.00"))
-                                    .currencyCode("VND")
+                                    .currentPrice(new BigDecimal("99.90"))
+                                    .currencyCode("USD")
                                     .instructorId("user-inst-01")
                                     .build()
                 ).toList();
