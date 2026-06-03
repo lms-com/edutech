@@ -5,20 +5,21 @@ import com.lms.enrollment.enums.EnrollmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(
-    name = "enrollments",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_enrollment_learner_course",
-        columnNames = {"learner_id", "course_id"}
-    )
-)
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Table(name = "enrollments", uniqueConstraints = @UniqueConstraint(name = "uk_enrollment_learner_course", columnNames = {
+        "learner_id", "course_id" }))
+@SQLRestriction("is_deleted = false")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Enrollment extends AuditableEntity {
 
@@ -53,11 +54,16 @@ public class Enrollment extends AuditableEntity {
     @Builder.Default
     List<QuizAttempt> quizAttempts = new ArrayList<>();
 
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    Boolean isDeleted = false;
+
     @PrePersist
     void prePersist() {
         if (id == null) {
             id = java.util.UUID.randomUUID().toString();
         }
-        if (startedAt == null) startedAt = LocalDateTime.now();
+        if (startedAt == null)
+            startedAt = LocalDateTime.now();
     }
 }

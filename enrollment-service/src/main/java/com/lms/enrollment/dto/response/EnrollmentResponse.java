@@ -16,6 +16,8 @@ public class EnrollmentResponse {
     private String id;
     private String courseId;
     private String learnerId;
+    private String learnerName;
+    private String learnerAvatar;
     private EnrollmentStatus status;
     private LocalDateTime startedAt;
     private Integer completedRate;
