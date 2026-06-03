@@ -15,4 +15,7 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
     Page<Review> findAllByCourseId(String courseId, Pageable pageable);
     boolean existsByEnrollmentId(String enrollmentId);
     Optional<Review> findByEnrollmentId(String enrollmentId);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM reviews WHERE enrollment_id = :enrollmentId", nativeQuery = true)
+    Optional<Review> findByEnrollmentIdIncludingDeleted(@org.springframework.data.repository.query.Param("enrollmentId") String enrollmentId);
 }

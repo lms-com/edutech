@@ -4,12 +4,18 @@ import com.lms.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "quiz_attempts")
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@SQLRestriction("is_deleted = false")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class QuizAttempt extends AuditableEntity {
 
@@ -22,10 +28,10 @@ public class QuizAttempt extends AuditableEntity {
     Enrollment enrollment;
 
     @Column(name = "lesson_id", nullable = false, length = 36)
-    String lessonId;    // ID của Quiz lesson trong Course Service
+    String lessonId; // ID của Quiz lesson trong Course Service
 
     @Column(name = "score", nullable = false)
-    Integer score;      // 0-100
+    Integer score; // 0-100
 
     @Column(name = "is_passed", nullable = false)
     Boolean isPassed;
@@ -33,11 +39,16 @@ public class QuizAttempt extends AuditableEntity {
     @Column(name = "submitted_at", nullable = false)
     LocalDateTime submittedAt;
 
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    Boolean isDeleted = false;
+
     @PrePersist
     void prePersist() {
         if (id == null) {
             id = java.util.UUID.randomUUID().toString();
         }
-        if (submittedAt == null) submittedAt = LocalDateTime.now();
+        if (submittedAt == null)
+            submittedAt = LocalDateTime.now();
     }
 }
