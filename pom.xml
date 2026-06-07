@@ -35,6 +35,7 @@
         <module>media-service</module>
         <module>video-worker-service</module>
         <module>enrollment-service</module>
+        <module>notification-service</module>
     </modules>
 
     <dependencyManagement>
