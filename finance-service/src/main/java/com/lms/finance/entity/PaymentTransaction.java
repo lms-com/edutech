@@ -7,6 +7,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -50,7 +51,7 @@ public class PaymentTransaction extends AuditableEntity {
     String gatewayResponse;
 
     @Column(length = 15, precision = 2, nullable = false)
-    Long amount;
+    BigDecimal amount;
 
     @Column(name = "currency_code", length = 3, nullable = false)
     String currencyCode;

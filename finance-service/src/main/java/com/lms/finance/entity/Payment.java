@@ -10,6 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class Payment {
     String learnerId;
 
     @Column(length = 15, precision = 2, nullable = false)
-    Long amount;
+    BigDecimal amount;
 
     @Column(name = "currency_code", length = 3, nullable = false)
     String currencyCode;
