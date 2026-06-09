@@ -16,29 +16,35 @@ CREATE TABLE instructor_balances (
 
     instructor_id       VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang IAM Service — UNIQUE',
 
-    currency_code       VARCHAR(10)     NOT NULL DEFAULT 'VND',
+    currency_code       VARCHAR(3)     NOT NULL DEFAULT 'VND',
+
+    -- actual_balance = available_balance + blocked_balance : Tong tien giang vien ma he thong dang giu
+    actual_balance      DECIMAL(15, 2)  NOT NULL DEFAULT 0.00
+                        COMMENT 'Tổng tài sản thực tế hệ thống đang giữ',
 
     -- available: có thể rút ngay
-    available_balance   BIGINT          NOT NULL DEFAULT 0
+    available_balance   DECIMAL(15, 2)          NOT NULL DEFAULT 0.00
                         COMMENT 'Số dư có thể rút. Đơn vị: VND (không dùng DECIMAL để tránh lỗi làm tròn)',
 
     -- blocked: đang chờ Admin duyệt rút, chưa thực sự mất
-    blocked_balance     BIGINT          NOT NULL DEFAULT 0
+    blocked_balance     DECIMAL(15, 2)          NOT NULL DEFAULT 0.00
                         COMMENT 'Số tiền đang bị đóng băng chờ duyệt payout',
+
+    -- pending: tiền đóng băng cho chính sachs hoàn tiền 7 ngày
+    pending_balance     DECIMAL(15, 2)          NOT NULL DEFAULT 0.00
+                        COMMENT 'Số tiền đóng băng chờ hết 7 ngày hoàn trả',
 
     -- Kiểm tra ràng buộc: không được âm
     CONSTRAINT chk_available_non_negative CHECK (available_balance >= 0),
     CONSTRAINT chk_blocked_non_negative   CHECK (blocked_balance >= 0),
 
-    created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by          VARCHAR(36)     NULL,
-    updated_by          VARCHAR(36)     NULL,
-    is_deleted          TINYINT(1)      NOT NULL DEFAULT 0,
+    created_at          TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     version             BIGINT          NOT NULL DEFAULT 0,  -- Optimistic lock: QUAN TRỌNG khi cập nhật số dư đồng thời
 
     PRIMARY KEY (id),
-    UNIQUE KEY uk_instructor_balances_instructor_id (instructor_id)
+    UNIQUE KEY uk_instructor_balances_instructor_id (instructor_id),
+    CONSTRAINT chk_balance_integrity CHECK (actual_balance = available_balance + instructor_balances.blocked_balance)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Ví điện tử của Instructor. Mỗi instructor có đúng 1 bản ghi';
