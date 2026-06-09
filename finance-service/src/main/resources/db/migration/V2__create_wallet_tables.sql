@@ -55,8 +55,10 @@ CREATE TABLE instructor_balances (
 CREATE TABLE balance_histories (
     id                  VARCHAR(36)     NOT NULL,
 
-    instructor_id       VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang IAM Service',
+    instructor_balance_id       VARCHAR(36)     NOT NULL        COMMENT 'Khóa ngoại trỏ sang bảng ví instructor_balances',
 
+    -- Quy chuẩn kế toán: DEBIT (Ghi nợ - Giảm tài sản), CREDIT (Ghi có - Tăng tài sản)
+entry_type              ENUM('DEBIT', 'CREDIT') NOT NULL,
     -- Loại giao dịch — mở rộng khi cần thêm loại mới
     transaction_type    ENUM(
                             'DEPOSIT_FROM_ORDER',   -- Cộng tiền sau khi học viên mua khóa học
@@ -68,36 +70,38 @@ CREATE TABLE balance_histories (
 
     -- Số tiền biến động: DƯƠNG = cộng vào, ÂM = trừ ra
     -- Ví dụ: +5000000 khi nhận hoa hồng, -2000000 khi rút tiền
-    amount              BIGINT          NOT NULL        COMMENT 'Dương = cộng, Âm = trừ',
+    amount              DECIMAL(15, 2)          NOT NULL        COMMENT 'Dương = cộng, Âm = trừ',
 
-    currency_code       VARCHAR(10)     NOT NULL DEFAULT 'VND',
+    currency_code       VARCHAR(3)     NOT NULL DEFAULT 'VND',
 
     -- Snapshot số dư TẠI THỜI ĐIỂM giao dịch này xảy ra
     -- Để sau này có thể render lịch sử "Số dư trước → Số dư sau" cho Instructor
-    balance_before      BIGINT          NOT NULL        COMMENT 'available_balance TRƯỚC khi áp dụng giao dịch này',
-    balance_after       BIGINT          NOT NULL        COMMENT 'available_balance SAU khi áp dụng giao dịch này',
+    pending_balance_before  DECIMAL(15, 2)  NOT NULL        COMMENT 'Ví tạm giữ TRƯỚC giao dịch',
+    pending_balance_after   DECIMAL(15, 2)  NOT NULL        COMMENT 'Ví tạm giữ SAU giao dịch',
+
+    available_balance_before      DECIMAL(15, 2)          NOT NULL        COMMENT 'available_balance TRƯỚC khi áp dụng giao dịch này',
+    available_balance_after       DECIMAL(15, 2)          NOT NULL        COMMENT 'available_balance SAU khi áp dụng giao dịch này',
+
+    blocked_balance_before      DECIMAL(15, 2)  NOT NULL        COMMENT 'Ví đóng băng TRƯỚC giao dịch',
+    block_balance_after         DECIMAL(15, 2)  NOT NULL        COMMENT 'Ví đóng băng SAU giao dịch',
 
     -- Liên kết đến nguồn gốc giao dịch (để trace back)
     -- Chỉ 1 trong các trường này có giá trị, tùy transaction_type
-    reference_id        VARCHAR(36)     NULL            COMMENT 'ID nguồn: revenue_share_id / payout_request_id / payment_id',
-    reference_type      VARCHAR(50)     NULL            COMMENT 'Loại nguồn: REVENUE_SHARE / PAYOUT / PAYMENT',
+    reference_id        VARCHAR(36)     NOT NULL            COMMENT 'ID nguồn: revenue_share_id / payout_request_id / payment_id',
+    reference_type      VARCHAR(50)     NOT NULL            COMMENT 'Loại nguồn: REVENUE_SHARE / PAYOUT / PAYMENT',
 
     -- Ghi chú thêm nếu cần (VD: Admin ghi lý do từ chối)
     note                VARCHAR(500)    NULL,
 
     created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by          VARCHAR(36)     NULL,
-    updated_by          VARCHAR(36)     NULL,
-    is_deleted          TINYINT(1)      NOT NULL DEFAULT 0,
-    version             BIGINT          NOT NULL DEFAULT 0,
 
     PRIMARY KEY (id),
 
     -- Instructor xem lịch sử của mình (filter + sort)
     INDEX idx_balance_histories_instructor      (instructor_id, created_at DESC),
-    INDEX idx_balance_histories_type            (instructor_id, transaction_type),
-    INDEX idx_balance_histories_reference       (reference_id, reference_type)
+    INDEX idx_balance_histories_reference       (reference_id, reference_type),
+
+    CONSTRAINT fk_bh_balance FOREIGN KEY (instructor_balance_id) REFERENCES instructor_balances(id) ON DELETE RESTRICT
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Sổ cái — mọi biến động số dư của Instructor. Source of truth để audit và replay';
