@@ -4,6 +4,8 @@ import com.lms.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
@@ -22,6 +24,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@EntityListeners(AuditingEntityListener.class)
 public class PaymentTransaction extends AuditableEntity {
 
     @Id
@@ -46,21 +49,22 @@ public class PaymentTransaction extends AuditableEntity {
     @Column(name = "gateway_response", columnDefinition = "JSON")
     String gatewayResponse;
 
-    @Column(nullable = false)
+    @Column(length = 15, precision = 2, nullable = false)
     Long amount;
 
-    @Column(name = "currency_code", length = 10, nullable = false)
+    @Column(name = "currency_code", length = 3, nullable = false)
     String currencyCode;
 
     @Column(name = "transacted_at")
     Instant transactedAt;
 
-    @Column(name = "is_deleted", nullable = false)
-    Boolean deleted;
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    Instant createdAt;
+
 
     @PrePersist
     public void prePersist() {
         if (this.currencyCode == null) this.currencyCode = "VND";
-        if (this.deleted == null) this.deleted = false;
     }
 }
