@@ -34,7 +34,7 @@ public class Notification extends AuditableEntity {
     String userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 50)
+    @Column(name = "type", nullable = false, length = 50, columnDefinition = "VARCHAR(50)")
     NotificationType type;
 
     @Column(name = "title", nullable = false)

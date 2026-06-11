@@ -1,14 +1,14 @@
 server:
-  # Cổng kết nối HTTP của Enrollment Service (HTTP Port)
-  port: 8006
+  # Cổng kết nối HTTP của Notification Service (HTTP Port)
+  port: 8008
 
 spring:
   application:
-    name: enrollment-service
+    name: notification-service
   config:
     import: "optional:configserver:http://localhost:8888"
   datasource:
-    url: jdbc:mysql://localhost:3306/enrollment_db?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/notification_db?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -29,6 +29,17 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 eureka:
   client:
@@ -46,22 +57,18 @@ management:
 # App Custom Configs
 app:
   redis:
-    key-prefix: "enrollment:"
-  rabbitmq:
-    queue:
-      order-completed: "enrollment-order-completed-queue"
-    exchange:
-      order: "order-exchange"
-    routing-key:
-      order-completed: "order.completed"
+    key-prefix: "notification:"
 
+# Cấu hình RabbitMQ dành riêng cho Notification Service
+# Các giá trị này khớp với hằng số trong RabbitMQConfig.java
 lms:
   rabbitmq:
-    enrollment:
-      exchange: lms.order.exchange
-      queue: enrollment.order.completed.queue
-      routing-key: order.completed
-      dlq: enrollment.order.completed.queue.dlq  # Dead Letter Queue
+    notification:
+      exchange: lms.iam.exchange
+      queue:
+        otp: lms.notification.queue.auth.otp
+      routing-key:
+        otp: auth.email.send_otp
 
 application:
   security:

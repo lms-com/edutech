@@ -69,6 +69,19 @@ spring:
           filters:
             - StripPrefix=1
             - AuthenticationFilter
+        - id: notification-service-public
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification-service/api/v1/notifications/subscribe, /notification-service/v3/api-docs
+          filters:
+            - StripPrefix=1
+        - id: notification-service-secured
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
       globalcors:
         cors-configurations:
           '[/**]':
@@ -116,7 +129,8 @@ springdoc:
         url: /media-service/v3/api-docs
       - name: 04. Finance Service
         url: /finance-service/v3/api-docs
-      # Tuong tu cho cac Service khac ...
+      - name: 05. Notification Service
+        url: /notification-service/v3/api-docs
 
   api-docs:
     path: /v3/api-docs
