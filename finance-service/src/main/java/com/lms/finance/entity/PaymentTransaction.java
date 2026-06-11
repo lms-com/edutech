@@ -15,9 +15,6 @@ import java.time.Instant;
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_gateway_transaction",
                         columnNames = {"gateway", "gateway_transaction_id"})
-        },
-        indexes = {
-                @Index(name = "idx_payment_transactions_payment_id", columnList = "payment_id")
         })
 @Getter
 @Setter
@@ -54,7 +51,8 @@ public class PaymentTransaction extends AuditableEntity {
     BigDecimal amount;
 
     @Column(name = "currency_code", length = 3, nullable = false)
-    String currencyCode;
+    @Builder.Default
+    String currencyCode = "VND";
 
     @Column(name = "transacted_at")
     Instant transactedAt;
@@ -63,9 +61,4 @@ public class PaymentTransaction extends AuditableEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     Instant createdAt;
 
-
-    @PrePersist
-    public void prePersist() {
-        if (this.currencyCode == null) this.currencyCode = "VND";
-    }
 }

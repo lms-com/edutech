@@ -1,6 +1,5 @@
 package com.lms.finance.entity;
 
-import com.lms.common.model.AuditableEntity;
 import com.lms.finance.enums.PaymentMethod;
 import com.lms.finance.enums.PaymentStatus;
 import jakarta.persistence.*;
@@ -16,7 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "payments", indexes = {
+@Table(name = "payments",
+        uniqueConstraints = @UniqueConstraint(name = "uk_payments_payment_ref", columnNames = "payment_ref")
+        ,indexes = {
         @Index(name = "idx_payments_order_id", columnList = "order_id"),
         @Index(name = "idx_payments_learner_status", columnList = "learner_id, status"),
         @Index(name = "idx_payments_status", columnList = "status")
