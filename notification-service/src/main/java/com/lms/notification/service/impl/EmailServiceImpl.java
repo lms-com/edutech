@@ -17,6 +17,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -65,12 +66,56 @@ public class EmailServiceImpl implements EmailService {
             log.info("Đã gửi Email OTP thành công tới: [{}]", recipientEmail);
 
         } catch (Exception e) {
-            // Nếu lỗi (Sai pass SMTP, nghẽn mạng...), bắt ngoại lệ và lưu log FAILED để Admin vào kiểm tra
+            // Nếu lỗi (Sai pass SMTP, nghẽn mạng...), bắt ngoại lệ và lưu log FAILED để
+            // Admin vào kiểm tra
             emailLog.setStatus(EmailStatus.FAILED);
             emailLog.setErrorMessage(e.getMessage());
             log.error("Thất bại khi gửi Email OTP cho [{}]. Lý do: {}", recipientEmail, e.getMessage());
         } finally {
             emailLogRepository.save(emailLog);
         }
+    }
+
+    @Override
+    @Async
+    public void sendOrderSuccessEmail(String orderId, String recipientEmail, Long totalAmount, List<String> courseIds) {
+        log.info("Bắt đầu xử lý gửi Email biên lai đơn hàng [{}] ngầm cho: [{}]", orderId, recipientEmail);
+
+        EmailLog emailLog = EmailLog.builder()
+                .recipientEmail(recipientEmail)
+                .subject("Biên lai thanh toán khóa học đơn hàng #" + orderId)
+                .templateName("order-success.html")
+                .referenceId(orderId)
+                .referenceType("Order")
+                .build();
+
+        try {
+            Context context = new Context();
+            context.setVariable("orderId", orderId);
+            context.setVariable("totalAmount", totalAmount);
+            context.setVariable("courseIds", String.join(", ", courseIds));
+
+            String htmlContent = templateEngine.process("email/order-success", context);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(recipientEmail);
+            helper.setSubject(emailLog.getSubject());
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            emailLog.setStatus(EmailStatus.SENT);
+            emailLog.setSentAt(LocalDateTime.now());
+            log.info("Đã gửi Email hóa đơn thành công cho đơn hàng: [{}]", orderId);
+
+        } catch (Exception e) {
+            emailLog.setStatus(EmailStatus.FAILED);
+            emailLog.setErrorMessage(e.getMessage());
+            log.error("Lỗi khi gửi mail biên lai cho đơn hàng [{}]. Lý do: {}", orderId, e.getMessage());
+        } finally {
+            emailLogRepository.save(emailLog);
+        }
+
     }
 }

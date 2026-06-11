@@ -67,8 +67,13 @@ lms:
       exchange: lms.iam.exchange
       queue:
         otp: lms.notification.queue.auth.otp
+        order-completed: lms.notification.queue.order.completed
+
       routing-key:
         otp: auth.email.send_otp
+        order-completed: order.completed
+
+      
 
 application:
   security:
