@@ -7,20 +7,15 @@ CREATE TABLE revenue_shares (
     order_id            VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang Order Service',
     course_id           VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang Course Service',
     instructor_id       VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang IAM Service',
-    gross_amount        BIGINT          NOT NULL        COMMENT 'Giá bán thực tế của khóa học trong đơn',
-    currency_code       VARCHAR(10)     NOT NULL DEFAULT 'VND',
+    gross_amount        DECIMAL(15, 2)          NOT NULL        COMMENT 'Giá bán thực tế của khóa học trong đơn',
+    currency_code       VARCHAR(3)     NOT NULL DEFAULT 'VND',
     commission_rate     DECIMAL(5,4)    NOT NULL        COMMENT 'Snapshot tỷ lệ lúc chia — VD: 0.7000 = 70%',
-    instructor_amount   BIGINT          NOT NULL        COMMENT 'gross_amount * commission_rate',
-    platform_fee        BIGINT          NOT NULL        COMMENT 'gross_amount - instructor_amount',
+    instructor_amount   DECIMAL(15, 2)          NOT NULL        COMMENT 'gross_amount * commission_rate',
+    platform_fee        DECIMAL(15, 2)          NOT NULL        COMMENT 'gross_amount - instructor_amount',
 
     CONSTRAINT chk_revenue_split CHECK (instructor_amount + platform_fee = gross_amount),
 
-    created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by          VARCHAR(36)     NULL,
-    updated_by          VARCHAR(36)     NULL,
-    is_deleted          TINYINT(1)      NOT NULL DEFAULT 0,
-    version             BIGINT          NOT NULL DEFAULT 0,
+    created_at          TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
 
@@ -28,7 +23,6 @@ CREATE TABLE revenue_shares (
     UNIQUE KEY uk_revenue_order_course  (order_id, course_id),
 
     INDEX idx_revenue_instructor        (instructor_id, created_at DESC),
-    INDEX idx_revenue_order_id          (order_id),
     INDEX idx_revenue_course_id         (course_id),
 
     -- FIX 2: Index riêng cho Admin query platform_revenue theo tháng
@@ -42,7 +36,7 @@ CREATE TABLE revenue_shares (
 CREATE TABLE payout_requests (
     id                  VARCHAR(36)     NOT NULL,
     instructor_id       VARCHAR(36)     NOT NULL,
-    amount              BIGINT          NOT NULL,
+    amount              DECIMAL(15, 2)          NOT NULL,
     currency_code       VARCHAR(10)     NOT NULL DEFAULT 'VND',
     status              ENUM('PENDING','SUCCESS','REJECTED') NOT NULL DEFAULT 'PENDING',
 
@@ -54,16 +48,13 @@ CREATE TABLE payout_requests (
     account_name        VARCHAR(200)    NOT NULL,
 
     processed_by        VARCHAR(36)     NULL            COMMENT 'Admin ID thực hiện duyệt/từ chối',
-    processed_at        DATETIME        NULL,
+    processed_at        TIMESTAMP        NULL,
     reject_reason       VARCHAR(500)    NULL,
     bank_reference_no   VARCHAR(100)    NULL            COMMENT 'Số bút toán CK thực tế — Admin điền sau',
 
-    created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by          VARCHAR(36)     NULL,
-    updated_by          VARCHAR(36)     NULL,
-    is_deleted          TINYINT(1)      NOT NULL DEFAULT 0,
-    version             BIGINT          NOT NULL DEFAULT 0,
+    created_at          TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    version             BIGINT          NOT NULL DEFAULT 0      COMMENT 'Tránh tình trạng Admin nhấn double-click duyệt 1 lệnh 2 lần',
 
     PRIMARY KEY (id),
     INDEX idx_payout_instructor (instructor_id, created_at DESC),
@@ -84,12 +75,8 @@ CREATE TABLE bank_accounts (
     account_name        VARCHAR(200)    NOT NULL        COMMENT 'Tên chủ TK — phải khớp chính xác tên ngân hàng',
     is_primary          TINYINT(1)      NOT NULL DEFAULT 0 COMMENT '1 = tài khoản mặc định để rút tiền',
 
-    created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by          VARCHAR(36)     NULL,
-    updated_by          VARCHAR(36)     NULL,
-    is_deleted          TINYINT(1)      NOT NULL DEFAULT 0,
-    version             BIGINT          NOT NULL DEFAULT 0,
+    created_at          TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
     INDEX idx_bank_instructor           (instructor_id),
