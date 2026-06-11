@@ -36,6 +36,7 @@ public class InstructorBalance {
     String instructorId;
 
     @Column(name = "currency_code", length = 3, nullable = false)
+    @Builder.Default
     String currencyCode = "VND";
 
     /**
@@ -43,6 +44,7 @@ public class InstructorBalance {
      * actualBalance = availableBalance + blockedBalance + pendingBalance
      */
     @Column(name = "actual_balance", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal actualBalance = BigDecimal.ZERO;
 
     /**
@@ -50,6 +52,7 @@ public class InstructorBalance {
      * DB CHECK constraint đảm bảo >= 0.
      */
     @Column(name = "available_balance", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal availableBalance = BigDecimal.ZERO;
 
     /**
@@ -57,9 +60,11 @@ public class InstructorBalance {
      * DB CHECK constraint đảm bảo >= 0.
      */
     @Column(name = "blocked_balance", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal blockedBalance = BigDecimal.ZERO;
 
     @Column(name = "pending_balance", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal pendingBalance = BigDecimal.ZERO;
 
     @CreatedDate
@@ -70,7 +75,9 @@ public class InstructorBalance {
     @Column(name = "updated_at")
     Instant updatedAt;
 
+    @Version
     @Column(nullable = false)
+    @Builder.Default
     Long version = 0L;
 
 

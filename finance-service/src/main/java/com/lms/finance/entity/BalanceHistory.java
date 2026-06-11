@@ -16,7 +16,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "balance_histories", indexes = {
         @Index(name = "idx_balance_histories_instructor", columnList = "instructor_id, created_at DESC"),
-        @Index(name = "idx_balance_histories_type", columnList = "instructor_id, transaction_type"),
         @Index(name = "idx_balance_histories_reference", columnList = "reference_id, reference_type")
 })
 @Getter
@@ -57,21 +56,27 @@ public class BalanceHistory {
 
     /** Snapshot available_balance TRƯỚC và SAU khi áp dụng giao dịch này */
     @Column(name = "pending_balance_before", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal pendingBalanceBefore = BigDecimal.ZERO;
 
     @Column(name = "pending_balance_after", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal pendingBalanceAfter = BigDecimal.ZERO;
 
     @Column(name = "available_balance_before", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal availableBalanceBefore = BigDecimal.ZERO;
 
     @Column(name = "available_balance_after", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal availableBalanceAfter = BigDecimal.ZERO;
 
     @Column(name = "blocked_balance_before", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal blockedBalanceBefore = BigDecimal.ZERO;
 
     @Column(name = "blocked_balance_after", precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     BigDecimal blockedBalanceAfter = BigDecimal.ZERO;
 
 
