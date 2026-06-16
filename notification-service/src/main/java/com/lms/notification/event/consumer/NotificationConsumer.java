@@ -2,6 +2,7 @@ package com.lms.notification.event.consumer;
 
 import com.lms.notification.config.RabbitMQConfig;
 import com.lms.notification.enums.NotificationType;
+import com.lms.notification.event.payload.CourseStatusChangedEvent;
 import com.lms.notification.event.payload.SendOrderCompletedEvent;
 import com.lms.notification.event.payload.SendOtpEvent;
 import com.lms.notification.service.EmailService;
@@ -74,6 +75,40 @@ public class NotificationConsumer {
 
         } catch (Exception e) {
             log.error("❌ Thất bại khi xử lý chuỗi sự kiện Đơn hàng [{}]. Chi tiết: {}", event.getOrderId(),
+                    e.getMessage());
+        }
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_NOTIFICATION_COURSE_STATUS)
+    public void listenCourseStatusEvent(CourseStatusChangedEvent event) {
+        log.info("➔ [RabbitMQ] Nhận được Event Course Status Changed. Khóa học: [{}], Trạng thái mới: [{}]",
+                event.getCourseTitle(), event.getStatus());
+        try {
+            String title;
+            String content;
+            NotificationType type;
+            if ("APPROVED".equalsIgnoreCase(event.getStatus())) {
+                title = "Khóa học đã được duyệt !";
+                content = "Chúc mừng! Khóa học \"" + event.getCourseTitle()
+                        + "\" của bạn đã được Admin phê duyệt và xuất bản.";
+                type = NotificationType.COURSE_APPROVED;
+            } else {
+                title = "Yêu cầu duyệt khóa học bị từ chối";
+                content = "Khóa học \"" + event.getCourseTitle() + "\" của bạn không được phê duyệt. Lý do: "
+                        + (event.getRejectionNote() != null ? event.getRejectionNote() : "Không có lý do cụ thể.");
+                type = NotificationType.COURSE_REJECTED;
+            }
+            // Gửi thông báo in-app (lưu DB & đẩy SSE real-time lên quả chuông của
+            // Instructor)
+            notificationService.createAndSendNotification(
+                    event.getInstructorId(),
+                    title,
+                    content,
+                    type,
+                    event.getCourseId(),
+                    "Course");
+        } catch (Exception e) {
+            log.error("❌ Thất bại khi xử lý thông báo trạng thái khóa học [{}]. Chi tiết: {}", event.getCourseId(),
                     e.getMessage());
         }
     }

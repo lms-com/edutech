@@ -72,7 +72,10 @@ lms:
       routing-key:
         otp: auth.email.send_otp
         order-completed: order.completed
-
+      routing-key:
+        otp: auth.email.send_otp
+        order-completed: order.completed
+        course-status: course.status.changed
       
 
 application:
