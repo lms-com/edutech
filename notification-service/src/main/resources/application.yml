@@ -68,14 +68,12 @@ lms:
       queue:
         otp: lms.notification.queue.auth.otp
         order-completed: lms.notification.queue.order.completed
-
-      routing-key:
-        otp: auth.email.send_otp
-        order-completed: order.completed
+        course-status: lms.notification.queue.course.status
       routing-key:
         otp: auth.email.send_otp
         order-completed: order.completed
         course-status: course.status.changed
+
       
 
 application:
@@ -92,3 +90,8 @@ resilience4j:
         wait-duration-in-open-state: 10s  # Chờ 10s trước khi thử lại
         permitted-number-of-calls-in-half-open-state: 3
 
+minio:
+  uri: http://localhost:9000
+  access-key: admin
+  secret-key: admin123
+  bucket-name: lms-media-bucket

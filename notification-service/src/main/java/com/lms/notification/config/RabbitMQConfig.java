@@ -26,6 +26,11 @@ public class RabbitMQConfig {
     public static final String EXCHANGE_COURSE = "lms.course.exchange";
     public static final String ROUTING_KEY_COURSE_STATUS = "course.status.changed";
 
+    // Hằng số cho luồng hoàn thành khóa học (Sinh chứng chỉ)
+    public static final String QUEUE_NOTIFICATION_COURSE_COMPLETED = "lms.notification.queue.course.completed";
+    public static final String EXCHANGE_COURSE_COMPLETED = "course-exchange";
+    public static final String ROUTING_KEY_COURSE_COMPLETED = "course.completed";
+
     // Khai báo Hàng đợi (Durable = true giúp tin nhắn không bị mất nếu server
     // RabbitMQ bị restart)
     @Bean
@@ -43,6 +48,11 @@ public class RabbitMQConfig {
         return new Queue(QUEUE_NOTIFICATION_COURSE_STATUS, true);
     }
 
+    @Bean
+    public Queue courseCompletedQueue() {
+        return new Queue(QUEUE_NOTIFICATION_COURSE_COMPLETED, true);
+    }
+
     // Khai báo Topic Exchange để lắng nghe sự kiện từ IAM Service
     @Bean
     public TopicExchange iamExchange() {
@@ -57,6 +67,11 @@ public class RabbitMQConfig {
     @Bean
     public TopicExchange courseExchange() {
         return new TopicExchange(EXCHANGE_COURSE);
+    }
+
+    @Bean
+    public TopicExchange courseCompletedExchange() {
+        return new TopicExchange(EXCHANGE_COURSE_COMPLETED);
     }
 
     // 3. Đấu nối (Binding) Queue vào Exchange thông qua Routing Key chuẩn:
@@ -83,6 +98,14 @@ public class RabbitMQConfig {
                 .bind(courseStatusQueue())
                 .to(courseExchange())
                 .with(ROUTING_KEY_COURSE_STATUS);
+    }
+
+    @Bean
+    public Binding bindingCourseCompleted() {
+        return BindingBuilder
+                .bind(courseCompletedQueue())
+                .to(courseCompletedExchange())
+                .with(ROUTING_KEY_COURSE_COMPLETED);
     }
 
     // Cấu hình bộ chuyển đổi để Spring tự động dịch chuỗi dữ liệu JSON từ Queue

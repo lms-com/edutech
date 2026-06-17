@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Chứng Chỉ Hoàn Thành</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .certificate-container {
+            border: 15px solid #2c3e50;
+            padding: 40px;
+            width: 800px;
+            margin: 30px auto;
+            position: relative;
+            background-color: #fcfcfc;
+            text-align: center;
+        }
+
+        .header {
+            font-size: 38px;
+            color: #2c3e50;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 20px;
+        }
+
+        .sub-header {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin: 20px 0;
+        }
+
+        .learner-name {
+            font-size: 32px;
+            color: #e74c3c;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 20px 0;
+        }
+
+        .course-title {
+            font-size: 24px;
+            color: #2c3e50;
+            font-style: italic;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .footer-section {
+            margin-top: 50px;
+            display: table;
+            width: 100%;
+        }
+
+        .footer-col {
+            display: table-cell;
+            width: 50%;
+            vertical-align: middle;
+        }
+
+        .qr-code {
+            width: 120px;
+            height: 120px;
+        }
+
+        .issue-date {
+            font-size: 14px;
+            color: #7f8c8d;
+            text-align: left;
+            padding-left: 50px;
+        }
+
+        .signature {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            border-top: 1px solid #7f8c8d;
+            display: inline-block;
+            padding-top: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="certificate-container">
+        <div class="header">CHỨNG CHỈ HOÀN THÀNH</div>
+        <div class="sub-header">Chứng nhận học viên</div>
+        <div class="learner-name" th:text="${learnerName}">Nguyễn Văn A</div>
+        <div class="sub-header">Đã hoàn thành xuất sắc khóa học</div>
+        <div class="course-title" th:text="${courseTitle}">Lập trình Java Spring Boot</div>
+
+        <div class="footer-section">
+            <div class="footer-col" style="text-align: left;">
+                <p class="issue-date">
+                    <strong>Ngày cấp:</strong> <span th:text="${issuedAt}"></span><br />
+                    <strong>Mã xác thực:</strong> <span th:text="${qrCodeHash}"></span>
+                </p>
+            </div>
+            <div class="footer-col" style="text-align: right; padding-right: 50px;">
+                <!-- QR Code hiển thị dạng Base64 được nhúng trực tiếp -->
+                <img th:src="'data:image/png;base64,' + ${qrCodeBase64}" class="qr-code"
+                    alt="QR Code Verification" /><br />
+                <div class="signature">Ban Giám Đốc EDUTECH</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

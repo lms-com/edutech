@@ -7,6 +7,8 @@ import com.lms.notification.event.payload.SendOrderCompletedEvent;
 import com.lms.notification.event.payload.SendOtpEvent;
 import com.lms.notification.service.EmailService;
 import com.lms.notification.service.NotificationService;
+import com.lms.notification.event.payload.CourseCompletedEvent;
+import com.lms.notification.service.CertificateService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class NotificationConsumer {
 
     EmailService emailService;
     NotificationService notificationService;
+    CertificateService certificateService;
 
     // @RabbitListener nói với Spring Boot: "Hãy liên tục túc trực lắng nghe tại
     // Queue OTP này"
@@ -112,4 +115,22 @@ public class NotificationConsumer {
                     e.getMessage());
         }
     }
+
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_NOTIFICATION_COURSE_COMPLETED)
+    public void listenCourseCompletedEvent(CourseCompletedEvent event) {
+        log.info("➔ [RabbitMQ] Nhận được Event Course Completed. Học viên: [{}], Khóa học: [{}]",
+                event.getLearnerId(), event.getCourseId());
+        try {
+            // Kích hoạt quy trình sinh chứng chỉ PDF, upload MinIO & lưu DB
+            certificateService.generateCertificate(
+                    event.getLearnerId(),
+                    event.getCourseId(),
+                    event.getEnrollmentId());
+            log.info("✔ Cấp chứng chỉ thành công cho học viên [{}]", event.getLearnerId());
+        } catch (Exception e) {
+            log.error("❌ Thất bại khi xử lý sinh chứng chỉ cho học viên [{}]. Chi tiết: {}",
+                    event.getLearnerId(), e.getMessage());
+        }
+    }
+
 }
