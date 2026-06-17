@@ -5,36 +5,41 @@
     <meta charset="UTF-8" />
     <title>Chứng Chỉ Hoàn Thành</title>
     <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
             background-color: #ffffff;
             margin: 0;
             padding: 0;
         }
 
         .certificate-container {
-            border: 15px solid #2c3e50;
-            padding: 40px;
-            width: 800px;
-            margin: 30px auto;
-            position: relative;
+            border: 15px double #2c3e50;
+            padding: 30px;
+            box-sizing: border-box;
             background-color: #fcfcfc;
             text-align: center;
+            height: 180mm; /* Khít với chiều cao A4 landscape trừ lề */
+            position: relative;
         }
 
         .header {
-            font-size: 38px;
+            font-size: 36px;
             color: #2c3e50;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .sub-header {
-            font-size: 18px;
+            font-size: 16px;
             color: #7f8c8d;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
         .learner-name {
@@ -42,7 +47,7 @@
             color: #e74c3c;
             font-weight: bold;
             text-decoration: underline;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
         .course-title {
@@ -50,31 +55,29 @@
             color: #2c3e50;
             font-style: italic;
             font-weight: bold;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
         .footer-section {
-            margin-top: 50px;
+            margin-top: 35px;
             display: table;
             width: 100%;
         }
 
         .footer-col {
             display: table-cell;
-            width: 50%;
             vertical-align: middle;
         }
 
         .qr-code {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
         }
 
         .issue-date {
             font-size: 14px;
             color: #7f8c8d;
             text-align: left;
-            padding-left: 50px;
         }
 
         .signature {
@@ -84,7 +87,8 @@
             border-top: 1px solid #7f8c8d;
             display: inline-block;
             padding-top: 5px;
-            width: 200px;
+            width: 220px;
+            text-align: center;
         }
     </style>
 </head>
@@ -98,16 +102,22 @@
         <div class="course-title" th:text="${courseTitle}">Lập trình Java Spring Boot</div>
 
         <div class="footer-section">
-            <div class="footer-col" style="text-align: left;">
+            <!-- Cột trái: Ngày cấp & Mã xác thực -->
+            <div class="footer-col" style="text-align: left; width: 35%; padding-left: 20px;">
                 <p class="issue-date">
-                    <strong>Ngày cấp:</strong> <span th:text="${issuedAt}"></span><br />
-                    <strong>Mã xác thực:</strong> <span th:text="${qrCodeHash}"></span>
+                    <strong>Ngày cấp:</strong> <span th:text="${issuedAt}">17/06/2026</span><br />
+                    <strong>Mã xác thực:</strong> <span th:text="${qrCodeHash}">CERT-8888-9999-AAAA</span>
                 </p>
             </div>
-            <div class="footer-col" style="text-align: right; padding-right: 50px;">
-                <!-- QR Code hiển thị dạng Base64 được nhúng trực tiếp -->
+
+            <!-- Cột giữa: QR Code xác thực -->
+            <div class="footer-col" style="text-align: center; width: 30%;">
                 <img th:src="'data:image/png;base64,' + ${qrCodeBase64}" class="qr-code"
-                    alt="QR Code Verification" /><br />
+                    alt="QR Code Verification" />
+            </div>
+
+            <!-- Cột phải: Chữ ký ban giám đốc -->
+            <div class="footer-col" style="text-align: right; width: 35%; padding-right: 20px; vertical-align: bottom;">
                 <div class="signature">Ban Giám Đốc EDUTECH</div>
             </div>
         </div>
