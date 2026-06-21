@@ -44,7 +44,7 @@ CREATE TABLE instructor_balances (
 
     PRIMARY KEY (id),
     UNIQUE KEY uk_instructor_balances_instructor_id (instructor_id),
-    CONSTRAINT chk_balance_integrity CHECK (actual_balance = available_balance + instructor_balances.blocked_balance)
+    CONSTRAINT chk_balance_integrity CHECK (actual_balance = available_balance + blocked_balance + pending_balance)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Ví điện tử của Instructor. Mỗi instructor có đúng 1 bản ghi';
@@ -54,11 +54,11 @@ CREATE TABLE instructor_balances (
 -- Đây là nguồn sự thật (source of truth) — có thể replay lại để tính số dư bất kỳ thời điểm
 CREATE TABLE balance_histories (
     id                  VARCHAR(36)     NOT NULL,
-
+    instructor_id       VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang IAM Service — UNIQUE',
     instructor_balance_id       VARCHAR(36)     NOT NULL        COMMENT 'Khóa ngoại trỏ sang bảng ví instructor_balances',
 
     -- Quy chuẩn kế toán: DEBIT (Ghi nợ - Giảm tài sản), CREDIT (Ghi có - Tăng tài sản)
-entry_type              ENUM('DEBIT', 'CREDIT') NOT NULL,
+    entry_type              ENUM('DEBIT', 'CREDIT') NOT NULL,
     -- Loại giao dịch — mở rộng khi cần thêm loại mới
     transaction_type    ENUM(
                             'DEPOSIT_FROM_ORDER',   -- Cộng tiền sau khi học viên mua khóa học
@@ -83,7 +83,7 @@ entry_type              ENUM('DEBIT', 'CREDIT') NOT NULL,
     available_balance_after       DECIMAL(15, 2)          NOT NULL        COMMENT 'available_balance SAU khi áp dụng giao dịch này',
 
     blocked_balance_before      DECIMAL(15, 2)  NOT NULL        COMMENT 'Ví đóng băng TRƯỚC giao dịch',
-    block_balance_after         DECIMAL(15, 2)  NOT NULL        COMMENT 'Ví đóng băng SAU giao dịch',
+    blocked_balance_after         DECIMAL(15, 2)  NOT NULL        COMMENT 'Ví đóng băng SAU giao dịch',
 
     -- Liên kết đến nguồn gốc giao dịch (để trace back)
     -- Chỉ 1 trong các trường này có giá trị, tùy transaction_type
@@ -98,7 +98,7 @@ entry_type              ENUM('DEBIT', 'CREDIT') NOT NULL,
     PRIMARY KEY (id),
 
     -- Instructor xem lịch sử của mình (filter + sort)
-    INDEX idx_balance_histories_instructor      (instructor_id, created_at DESC),
+    INDEX idx_balance_histories_instructor_perf      (instructor_id, created_at DESC),
     INDEX idx_balance_histories_reference       (reference_id, reference_type),
 
     CONSTRAINT fk_bh_balance FOREIGN KEY (instructor_balance_id) REFERENCES instructor_balances(id) ON DELETE RESTRICT

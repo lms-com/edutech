@@ -7,11 +7,15 @@ CREATE TABLE revenue_shares (
     order_id            VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang Order Service',
     course_id           VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang Course Service',
     instructor_id       VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang IAM Service',
-    gross_amount        DECIMAL(15, 2)          NOT NULL        COMMENT 'Giá bán thực tế của khóa học trong đơn',
-    currency_code       VARCHAR(3)     NOT NULL DEFAULT 'VND',
+    gross_amount        DECIMAL(15, 2)  NOT NULL        COMMENT 'Giá bán thực tế của khóa học trong đơn',
+    currency_code       VARCHAR(3)      NOT NULL DEFAULT 'VND',
     commission_rate     DECIMAL(5,4)    NOT NULL        COMMENT 'Snapshot tỷ lệ lúc chia — VD: 0.7000 = 70%',
-    instructor_amount   DECIMAL(15, 2)          NOT NULL        COMMENT 'gross_amount * commission_rate',
-    platform_fee        DECIMAL(15, 2)          NOT NULL        COMMENT 'gross_amount - instructor_amount',
+    instructor_amount   DECIMAL(15, 2)  NOT NULL        COMMENT 'gross_amount * commission_rate',
+    platform_fee        DECIMAL(15, 2)  NOT NULL        COMMENT 'gross_amount - instructor_amount',
+    status              VARCHAR(20)     NOT NULL DEFAULT 'HOLDING'
+        COMMENT 'Trạng thái của tiền sau thanh toán: HOLDING, RELEASED, REFUNDED',
+    original_revenue_id VARCHAR(36)     NULL            COMMENT 'Chỉ dùng cho revenue refund hoàn tiền để tham chiếu đến revenue gốc khi nhân tiện',
+    idempotency_key     VARCHAR(100)    NOT NULL        COMMENT 'Cấu trúc: ORDER_ID:COURSE_ID:ACTION',
 
     CONSTRAINT chk_revenue_split CHECK (instructor_amount + platform_fee = gross_amount),
 
@@ -20,14 +24,20 @@ CREATE TABLE revenue_shares (
     PRIMARY KEY (id),
 
     -- Chống xử lý event order.completed 2 lần cho cùng 1 khóa học
-    UNIQUE KEY uk_revenue_order_course  (order_id, course_id),
+    -- Dòng gốc: original_revenue_id là NULL. Khóa sẽ là (ORD-1, CRS-1, NULL) --> Chống trùng event mua hàng.
+    -- Dòng refund âm: original_revenue_id là REV-001. Khóa sẽ là (ORD-1, CRS-1, 'REV-001') --> Chống trùng event refund.
 
     INDEX idx_revenue_instructor        (instructor_id, created_at DESC),
-    INDEX idx_revenue_course_id         (course_id),
+    INDEX idx_revenue_course_id_status         (course_id, status),
 
     -- FIX 2: Index riêng cho Admin query platform_revenue theo tháng
     -- Admin query: GROUP BY YEAR(created_at), MONTH(created_at) trên toàn bảng
-    INDEX idx_revenue_created_at        (created_at)
+    INDEX idx_revenue_created_at        (created_at),
+    -- Index phục vụ cho cron job quét kiểm tra tự động thời hạn 7 ngày của mỗi revenue share
+    INDEX idx_revenue_cron_trigger (status, created_at),
+
+    -- Duy nhất 1 Unique Key này là đủ cân cả hệ thống
+    UNIQUE KEY uk_revenue_idempotency (idempotency_key)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Chia hoa hồng mỗi đơn hàng. UNIQUE(order_id,course_id) chống duplicate RabbitMQ event';
