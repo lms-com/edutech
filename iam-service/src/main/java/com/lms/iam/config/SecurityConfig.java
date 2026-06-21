@@ -23,6 +23,9 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
 
+    @org.springframework.beans.factory.annotation.Value("${application.security.internal-key:my-secret-internal-key}")
+    private String internalKey;
+
     @Bean
     public AuthenticationManager authenticationManager (AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
@@ -33,6 +36,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/internal/**").hasAuthority("INTERNAL")
                         .requestMatchers("/dev/**", "/actuator/**", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/v1/user/**").hasAnyAuthority("LEARNER", "INSTRUCTOR", "ADMIN")
@@ -43,7 +47,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new com.lms.common.security.InternalApiFilter(internalKey), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

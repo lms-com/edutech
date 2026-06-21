@@ -29,6 +29,18 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     EnrollmentRepository enrollmentRepository;
     QuizAttemptRepository quizAttemptRepository;
 
+    /**
+     * Nộp bài kiểm tra trắc nghiệm (Quiz).
+     * Thực hiện kiểm tra tính hợp lệ và phân quyền của học viên đối với lượt ghi danh.
+     * Tự động tính toán kết quả ĐẠT (Passed) nếu điểm số đạt từ 80% trở lên.
+     * Lưu trữ chi tiết bài nộp của học viên vào MySQL database.
+     *
+     * @param enrollmentId ID lượt ghi danh
+     * @param quizId ID bài kiểm tra (tương ứng với lessonId dạng quiz)
+     * @param request Điểm số và thông tin nộp bài từ người dùng
+     * @param userId ID người dùng gửi yêu cầu
+     * @return QuizResultResponse Kết quả chấm điểm kèm phản hồi đánh giá
+     */
     @Override
     @Transactional
     public QuizResultResponse submitQuizAttempt(String enrollmentId, String quizId, QuizSubmitRequest request, String userId) {
@@ -56,10 +68,19 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                 .lessonId(quizId)
                 .score(request.getScore())
                 .isPassed(passed)
-                .feedback(passed ? "Congratulations, you passed!" : "Please try again to get at least 80%")
+                .feedback(passed ? "Chúc mừng, bạn đã vượt qua bài kiểm tra!" : "Vui lòng làm lại bài để đạt ít nhất 80% điểm số yêu cầu")
                 .build();
     }
 
+    /**
+     * Lấy toàn bộ lịch sử các lần nộp bài kiểm tra (Quiz attempts) của học viên theo bài học cụ thể.
+     * Thực hiện xác thực người dùng để tránh truy cập trái phép.
+     *
+     * @param enrollmentId ID lượt ghi danh
+     * @param quizId ID bài kiểm tra
+     * @param userId ID người dùng đang yêu cầu
+     * @return List<QuizAttemptResponse> Danh sách lịch sử các lần thi thử
+     */
     @Override
     @Transactional(readOnly = true)
     public List<QuizAttemptResponse> getQuizAttempts(String enrollmentId, String quizId, String userId) {
@@ -75,6 +96,9 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Chuyển đổi thực thể QuizAttempt sang DTO QuizAttemptResponse.
+     */
     private QuizAttemptResponse mapToResponse(QuizAttempt attempt) {
         return QuizAttemptResponse.builder()
                 .id(attempt.getId())

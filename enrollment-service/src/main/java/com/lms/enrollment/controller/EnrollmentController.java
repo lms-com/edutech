@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -42,8 +43,17 @@ public class EnrollmentController {
     }
 
     @PutMapping("/{id}/revoke")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<Void> revokeEnrollment(@PathVariable String id) {
         enrollmentService.revokeEnrollment(id);
         return ApiResponse.success(null);
+    }
+
+    @GetMapping("/courses/{courseId}")
+    public ApiResponse<Page<EnrollmentResponse>> getCourseEnrollments(
+            @PathVariable String courseId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.success(enrollmentService.getCourseEnrollments(courseId, PageRequest.of(page, size)));
     }
 }
