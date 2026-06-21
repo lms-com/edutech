@@ -1,18 +1,23 @@
 package com.lms.finance.entity;
 
-import com.lms.common.model.AuditableEntity;
 import com.lms.finance.enums.PaymentMethod;
 import com.lms.finance.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "payments", indexes = {
+@Table(name = "payments",
+        uniqueConstraints = @UniqueConstraint(name = "uk_payments_payment_ref", columnNames = "payment_ref")
+        ,indexes = {
         @Index(name = "idx_payments_order_id", columnList = "order_id"),
         @Index(name = "idx_payments_learner_status", columnList = "learner_id, status"),
         @Index(name = "idx_payments_status", columnList = "status")
@@ -23,7 +28,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Payment extends AuditableEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,16 +42,19 @@ public class Payment extends AuditableEntity {
     @Column(name = "learner_id", length = 36, nullable = false)
     String learnerId;
 
-    @Column(nullable = false)
-    Long amount;
+    @Column(length = 15, precision = 2, nullable = false)
+    BigDecimal amount;
 
-    @Column(name = "currency_code", length = 10, nullable = false)
+    @Column(name = "currency_code", length = 3, nullable = false)
     String currencyCode;
 
     // VARCHAR trong DB — dùng enum Java để an toàn, lưu dạng String
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", length = 20, nullable = false)
     PaymentMethod paymentMethod;
+
+    @Column(name = "payment_ref", length = 64, nullable = false)
+    String paymentRef;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "ENUM('PROCESSING','SUCCESS','FAILED','REFUNDED')")
@@ -57,8 +66,13 @@ public class Payment extends AuditableEntity {
     @Column(name = "paid_at")
     Instant paidAt;
 
-    @Column(name = "is_deleted", nullable = false)
-    Boolean deleted;
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    Instant createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    Instant updatedAt;
 
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -68,6 +82,5 @@ public class Payment extends AuditableEntity {
     public void prePersist() {
         if (this.currencyCode == null) this.currencyCode = "VND";
         if (this.status == null) this.status = PaymentStatus.PROCESSING;
-        if (this.deleted == null) this.deleted = false;
     }
 }

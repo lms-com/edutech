@@ -1,11 +1,12 @@
 package com.lms.finance.entity;
 
-import com.lms.common.model.AuditableEntity;
 import com.lms.finance.enums.PayoutStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -19,7 +20,8 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PayoutRequest extends AuditableEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class PayoutRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -29,15 +31,17 @@ public class PayoutRequest extends AuditableEntity {
     @Column(name = "instructor_id", length = 36, nullable = false)
     String instructorId;
 
-    @Column(nullable = false)
-    Long amount;
+    @Column(precision = 15, scale = 2, nullable = false)
+    BigDecimal amount;
 
-    @Column(name = "currency_code", length = 10, nullable = false)
-    String currencyCode;
+    @Column(name = "currency_code", length = 3, nullable = false)
+    @Builder.Default
+    String currencyCode = "VND";
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "ENUM('PENDING','SUCCESS','REJECTED')")
-    PayoutStatus status;
+    @Builder.Default
+    PayoutStatus status = PayoutStatus.PENDING;
 
     // ── Snapshot thông tin ngân hàng TẠI THỜI ĐIỂM tạo lệnh ──
     // Không dùng FK sang bank_accounts — nếu Instructor đổi TK sau, lệnh cũ vẫn đúng
@@ -64,13 +68,4 @@ public class PayoutRequest extends AuditableEntity {
     @Column(name = "bank_reference_no", length = 100)
     String bankReferenceNo;
 
-    @Column(name = "is_deleted", nullable = false)
-    Boolean deleted;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.currencyCode == null) this.currencyCode = "VND";
-        if (this.status == null) this.status = PayoutStatus.PENDING;
-        if (this.deleted == null) this.deleted = false;
-    }
 }
