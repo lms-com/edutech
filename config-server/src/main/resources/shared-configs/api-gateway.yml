@@ -43,6 +43,7 @@ spring:
           filters:
               - StripPrefix=1
               - AuthenticationFilter
+        # Cac id cho course service
         - id: course-service-public
           uri: lb://course-service
           predicates:
@@ -56,6 +57,16 @@ spring:
           filters:
             - StripPrefix=1
             - AuthenticationFilter
+
+        # Cac id cho order service
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/order-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+
         - id: finance-service-public
           uri: lb://finance-service
           predicates:
@@ -114,7 +125,9 @@ springdoc:
         url: /course-service/v3/api-docs
       - name: 03. Media-service
         url: /media-service/v3/api-docs
-      - name: 04. Finance Service
+      - name: 04. Order Service
+        url: /order-service/v3/api-docs
+      - name: 05. Finance Service
         url: /finance-service/v3/api-docs
       # Tuong tu cho cac Service khac ...
 

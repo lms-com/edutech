@@ -1,4 +1,4 @@
-package com.lms.media.client.course;
+package com.lms.order.client;
 
 import feign.Logger;
 import org.springframework.context.annotation.Bean;
