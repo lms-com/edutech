@@ -60,4 +60,11 @@ public class InternalCourseController {
     public ApiResponse<List<CorrectAnswerResponse>> getCorrectAnswers(@PathVariable String lessonId) {
         return ApiResponse.success(internalCourseService.getCorrectAnswers(lessonId));
     }
+
+    @Operation(summary = "40. Lấy thông tin cơ bản + giá nhiều khóa học (Bulk)",
+               description = "Finance Service gọi khi nhận event order.completed để lấy basePrice + instructorId phục vụ Revenue Split.")
+    @PostMapping("/courses/bulk")
+    public ApiResponse<List<CourseBulkResponse>> getCourseBulk(@RequestBody List<String> courseIds) {
+        return ApiResponse.success(internalCourseService.getCourseBulk(courseIds));
+    }
 }
