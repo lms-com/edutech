@@ -1,0 +1,283 @@
+{
+	"info": {
+		"_postman_id": "notification-service-edutech-v1",
+		"name": "Notification Service - EDUTECH LMS",
+		"description": "Bộ Collection kiểm thử đầy đủ các chức năng Notification (SSE Real-time, DB Notifications, Certificate verification & Test Trigger) cho Notification Service.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. In-App Notifications & Realtime SSE",
+			"item": [
+				{
+					"name": "Subscribe SSE Realtime Stream",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "text/event-stream",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications/subscribe?userId=user-test-123",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"subscribe"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "user-test-123",
+									"description": "ID người dùng muốn mở kết nối nhận thông báo"
+								}
+							]
+						},
+						"description": "Kết nối luồng Server-Sent Events (SSE) để nhận thông báo real-time khi có sự kiện mới."
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy danh sách thông báo của tôi (My Notifications)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-User-Id",
+								"value": "user-test-123",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications/me?isRead=false&page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"me"
+							],
+							"query": [
+								{
+									"key": "isRead",
+									"value": "false",
+									"description": "Lọc theo trạng thái đọc: true, false hoặc bỏ trống để lấy tất cả"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Lấy danh sách thông báo phân trang của người dùng hiện tại."
+					},
+					"response": []
+				},
+				{
+					"name": "Đếm số thông báo chưa đọc (Unread Count)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-User-Id",
+								"value": "user-test-123",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications/unread-count",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"unread-count"
+							]
+						},
+						"description": "Trả về số lượng thông báo chưa đọc cho quả chuông thông báo trên Header."
+					},
+					"response": []
+				},
+				{
+					"name": "Đánh dấu 1 thông báo đã đọc (Mark As Read)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-User-Id",
+								"value": "user-test-123",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications/:notificationId/read",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								":notificationId",
+								"read"
+							],
+							"variable": [
+								{
+									"key": "notificationId",
+									"value": "REPLACE_WITH_NOTIFICATION_ID",
+									"description": "Mã ID thông báo cần đánh dấu đã đọc"
+								}
+							]
+						},
+						"description": "Chuyển trạng thái của 1 thông báo cụ thể sang isRead = true."
+					},
+					"response": []
+				},
+				{
+					"name": "Đánh dấu tất cả thông báo đã đọc (Mark All As Read)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-User-Id",
+								"value": "user-test-123",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications/read-all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"read-all"
+							]
+						},
+						"description": "Đánh dấu toàn bộ thông báo chưa đọc của user sang trạng thái đã đọc."
+					},
+					"response": []
+				},
+				{
+					"name": "[TEST] Giả lập bắn thông báo Realtime (Simulate Trigger)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/notifications/simulate-trigger?userId=user-test-123&title=Thanh toán đơn hàng thành công&content=Cảm ơn bạn đã mua khóa học Java Spring Boot!",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"simulate-trigger"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "user-test-123"
+								},
+								{
+									"key": "title",
+									"value": "Thanh toán đơn hàng thành công"
+								},
+								{
+									"key": "content",
+									"value": "Cảm ơn bạn đã mua khóa học Java Spring Boot!"
+								}
+							]
+						},
+						"description": "Endpoint giả lập gửi thông báo. Mở tab Subscribe SSE trước, sau đó gọi API này để thấy tin nhắn đẩy real-time."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Certificates Management",
+			"item": [
+				{
+					"name": "Lấy danh sách chứng chỉ của tôi (My Certificates)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-User-Id",
+								"value": "user-test-123",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/certificates/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"certificates",
+								"me"
+							]
+						},
+						"description": "Trả về danh sách chứng chỉ hoàn thành khóa học đã được cấp cho học viên."
+					},
+					"response": []
+				},
+				{
+					"name": "Xác minh tính hợp lệ chứng chỉ qua mã QR Hash (Public Verify)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/certificates/verify/:hash",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"certificates",
+								"verify",
+								":hash"
+							],
+							"variable": [
+								{
+									"key": "hash",
+									"value": "REPLACE_WITH_QR_HASH",
+									"description": "Mã Hash QR thu được khi quét mã QR trên chứng chỉ PDF"
+								}
+							]
+						},
+						"description": "API công khai (Public API) cho phép kiểm tra bằng cấp thật/giả mà không cần đăng nhập."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8008",
+			"type": "string"
+		}
+	]
+}

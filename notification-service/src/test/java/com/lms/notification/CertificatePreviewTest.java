@@ -50,8 +50,8 @@ public class CertificatePreviewTest {
         PdfGeneratorService pdfGeneratorService = new PdfGeneratorService();
         byte[] pdfBytes = pdfGeneratorService.generatePdfFromHtml(htmlContent);
 
-        // 6. Lưu file PDF xuống thư mục 'target/' của dự án
-        String outputPath = "target/certificate-preview.pdf";
+        // 6. Lưu file PDF xuống thư mục 'target/' với tên duy nhất (tránh bị lock)
+        String outputPath = "target/cert-preview-" + System.currentTimeMillis() + ".pdf";
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
             fos.write(pdfBytes);
         }
