@@ -72,13 +72,26 @@ spring:
         - id: notification-service-public
           uri: lb://notification-service
           predicates:
-            - Path=/notification-service/api/v1/notifications/subscribe, /notification-service/v3/api-docs
+            - Path=/notification-service/api/v1/notifications/subscribe, /notification-service/api/v1/certificates/verify/**, /notification-service/v3/api-docs
           filters:
             - StripPrefix=1
         - id: notification-service-secured
           uri: lb://notification-service
           predicates:
             - Path=/notification-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+        - id: enrollment-service-public
+          uri: lb://enrollment-service
+          predicates:
+            - Path=/enrollment-service/api/v1/reviews/courses/**, /enrollment-service/v3/api-docs
+          filters:
+            - StripPrefix=1
+        - id: enrollment-service-secured
+          uri: lb://enrollment-service
+          predicates:
+            - Path=/enrollment-service/api/v1/**
           filters:
             - StripPrefix=1
             - AuthenticationFilter
@@ -131,6 +144,8 @@ springdoc:
         url: /finance-service/v3/api-docs
       - name: 05. Notification Service
         url: /notification-service/v3/api-docs
+      - name: 06. Enrollment Service
+        url: /enrollment-service/v3/api-docs
 
   api-docs:
     path: /v3/api-docs
