@@ -43,14 +43,7 @@ public class BankAccount extends AuditableEntity {
      * → enforce "chỉ 1 primary per instructor" ở Service layer.
      */
     @Column(name = "is_primary", nullable = false)
-    Boolean primary;
+    @Builder.Default
+    Boolean primary = false;
 
-    @Column(name = "is_deleted", nullable = false)
-    Boolean deleted;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.primary == null) this.primary = false;
-        if (this.deleted == null) this.deleted = false;
-    }
 }

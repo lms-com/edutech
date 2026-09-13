@@ -1,11 +1,13 @@
 package com.lms.finance.entity;
 
-import com.lms.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @Entity
 @Table(name = "revenue_shares",
@@ -15,7 +17,6 @@ import java.math.BigDecimal;
         },
         indexes = {
                 @Index(name = "idx_revenue_instructor", columnList = "instructor_id, created_at DESC"),
-                @Index(name = "idx_revenue_order_id", columnList = "order_id"),
                 @Index(name = "idx_revenue_course_id", columnList = "course_id"),
                 @Index(name = "idx_revenue_created_at", columnList = "created_at")
         })
@@ -25,7 +26,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RevenueShare extends AuditableEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class RevenueShare {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -42,30 +44,27 @@ public class RevenueShare extends AuditableEntity {
     String instructorId;
 
     /** Giá bán thực tế của khóa học trong đơn */
-    @Column(name = "gross_amount", nullable = false)
+    @Column(name = "gross_amount", precision = 15, scale = 2, nullable = false)
     Long grossAmount;
 
-    @Column(name = "currency_code", length = 10, nullable = false)
-    String currencyCode;
+    @Column(name = "currency_code", length = 3, nullable = false)
+    @Builder.Default
+    String currencyCode = "VND";
 
     /** Snapshot tỷ lệ hoa hồng lúc chia — VD: 0.7000 = 70% cho Instructor */
     @Column(name = "commission_rate", precision = 5, scale = 4, nullable = false)
     BigDecimal commissionRate;
 
     /** gross_amount * commission_rate — phần Instructor nhận */
-    @Column(name = "instructor_amount", nullable = false)
-    Long instructorAmount;
+    @Column(name = "instructor_amount", precision = 15, scale = 2, nullable = false)
+    BigDecimal instructorAmount;
 
     /** gross_amount - instructor_amount — phần Platform giữ lại */
-    @Column(name = "platform_fee", nullable = false)
-    Long platformFee;
+    @Column(name = "platform_fee", precision = 15, scale = 2, nullable = false)
+    BigDecimal platformFee;
 
-    @Column(name = "is_deleted", nullable = false)
-    Boolean deleted;
+    @CreatedDate
+    @Column(name = "created_at", nullable = false)
+    Instant createdAt;
 
-    @PrePersist
-    public void prePersist() {
-        if (this.currencyCode == null) this.currencyCode = "VND";
-        if (this.deleted == null) this.deleted = false;
-    }
 }

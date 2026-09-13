@@ -1,5 +1,6 @@
 package com.lms.media.client.course;
 
+import com.lms.media.client.FeignClientConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
