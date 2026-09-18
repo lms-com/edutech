@@ -1,4 +1,4 @@
-package com.lms.order.client.finance.dto;
+package com.lms.order.client.feign.finance.dto;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

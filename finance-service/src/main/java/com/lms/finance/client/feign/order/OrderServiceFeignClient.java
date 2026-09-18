@@ -1,8 +1,8 @@
-package com.lms.finance.client.order;
+package com.lms.finance.client.feign.order;
 
-import com.lms.finance.client.FeignClientConfig;
-import com.lms.finance.client.order.dto.CourseInternalRequest;
-import com.lms.finance.client.order.dto.OrderDto;
+import com.lms.finance.client.feign.FeignClientConfig;
+import com.lms.finance.client.feign.order.dto.CourseInternalRequest;
+import com.lms.finance.client.feign.order.dto.OrderDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

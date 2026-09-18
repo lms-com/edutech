@@ -1,4 +1,4 @@
-package com.lms.finance.client.order.dto;
+package com.lms.finance.client.feign.order.dto;
 
 public class OrderDto {
     String orderId;

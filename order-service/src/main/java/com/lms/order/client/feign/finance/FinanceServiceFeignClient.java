@@ -1,11 +1,10 @@
-package com.lms.order.client.finance;
+package com.lms.order.client.feign.finance;
 
-import com.lms.order.client.FeignClientConfig;
-import com.lms.order.client.finance.dto.CreatePaymentDto;
+import com.lms.order.client.feign.FeignClientConfig;
+import com.lms.order.client.feign.finance.dto.CreatePaymentDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(
         name = "finance-service",

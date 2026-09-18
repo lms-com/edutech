@@ -1,7 +1,9 @@
-package com.lms.order.dev.service;
+package com.lms.order.dev.dev_service;
 
+import com.lms.order.dev.dev_dto.CoursePromotionResponse;
 import com.lms.order.dto.request.CoursePromotionRequest;
 import com.lms.order.model.CoursePromotion;
+import com.lms.order.model.Order;
 import com.lms.order.model.Promotion;
 import com.lms.order.repository.CoursePromotionRepository;
 import com.lms.order.repository.PromotionRepository;
@@ -45,7 +47,18 @@ public class DevPromotionService {
      * Get all Course-Promotion
      * @return List of CoursePromotion
      */
-    public List<CoursePromotion> getAllCoursePromotions(){
-        return coursePromotionRepository.findAll();
+    public List<CoursePromotionResponse> getAllCoursePromotions(){
+        return coursePromotionRepository.findAll().stream().map(cp -> CoursePromotionResponse.builder()
+                .id(cp.getId())
+                .promotion(CoursePromotionResponse.PromotionResponse.builder()
+                        .id(cp.getPromotion().getId())
+                        .code(cp.getPromotion().getCode())
+                        .discountPercent(cp.getPromotion().getDiscountPercent())
+                        .discountAmount(cp.getPromotion().getDiscountAmount())
+                        .isActive(cp.getPromotion().isActive())
+                        .build())
+                .courseId(cp.getCourseId())
+                .build()
+        ).toList();
     }
 }

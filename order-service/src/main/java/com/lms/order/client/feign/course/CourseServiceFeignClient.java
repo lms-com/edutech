@@ -1,7 +1,7 @@
-package com.lms.order.client.course;
+package com.lms.order.client.feign.course;
 
-import com.lms.order.client.FeignClientConfig;
-import com.lms.order.client.course.dto.CourseInternalRequest;
+import com.lms.order.client.feign.FeignClientConfig;
+import com.lms.order.client.feign.course.dto.CourseInternalRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,8 +10,8 @@ import java.util.List;
 
 @FeignClient(
         name = "course-service",
-        configuration = FeignClientConfig.class,
-        fallback = CourseServiceFallBack.class
+        configuration = FeignClientConfig.class
+        //, fallback = CourseServiceFallBack.class
 )
 public interface CourseServiceFeignClient {
 

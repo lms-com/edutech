@@ -1,5 +1,6 @@
 package com.lms.finance.entity;
 
+import com.lms.finance.enums.RevenueShareStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -45,7 +46,7 @@ public class RevenueShare {
 
     /** Giá bán thực tế của khóa học trong đơn */
     @Column(name = "gross_amount", precision = 15, scale = 2, nullable = false)
-    Long grossAmount;
+    BigDecimal grossAmount;
 
     @Column(name = "currency_code", length = 3, nullable = false)
     @Builder.Default
@@ -63,8 +64,20 @@ public class RevenueShare {
     @Column(name = "platform_fee", precision = 15, scale = 2, nullable = false)
     BigDecimal platformFee;
 
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    RevenueShareStatus status;
+
+    @Column(name = "original_revenue_id", length = 36)
+    String originalRevenueId;
+
+    @Column(name = "idempotency_key", length = 100)
+    String idempotencyKey;
+
+    @Column(name = "release_at", nullable = false)
+    Instant releaseAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     Instant createdAt;
-
 }

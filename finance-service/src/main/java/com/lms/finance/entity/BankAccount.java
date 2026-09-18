@@ -4,6 +4,12 @@ import com.lms.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "bank_accounts", indexes = {
@@ -16,7 +22,8 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BankAccount extends AuditableEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class BankAccount {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -46,4 +53,11 @@ public class BankAccount extends AuditableEntity {
     @Builder.Default
     Boolean primary = false;
 
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    Instant createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    Instant updatedAt;
 }

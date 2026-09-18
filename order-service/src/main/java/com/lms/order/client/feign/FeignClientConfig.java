@@ -1,4 +1,4 @@
-package com.lms.order.client;
+package com.lms.order.client.feign;
 
 import feign.Logger;
 import org.springframework.context.annotation.Bean;

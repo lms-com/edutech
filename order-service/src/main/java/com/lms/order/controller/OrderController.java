@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/orders")
@@ -20,10 +22,11 @@ public class OrderController {
 
     @Operation(summary = "Create an Order", description = "Posting order request to create an order")
     @PostMapping
-    public ApiResponse<OrderResponse> createOrder (
+    public ApiResponse<Map<String, String>> createOrder (
             @Valid @RequestBody CreateOrderRequest request,
             @RequestHeader("X-User-Id") String userId
     ) {
-        return ApiResponse.success(orderService.createOrder(request,userId));
+        String vnPayUrl = orderService.createOrderAndGetPaymentUrl(request, userId);
+        return ApiResponse.success(Map.of("paymentUrl", vnPayUrl));
     }
 }

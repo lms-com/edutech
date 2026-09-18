@@ -1,16 +1,18 @@
-package com.lms.order.client.course.dto;
+package com.lms.order.client.feign.course.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CourseInternalRequest {
     @JsonProperty("id")
     String courseId;
@@ -28,7 +30,7 @@ public class CourseInternalRequest {
     @JsonProperty("instructorId")
     String instructorId;
 
-    @JsonProperty("commisionRate")
+    @JsonProperty("commissionRate")
     BigDecimal commissionRate;
 
 }

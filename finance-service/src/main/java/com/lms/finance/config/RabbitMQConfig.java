@@ -9,33 +9,65 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RabitMQConfig {
-    public static final String PAYMENT_PROCESSED_QUEUE = "payment.processed.queue";
+public class RabbitMQConfig {
+    /**
+     * Broadcasting message
+     */
+    //public static final String PAYMENT_PROCESSED_QUEUE = "payment.processed.queue";
     public static final String PAYMENT_EXCHANGE = "payment.exchange";
     public static final String PAYMENT_VNPAY_SUCCESS_ROUTING_KEY = "payment.vnpay.success";
+    public static final String PAYMENT_VNPAY_FAILURE_ROUTING_KEY = "payment.vnpay.failure";
 
-    @Bean
+
+    /*@Bean
     public Queue paymentProcessedQueue() {
         return new Queue(PAYMENT_PROCESSED_QUEUE, true);
-    }
+    }*/
 
     @Bean
     public TopicExchange paymentExchange() {
         return new TopicExchange(PAYMENT_EXCHANGE, true, false);
     }
 
-    @Bean
+    /*@Bean
     public Binding paymentVnPaySuccessBinding(Queue paymentProcessedQueue, TopicExchange paymentExchange) {
         return BindingBuilder.bind(paymentProcessedQueue).to(paymentExchange).with(PAYMENT_VNPAY_SUCCESS_ROUTING_KEY);
+    }*/
+
+    /*@Bean
+    public Binding paymentVnPayFailureBinding(Queue paymentProcessedQueue, TopicExchange paymentExchange) {
+        return BindingBuilder.bind(paymentProcessedQueue).to(paymentExchange).with(PAYMENT_VNPAY_FAILURE_ROUTING_KEY);
+    }*/
+
+    /**
+     * Receiving message
+     */
+    public static final String ORDER_COMPLETED_QUEUE = "order.completed.queue";
+    public static final String ORDER_EXCHANGE = "order.exchange";
+    public static final String ORDER_COMPLETED_ROUTING_KEY = "order.completed";
+
+    @Bean
+    public Queue orderCompletedQueue() {
+        return new Queue(ORDER_COMPLETED_QUEUE, true);
     }
 
+    @Bean
+    public Binding bindingOrderCompleted(Queue orderCompletedQueue) {
+        DirectExchange orderExchange = new DirectExchange(ORDER_EXCHANGE);
+        return BindingBuilder.bind(orderCompletedQueue).to(orderExchange).with(ORDER_COMPLETED_ROUTING_KEY);
+    }
+
+
+    /**
+     * Cau hinh Converter va Template
+     */
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
     @Bean
-    public AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter jsonMessageConverter) {
+    public AmqpTemplate amqpTemplate(ConnectionFactory connectionFactory, MessageConverter jsonMessageConverter) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(jsonMessageConverter);
         return rabbitTemplate;

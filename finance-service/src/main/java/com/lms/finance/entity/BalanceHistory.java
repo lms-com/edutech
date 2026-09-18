@@ -31,6 +31,9 @@ public class BalanceHistory {
     @Column(length = 36, updatable = false, nullable = false)
     String id;
 
+    @Column(name = "instructor_id", length = 36, nullable = false)
+    String instructorId;
+
     @Column(name = "instructor_balance_id", length = 36, nullable = false)
     String instructorBalanceId;
 
@@ -97,6 +100,7 @@ public class BalanceHistory {
     Instant createdAt;
 
     public static BalanceHistory createLog (
+            String instructorId,
             InstructorBalance wallet,
             EntryType entryType,
             TransactionType transactionType,
@@ -109,6 +113,7 @@ public class BalanceHistory {
             String note) {
         BalanceHistory newLog = new BalanceHistory();
         newLog.setId(UUID.randomUUID().toString());
+        newLog.setInstructorId(instructorId);
         newLog.setInstructorBalanceId(wallet.getId());
         newLog.setEntryType(entryType);
         newLog.setTransactionType(transactionType);

@@ -1,6 +1,6 @@
-package com.lms.order.client.course;
+package com.lms.order.client.feign.course;
 
-import com.lms.order.client.course.dto.CourseInternalRequest;
+import com.lms.order.client.feign.course.dto.CourseInternalRequest;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -18,7 +18,9 @@ public class CourseServiceFallBack implements CourseServiceFeignClient {
                                     .courseId(courseId)
                                     .courseName("😁 Course " + count.incrementAndGet() + " for Example")
                                     .currentPrice(new BigDecimal("99.90"))
-                                    .currencyCode("USD")
+                                // VND is default throughout the entire system  ==>  COMMENT THIS LINE
+                                   //.currencyCode("USD")
+                                    .commissionRate(new BigDecimal("0.7"))
                                     .instructorId("user-inst-01")
                                     .build()
                 ).toList();

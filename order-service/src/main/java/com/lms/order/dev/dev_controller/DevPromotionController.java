@@ -1,7 +1,9 @@
-package com.lms.order.dev.controller;
+package com.lms.order.dev.dev_controller;
 
 import com.lms.common.dto.response.ApiResponse;
-import com.lms.order.dev.service.DevPromotionService;
+import com.lms.order.dev.dev_dto.CoursePromotionResponse;
+import com.lms.order.dev.dev_service.DevOrderService;
+import com.lms.order.dev.dev_service.DevPromotionService;
 import com.lms.order.dto.request.CoursePromotionRequest;
 import com.lms.order.model.CoursePromotion;
 import com.lms.order.model.Promotion;
@@ -13,13 +15,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Promotion APIs for Dev")
+@Tag(name = "</> Dev Promotion APIs")
 @RestController
 @RequestMapping("/dev/promotions")
 @RequiredArgsConstructor
 public class DevPromotionController {
     private final DevPromotionService devPromotionService;
     private final PromotionService promotionService;
+    private final DevOrderService devOrderService;
 
     @Operation(summary = "Get all promotions")
     @GetMapping
@@ -48,7 +51,7 @@ public class DevPromotionController {
 
     @Operation(summary = "Get all Course-Promotion")
     @GetMapping("/courses")
-    public ApiResponse<List<CoursePromotion>> getAllCoursePromotion(){
+    public ApiResponse<List<CoursePromotionResponse>> getAllCoursePromotion(){
         return ApiResponse.success(devPromotionService.getAllCoursePromotions());
     }
 }

@@ -9,7 +9,7 @@ CREATE TABLE revenue_shares (
     instructor_id       VARCHAR(36)     NOT NULL        COMMENT 'Logical ID sang IAM Service',
     gross_amount        DECIMAL(15, 2)  NOT NULL        COMMENT 'Giá bán thực tế của khóa học trong đơn',
     currency_code       VARCHAR(3)      NOT NULL DEFAULT 'VND',
-    commission_rate     DECIMAL(5,4)    NOT NULL        COMMENT 'Snapshot tỷ lệ lúc chia — VD: 0.7000 = 70%',
+    commission_rate     DECIMAL(3, 2)    NOT NULL        COMMENT 'Snapshot tỷ lệ lúc chia — VD: 0.7000 = 70%',
     instructor_amount   DECIMAL(15, 2)  NOT NULL        COMMENT 'gross_amount * commission_rate',
     platform_fee        DECIMAL(15, 2)  NOT NULL        COMMENT 'gross_amount - instructor_amount',
     status              VARCHAR(20)     NOT NULL DEFAULT 'HOLDING'
@@ -19,6 +19,7 @@ CREATE TABLE revenue_shares (
 
     CONSTRAINT chk_revenue_split CHECK (instructor_amount + platform_fee = gross_amount),
 
+    release_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at          TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
@@ -34,7 +35,7 @@ CREATE TABLE revenue_shares (
     -- Admin query: GROUP BY YEAR(created_at), MONTH(created_at) trên toàn bảng
     INDEX idx_revenue_created_at        (created_at),
     -- Index phục vụ cho cron job quét kiểm tra tự động thời hạn 7 ngày của mỗi revenue share
-    INDEX idx_revenue_cron_trigger (status, created_at),
+    INDEX idx_revenue_cron_trigger (status, release_at),
 
     -- Duy nhất 1 Unique Key này là đủ cân cả hệ thống
     UNIQUE KEY uk_revenue_idempotency (idempotency_key)
