@@ -16,6 +16,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,7 +59,8 @@ public class CourseController {
             summary = "7. Lấy tất cả các khóa học",
             description = "Tìm kiếm, lọc và phân trang khóa học (Public)")
     @GetMapping
-    public ApiResponse<Page<CourseResponse>> getAllCourses(Pageable pageable){
+    public ApiResponse<Page<CourseResponse>> getAllCourses(
+            @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC)Pageable pageable){
         Page<CourseResponse> response = courseService.getAllCourses(pageable);
         return ApiResponse.success(response);
 
@@ -76,7 +79,7 @@ public class CourseController {
     public ApiResponse<Page<CourseResponse>> getMyCourses(
             // Giả định Gateway parse JWT và truyền userId qua Header. Hoặc lấy từ SecurityContextHolder
             @RequestHeader("X-User-Id") String instructorId,
-            Pageable pageable) {
+            @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<CourseResponse> response = courseService.getAllCoursesByInstructorId(instructorId, pageable);
         return ApiResponse.success(response);
     }

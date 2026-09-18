@@ -15,6 +15,8 @@ public class CourseBulkResponse {
     private String id;
     private String title;
     private BigDecimal basePrice;
-    private String currencyCode;
+    // VND is default throughout the entire system  ==>  COMMENT THIS Field
+    //private String currencyCode;
     private String instructorId;
+    private BigDecimal commissionRate;
 }

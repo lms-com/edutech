@@ -165,8 +165,10 @@ public class InternalCourseServiceImpl implements InternalCourseService {
                 .id(course.getId())
                 .title(course.getTitle())
                 .basePrice(course.getBasePrice())
-                .currencyCode(course.getCurrencyCode())
+                // VND is default throughout the entire system  ==>  COMMENT THIS LINE
+                //.currencyCode(course.getCurrencyCode())
                 .instructorId(course.getInstructorId())
+                .commissionRate(course.getOverrideCommissionRate())
                 .build()
         ).collect(Collectors.toList());
     }
