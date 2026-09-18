@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/dev/**", "/actuator/**", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/v1/user/**").hasAnyAuthority("LEARNER", "INSTRUCTOR", "ADMIN")
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/v3/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

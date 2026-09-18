@@ -1,6 +1,6 @@
 package com.lms.finance.enums;
 
 public enum EntryType {
-    CREDIT,
-    DEBIT
+    CREDIT, // increase amount
+    DEBIT   // decrease amount
 }

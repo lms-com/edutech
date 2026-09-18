@@ -91,7 +91,7 @@ public class Course extends AuditableEntity {
     @PrePersist
     public void prePersist() {
         if(this.basePrice == null) this.basePrice = BigDecimal.ZERO;
-        if(this.currencyCode == null) this.currencyCode = "VND";
+        this.currencyCode = "VND";
         if(this.status == null) this.status = "DRAFT";
         // Cập nhật lại tên biến trong hàm này
         if(this.deleted == null) this.deleted = false;

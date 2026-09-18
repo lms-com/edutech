@@ -16,15 +16,14 @@ public class CreateOrderRequest {
     @Valid
     List<CartItemRequest> items;
 
-    @NotBlank(message = "Currency code cannot be blank")
-    String currencyCode;
+    @NotBlank(message = "Payment method cannot be blank")
+    String paymentMethod;
 
     @Data
     @FieldDefaults(level = AccessLevel.PRIVATE)
     public static class CartItemRequest {
         @NotBlank(message = "Course id cannot be blank")
         String courseId;
-
         String promotionCode;
     }
 }

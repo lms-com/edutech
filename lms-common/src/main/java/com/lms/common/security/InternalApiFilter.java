@@ -44,8 +44,8 @@ public class InternalApiFilter  extends OncePerRequestFilter {
             log.error("Request {} missed header Internal Key", request.getRequestURL());
             throw new AppException(CommonErrorCode.UNAUTHORIZED, "Internal Key Header Missed");
         }
-        String secretKey = request.getHeader("X-Internal-Key");
         if (!authHeader.equals(internalKey)) {
+            log.warn("Missed match Internal key from client {} with receiver internal key {}", authHeader, internalKey);
             // Key sai thi nem loi 401
             String attackerIp = request.getRemoteAddr();
             log.error("CẢNH BÁO: Phát hiện truy cập trái phép vào API Internal!");

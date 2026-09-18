@@ -23,7 +23,7 @@ import java.time.Instant;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EntityListeners(AuditingEntityListener.class)
-public class PaymentTransaction extends AuditableEntity {
+public class PaymentTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -47,7 +47,7 @@ public class PaymentTransaction extends AuditableEntity {
     @Column(name = "gateway_response", columnDefinition = "JSON")
     String gatewayResponse;
 
-    @Column(length = 15, precision = 2, nullable = false)
+    @Column(precision = 15, scale = 2, nullable = false)
     BigDecimal amount;
 
     @Column(name = "currency_code", length = 3, nullable = false)

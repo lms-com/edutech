@@ -52,9 +52,9 @@ CREATE TABLE IF NOT EXISTS order_details (
     instructor_id VARCHAR(36) NOT NULL,
     promotion_id VARCHAR(36),
     original_price DECIMAL(15,2) NOT NULL,
-    original_currency VARCHAR(3) NOT NULL,
-    exchange_rate DECIMAL(12, 6) NOT NULL DEFAULT 1.000000,
-    price_at_purchase DECIMAL(15,2) NOT NULL,
+    #original_currency VARCHAR(3) NOT NULL,
+    #exchange_rate DECIMAL(12, 6) NOT NULL DEFAULT 1.000000,
+    #price_at_purchase DECIMAL(15,2) NOT NULL,
     discount_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
     final_price DECIMAL(15, 2) NOT NULL,
 
