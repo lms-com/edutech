@@ -103,10 +103,6 @@ public class OrderServiceImpl implements OrderService {
 
             log.info("💵💵 CourseId {} has cost is {}", courseInfo.getCourseId(), coursePrice);
             log.info("📉 PromotionCode {} for course id {}", promotionCode, courseInfo.getCourseId());
-            // VND is default throughout the entire system  ==>  COMMENT THESE CODES
-            /*// Neu khac tien te goc thi doi tien truoc
-            BigDecimal exchangeRate = exchangeRateService.getRate(courseInfo.getCurrencyCode(), request.getCurrencyCode());
-            BigDecimal priceAtPurchase = exchangeRate.multiply(courseInfo.getCurrentPrice());*/
 
             // Neu request co promotion kem voi course
             if (!promotionCode.trim().isEmpty()) {
@@ -119,22 +115,6 @@ public class OrderServiceImpl implements OrderService {
 
                 boolean isValid = promotionService.isValidForCourse(courseInfo.getCourseId(), promotion.getId());
 
-                // VND is default throughout the entire system  ==>  COMMENT THESE OLD STATEMENTS VERSION
-                /*// Neu promotion ko ap dung cho course thi gan null cho promotion do
-                if (!isValid) {
-                    log.warn("❌ Promotion code {} is invalid for course {}", promotionCode, courseInfo.getCourseName());
-                    promotion = null;
-                } else {
-                    // Promotion hop le thi tinh so tien duoc giam va tang usage count
-                    log.info("✅ Promotion code {} is valid", promotionCode);
-                    discountAmount = promotionService.calculateDiscountAmount(priceAtPurchase, request.getCurrencyCode(), promotion);
-                    // Chan truong hop tien giam nhieu hon tien goc
-                    if (discountAmount.compareTo(priceAtPurchase) > 0) {
-                        discountAmount = priceAtPurchase;
-                    }
-                    promotionService.increaseUsageCount(promotion);
-                }*/
-
                 if (!isValid) {
                     log.warn("❌ Promotion code {} is invalid for course {}", promotionCode, courseInfo.getCourseName());
                     promotion = null;
@@ -146,8 +126,6 @@ public class OrderServiceImpl implements OrderService {
                     if (discountAmount.compareTo(coursePrice) > 0) {
                         discountAmount = coursePrice;
                     }
-                    // Thuc hien tang luot dung promotion khi thanh toan thanh cong
-                    //promotionService.increaseUsageCount(promotion);
                 }
             }
 
@@ -164,10 +142,6 @@ public class OrderServiceImpl implements OrderService {
                             .instructorId(courseInfo.getInstructorId())
                             .promotionId(promotion == null ? null : promotion.getId())
                             .originalPrice(coursePrice)
-                    // VND is default throughout the entire system  ==>  COMMENT THESE FIELDS
-                            //.originalCurrency(courseInfo.getCurrencyCode())
-                            //.exchangeRate(exchangeRate)
-                            //.priceAtPurchase(priceAtPurchase)
                             .discountAmount(discountAmount)
                             .finalPrice(finalPrice)
                             .commissionRate(commissionRate)
@@ -178,7 +152,6 @@ public class OrderServiceImpl implements OrderService {
 
         orderRepository.save(order);
         return new PendingOrderResponse(order.getId(), order.getTotalPrice());
-        //return orderMapper.toOrderResponse(orderRepository.save(order));
     }
 
     @Override

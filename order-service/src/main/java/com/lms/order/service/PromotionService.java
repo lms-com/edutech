@@ -15,7 +15,5 @@ public interface PromotionService {
 
     void increaseUsageCountBatch (List<String> promotionIds);
 
-    // VND is default throughout the entire system  ==>  COMMENT THIS OLD VERSION OF FUNCTION
-    /*BigDecimal calculateDiscountAmount (BigDecimal originalPrice, String currencyCode, Promotion promotion);*/
     BigDecimal calculateDiscountAmount (BigDecimal originalPrice, Promotion promotion);
 }

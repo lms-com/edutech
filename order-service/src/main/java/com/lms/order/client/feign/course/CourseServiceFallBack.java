@@ -18,8 +18,6 @@ public class CourseServiceFallBack implements CourseServiceFeignClient {
                                     .courseId(courseId)
                                     .courseName("😁 Course " + count.incrementAndGet() + " for Example")
                                     .currentPrice(new BigDecimal("99.90"))
-                                // VND is default throughout the entire system  ==>  COMMENT THIS LINE
-                                   //.currencyCode("USD")
                                     .commissionRate(new BigDecimal("0.7"))
                                     .instructorId("user-inst-01")
                                     .build()

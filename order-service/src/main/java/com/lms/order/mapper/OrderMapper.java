@@ -16,7 +16,5 @@ public interface OrderMapper {
     OrderDetailResponse toOrderDetailResponse(OrderDetail orderDetail);
 
     @Mapping(source = "finalPrice", target = "currentPrice")
-    // VND is default throughout the entire system  ==>  COMMENT THIS LINE
-    /*@Mapping(source = "originalCurrency", target = "currencyCode")*/
     CourseInternalRequest toCourseInternalDto (OrderDetail orderDetail);
 }

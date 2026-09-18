@@ -81,17 +81,6 @@ public class PromotionServiceImpl implements PromotionService {
         promotionRepository.saveAll(promotionList);
     }
 
-
-
-    // VND is default throughout the entire system  ==>  COMMENT THIS OLD FUNCTION VERSION
-    /*@Override
-    public BigDecimal calculateDiscountAmount(BigDecimal originalPrice, String currencyCode, Promotion promotion) {
-        return promotion.getDiscountPercent() != null
-                ? originalPrice.multiply(promotion.getDiscountPercent())
-                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
-                : promotion.getDiscountAmount().multiply(exchangeRateService.getRate(promotion.getCurrencyCode(), currencyCode));
-    }*/
-
     @Override
     public BigDecimal calculateDiscountAmount(BigDecimal originalPrice, Promotion promotion) {
         return promotion.getDiscountPercent() != null ?

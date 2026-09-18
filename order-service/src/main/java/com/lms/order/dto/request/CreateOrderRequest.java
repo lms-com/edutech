@@ -16,10 +16,6 @@ public class CreateOrderRequest {
     @Valid
     List<CartItemRequest> items;
 
-    // VND is default throughout the entire system
-//    @NotBlank(message = "Currency code cannot be blank")
-//    String currencyCode;
-
     @NotBlank(message = "Payment method cannot be blank")
     String paymentMethod;
 
@@ -28,7 +24,6 @@ public class CreateOrderRequest {
     public static class CartItemRequest {
         @NotBlank(message = "Course id cannot be blank")
         String courseId;
-
         String promotionCode;
     }
 }

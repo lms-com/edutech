@@ -23,10 +23,6 @@ public class CourseInternalRequest {
     @JsonProperty("basePrice")
     BigDecimal currentPrice;
 
-    // VND is default throughout the entire system  ==> COMMENT THIS FIELD
-    /*@JsonProperty("currencyCode")
-    String currencyCode;*/
-
     @JsonProperty("instructorId")
     String instructorId;
 

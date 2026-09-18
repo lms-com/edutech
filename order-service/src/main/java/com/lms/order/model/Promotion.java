@@ -30,10 +30,6 @@ public class Promotion extends AuditableEntity {
     @Column(name = "discount_amount", precision = 15, scale = 2)
     BigDecimal discountAmount;
 
-    // VND is default throughout the entire system  ==> COMMENT THIS FIELD
-    /*@Column(name = "currency_code", length = 3)
-    String currencyCode;*/
-
     @Column(name = "start_date")
     LocalDateTime startDate;
 
