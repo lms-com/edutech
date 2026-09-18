@@ -1,0 +1,19 @@
+package com.lms.finance.client;
+
+import feign.RequestInterceptor;
+import feign.RequestTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class FeignClientInterceptor implements RequestInterceptor {
+
+    @Value("${application.security.internal-key}")
+    String internalKey;
+
+    @Override
+    public void apply(RequestTemplate requestTemplate) {
+        requestTemplate.header("X-Internal-Key", internalKey);
+    }
+}

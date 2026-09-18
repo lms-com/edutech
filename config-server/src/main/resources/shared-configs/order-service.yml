@@ -38,3 +38,8 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+# Dung swagger:
+springdoc:
+  api-docs:
+    path: /v3/api-docs

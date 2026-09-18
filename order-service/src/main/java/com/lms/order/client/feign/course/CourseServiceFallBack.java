@@ -1,6 +1,6 @@
 package com.lms.order.client.course;
 
-import com.lms.order.client.course.dto.CourseInternalDto;
+import com.lms.order.client.course.dto.CourseInternalRequest;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -11,10 +11,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CourseServiceFallBack implements CourseServiceFeignClient {
 
     @Override
-    public List<CourseInternalDto> getCoursesById(List<String> courseIds) {
+    public List<CourseInternalRequest> getCoursesById(List<String> courseIds) {
         AtomicInteger count = new AtomicInteger(0);
         return courseIds.stream()
-                .map(courseId -> CourseInternalDto.builder()
+                .map(courseId -> CourseInternalRequest.builder()
                                     .courseId(courseId)
                                     .courseName("😁 Course " + count.incrementAndGet() + " for Example")
                                     .currentPrice(new BigDecimal("99.90"))

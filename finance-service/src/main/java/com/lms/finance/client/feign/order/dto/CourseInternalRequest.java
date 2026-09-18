@@ -1,4 +1,4 @@
-package com.lms.order.client.course.dto;
+package com.lms.finance.client.order.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
@@ -11,19 +11,19 @@ import java.math.BigDecimal;
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CourseInternalDto {
+public class CourseInternalRequest {
     @JsonProperty("id")
     String courseId;
 
-    @JsonProperty("title")
-    String courseName;
-
-    @JsonProperty("basePrice")
-    BigDecimal currentPrice;
-
-    @JsonProperty("currencyCode")
+    @JsonProperty("paymentCurrency")
     String currencyCode;
 
     @JsonProperty("instructorId")
     String instructorId;
+
+    @JsonProperty("commissionRate")
+    BigDecimal commissionRate;
+
+    @JsonProperty("finalPrice")
+    BigDecimal priceAtPurchase;
 }

@@ -16,6 +16,8 @@ spring:
           filters:
             - SetStatus=403
 
+      ##### IAM SERVICE ROUTES #####
+        # Secured enpoints of iam-service:
         - id: iam-service-secured
           uri: lb://iam-service
           predicates:
@@ -23,6 +25,7 @@ spring:
           filters:
             - StripPrefix=1
             - AuthenticationFilter
+        # Public endpoints of iam-service:
         - id: iam-service-public
           uri: lb://iam-service
           predicates:
@@ -30,12 +33,14 @@ spring:
           filters:
             - StripPrefix=1
 
+      ##### CONFIG SERVER ROUTES #####
         - id: config-server
           uri: lb://config-server
           predicates:
             - Path=/config-server/**
             - RemoteAddr=127.0.0.1/32
 
+      ##### MEDIA SERVICE ROUTES #####
         - id: media-service
           uri: lb://media-service
           predicates:
@@ -43,13 +48,16 @@ spring:
           filters:
               - StripPrefix=1
               - AuthenticationFilter
-        # Cac id cho course service
+
+      ##### COURSE SERVICE ROUTES #####
+        # Public endpoints of course-service:
         - id: course-service-public
           uri: lb://course-service
           predicates:
             - Path=/course-service/api/v1/categories/**, /course-service/api/v1/courses, /course-service/api/v1/courses/*/related, /course-service/v3/api-docs
           filters:
             - StripPrefix=1
+        # Secured endpoints of course-service
         - id: course-service-secured
           uri: lb://course-service
           predicates:
@@ -58,7 +66,15 @@ spring:
             - StripPrefix=1
             - AuthenticationFilter
 
-        # Cac id cho order service
+      ##### ORDER SERVICE ROUTES #####
+        # Public Endpoints of Order Service
+        - id: order-service-public
+          uri: lb://order-service
+          predicates:
+            - Path=/order-service/dev/**, /order-service/v3/api-docs, /order-service/v3/swagger-ui.html
+          filters:
+            - StripPrefix=1
+        # Secured endpoints of order service
         - id: order-service
           uri: lb://order-service
           predicates:
@@ -67,12 +83,21 @@ spring:
             - StripPrefix=1
             - AuthenticationFilter
 
+      ##### FINANCE SERVICE ROUTES #####
+        # Public Endpoints of Finance Service
         - id: finance-service-public
           uri: lb://finance-service
           predicates:
-            - Path=/finance-service/api/v1/payments/vnpay-ipn, /finance-service/v3/api-docs
+            - name: Path
+              args:
+                patterns:
+                  - /finance-service/api/v1/payments/vnpay-ipn
+                  - /finance-service/v3/api-docs
+                  - /finance-service/api/v1/payments/create
+                  - /finance-service/api/v1/payments/vnpay-callback
           filters:
             - StripPrefix=1
+        # Secured Endpoint of Finance Service
         - id: finance-service-secured
           uri: lb://finance-service
           predicates:
@@ -80,6 +105,7 @@ spring:
           filters:
             - StripPrefix=1
             - AuthenticationFilter
+
       globalcors:
         cors-configurations:
           '[/**]':
