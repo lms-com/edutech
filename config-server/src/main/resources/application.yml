@@ -10,7 +10,7 @@ spring:
     config:
       server:
         native:
-          search-locations: classpath:/shared-configs/
+          search-locations: file:./config-server/src/main/resources/shared-configs/, classpath:/shared-configs/
 
 eureka:
   client:

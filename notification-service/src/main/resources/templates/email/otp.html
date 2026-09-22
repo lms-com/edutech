@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mã Xác Thực OTP</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333333;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            padding: 40px 20px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .content p {
+            font-size: 16px;
+            color: #555555;
+            margin-bottom: 24px;
+        }
+        .otp-box {
+            display: inline-block;
+            background: #f3f4f6;
+            border: 2px dashed #7C3AED;
+            border-radius: 12px;
+            padding: 16px 40px;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: #4F46E5;
+            margin: 20px 0;
+        }
+        .footer {
+            background: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            border-top: 1px solid #f3f4f6;
+        }
+        .footer a {
+            color: #4F46E5;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>EDUTECH</h1>
+        </div>
+        <div class="content">
+            <h2>Mã Xác Thực OTP Của Bạn</h2>
+            <p>Xin chào,</p>
+            <p>Bạn nhận được email này vì đã yêu cầu cấp mã xác thực OTP từ hệ thống học tập trực tuyến <strong>EDUTECH</strong>. Vui lòng nhập mã OTP dưới đây để hoàn tất tiến trình:</p>
+            <div class="otp-box" th:text="${otpCode}">123456</div>
+            <p style="font-size: 14px; color: #ef4444; margin-top: 24px;">Mã này chỉ có hiệu lực trong vòng 5 phút. Vui lòng tuyệt đối không chia sẻ mã này với bất kỳ ai.</p>
+        </div>
+        <div class="footer">
+            <p>© 2026 EDUTECH LMS. All rights reserved.</p>
+            <p>Nếu bạn không thực hiện yêu cầu này, vui lòng liên hệ <a href="mailto:support@edutech.com">Hỗ trợ khách hàng</a>.</p>
+        </div>
+    </div>
+</body>
+</html>
