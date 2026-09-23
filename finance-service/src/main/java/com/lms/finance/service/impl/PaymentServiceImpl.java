@@ -1,10 +1,12 @@
 package com.lms.finance.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lms.common.exception.AppException;
 import com.lms.finance.config.VnPayConfig;
 import com.lms.finance.dto.message.PaymentProcessMessage;
 import com.lms.finance.dto.request.CreatePaymentRequest;
 import com.lms.finance.entity.Payment;
+import com.lms.finance.entity.PaymentTransaction;
 import com.lms.finance.enums.PaymentMethod;
 import com.lms.finance.enums.PaymentStatus;
 import com.lms.finance.exception.FinanceErrorCode;
@@ -25,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -38,6 +41,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final Map<String, PaymentStrategy> paymentMap;
     private final RabbitTemplate rabbitTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
     public String createPayment (HttpServletRequest httpReq, CreatePaymentRequest createReq) {
@@ -162,15 +166,32 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private void processSuccessPayment (Payment payment, Map<String, String> params) {
-        // Cap nhat payment thanh cong va thoi gian
-        String vnp_PayDate = params.get("vnp_PayDate");
         Instant paidAt;
+        // Tao Payment Transaction de ghi lai giao dich
+            // chuyen params thanh json:
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-            LocalDateTime localDateTime = LocalDateTime.parse(vnp_PayDate, formatter);
-            paidAt = localDateTime.atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
+            String jsonResponse = objectMapper.writeValueAsString(params);
+            // Lay thoi gian thanh toan:
+            String vnpPayDateStr = params.get("vnp_PayDate");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+            LocalDateTime localDateTime = LocalDateTime.parse(vnpPayDateStr, timeFormatter);
+            // Gan thoi gian la dang theo moc VN
+            ZoneId zonId = ZoneId.of("Asia/Ho_Chi_Minh");
+            ZonedDateTime zonedDateTime = localDateTime.atZone(zonId);
+            paidAt = zonedDateTime.toInstant();
+            payment.addTransaction(PaymentTransaction.builder()
+                    .gatewayTransactionId(params.get("vnp_BankTranNo"))   // Ma giao dich dich thuc tu Ngan hang
+                    .gateway(payment.getPaymentMethod().name())
+                    .gatewayStatus(params.get("vnp_ResponseCode"))
+                    .gatewayResponse(jsonResponse)
+                    .amount(payment.getAmount())
+                    .currencyCode(payment.getCurrencyCode())
+                    .transactedAt(paidAt)
+                    .build()
+
+            );
         } catch (Exception e) {
-            paidAt = Instant.now();
+            throw new RuntimeException(e);
         }
 
         payment.setPaidAt(paidAt);
