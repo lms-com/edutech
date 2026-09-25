@@ -62,6 +62,7 @@ CREATE TABLE balance_histories (
     -- Loại giao dịch — mở rộng khi cần thêm loại mới
     transaction_type    ENUM(
                             'DEPOSIT_FROM_ORDER',   -- Cộng tiền sau khi học viên mua khóa học
+                            'RELEASE_REVENUE',
                             'BLOCK_FOR_PAYOUT',     -- Khóa tiền khi tạo lệnh rút
                             'WITHDRAW_SUCCESS',     -- Trừ hẳn sau khi Admin duyệt rút
                             'WITHDRAW_REJECTED',    -- Hoàn tiền khi Admin từ chối rút

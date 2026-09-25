@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderCompletedMessage {
     String orderId;
+    String learnerId;
     List<OrderItemDto> items;
 
     @Data

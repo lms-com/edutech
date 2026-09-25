@@ -3,6 +3,7 @@ package com.lms.enrollment.config;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
@@ -29,13 +30,13 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public TopicExchange orderExchange() {
-        return new TopicExchange("lms.order.exchange", true, false);
+    public DirectExchange orderExchange() {
+        return new DirectExchange("order.exchange", true, false);
     }
 
     @Bean
     public Binding enrollmentBinding(Queue enrollmentOrderCompletedQueue,
-                                     TopicExchange orderExchange) {
+                                     DirectExchange orderExchange) {
         return BindingBuilder
             .bind(enrollmentOrderCompletedQueue)
             .to(orderExchange)

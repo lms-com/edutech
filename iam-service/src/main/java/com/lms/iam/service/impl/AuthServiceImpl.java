@@ -17,6 +17,7 @@ import com.lms.iam.service.AuthService;
 import com.lms.iam.service.DeviceManagementService;
 import com.lms.iam.service.RoleService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -114,6 +116,7 @@ public class AuthServiceImpl implements AuthService {
                     .userId(newUser.getId())
                     .roleId(role.getId())
                     .build();
+            log.info("👨‍🎓 A Learner register successfully! -> userId={}, roleId={}", userRole.getUserId(), userRole.getRoleId());
             userRoleRepository.save(userRole);
         } catch(AppException e) {
             throw new AppException(e.getErrorCode(), "Role Not Found: LEARNER");

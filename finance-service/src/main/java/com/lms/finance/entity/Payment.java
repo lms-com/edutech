@@ -83,4 +83,9 @@ public class Payment {
         if (this.currencyCode == null) this.currencyCode = "VND";
         if (this.status == null) this.status = PaymentStatus.PROCESSING;
     }
+
+    public void addTransaction (PaymentTransaction transaction) {
+        this.transactions.add(transaction);
+        transaction.setPayment(this);
+    }
 }

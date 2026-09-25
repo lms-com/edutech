@@ -177,6 +177,8 @@ public class OrderServiceImpl implements OrderService {
         // Tang so luot dung cho tung promotion
         promotionService.increaseUsageCountBatch(promotionIdList);
 
+        // Lay learnerId:
+        String learnerId = order.getLearnerId();
         // Ban tin len order.exchange -> order.completed
         List<OrderCompletedMessage.OrderItemDto> items = order.getOrderDetails().stream().map(item -> OrderCompletedMessage.OrderItemDto.builder()
                 .courseId(item.getCourseId())
@@ -187,7 +189,7 @@ public class OrderServiceImpl implements OrderService {
                 .build()
         ).toList();
 
-        OrderCompletedMessage message = new OrderCompletedMessage(orderId, items);
+        OrderCompletedMessage message = new OrderCompletedMessage(orderId, learnerId, items);
         rabbitTemplate.convertAndSend(ORDER_EXCHANGE, ORDER_COMPLETED_ROUTING_KEY, message);
     }
 }
