@@ -63,6 +63,11 @@ management:
 application:
   security:
     internal-key: RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=
+  timezone: Asia/Ho_Chi_Minh
+  finance:
+    refund-deadline: 7  # Hạn Refund là 7 ngày
+  cron:
+    balance-settlement: "0 */1 * * * *"   # mỗi ngày một lần lúc 0 giờ
 
 springdoc:
   api-docs:

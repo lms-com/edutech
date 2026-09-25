@@ -5,6 +5,7 @@ import com.lms.finance.client.feign.order.dto.CourseInternalRequest;
 import com.lms.finance.dto.message.OrderCompletedMessage;
 import com.lms.finance.dto.message.PaymentProcessMessage;
 import com.lms.finance.entity.RevenueShare;
+import com.lms.finance.enums.ReferenceType;
 import com.lms.finance.enums.RevenueShareStatus;
 import com.lms.finance.repository.RevenueShareRepository;
 import com.lms.finance.service.InstructorBalanceService;
@@ -12,6 +13,7 @@ import com.lms.finance.service.RevenueShareService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,9 @@ public class RevenueShareServiceImpl implements RevenueShareService {
     private final RevenueShareRepository revenueShareRepository;
     private final InstructorBalanceService balanceService;
 
+    @Value("${application.finance.refund-deadline}")
+    private String refundDeadline;
+
     @Override
     @Transactional
     public void processRevenueDistribution (OrderCompletedMessage message) {
@@ -39,7 +44,7 @@ public class RevenueShareServiceImpl implements RevenueShareService {
         // Get List of courses from orderId
         List<OrderCompletedMessage.OrderItemDto> courses = message.getItems();  // thay bang feign client goi sang order-service
         Instant now = Instant.now();
-        Instant releaseAt = now.plus(7, ChronoUnit.DAYS);
+        Instant releaseAt = now.plus(Integer.parseInt(refundDeadline), ChronoUnit.DAYS);
         for (OrderCompletedMessage.OrderItemDto course : courses) {
             BigDecimal grossAmount = course.getFinalPrice();
             BigDecimal commissionRate = course.getCommissionRate();
@@ -82,7 +87,7 @@ public class RevenueShareServiceImpl implements RevenueShareService {
                         revenueShare.getCurrencyCode(),
                         revenueShare.getInstructorId(),
                         revenueShare.getId(),
-                        "REVENUE_SHARE",
+                        ReferenceType.REVENUE_SHARE.name(),
                         note
                 );
         }
