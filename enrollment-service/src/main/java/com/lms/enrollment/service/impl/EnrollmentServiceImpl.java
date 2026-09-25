@@ -157,8 +157,9 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     @Override
     @Transactional
     public void enrollFromOrder(OrderCompletedEvent event) {
-        log.info("Processing auto-enrollment for learnerId: {} and courses: {}", event.getLearnerId(), event.getCourseIds());
-        for (String courseId : event.getCourseIds()) {
+        List<String> courseIds = event.getItems().stream().map(OrderCompletedEvent.OrderItemDto::getCourseId).toList();
+        log.info("Processing auto-enrollment for learnerId: {} and courses: {}", event.getLearnerId(), courseIds);
+        for (String courseId : courseIds) {
             try {
                 if (enrollmentRepository.existsByLearnerIdAndCourseId(event.getLearnerId(), courseId)) {
                     log.info("Learner {} is already enrolled in course {}, skipping.", event.getLearnerId(), courseId);

@@ -1,6 +1,7 @@
 package com.lms.finance.service.impl;
 
 import com.lms.common.exception.AppException;
+import com.lms.finance.dto.response.BalanceInstructorResponse;
 import com.lms.finance.entity.BalanceHistory;
 import com.lms.finance.entity.InstructorBalance;
 import com.lms.finance.enums.EntryType;
@@ -54,4 +55,17 @@ public class InstructorBalanceServiceImpl implements InstructorBalanceService {
         balanceRepository.save(instructorBalance);
     }
 
+
+    @Override
+    public BalanceInstructorResponse getMyBalances(String userId) {
+        InstructorBalance balance = balanceRepository.findByInstructorId(userId)
+                .orElseThrow(() -> new AppException(FinanceErrorCode.INSTRUCTOR_BALANCE_NOT_EXISTS));
+
+        return BalanceInstructorResponse.builder()
+                .actualBalance(balance.getActualBalance())
+                .availableBalance(balance.getAvailableBalance())
+                .blockedBalance(balance.getBlockedBalance())
+                .pendingBalance(balance.getPendingBalance())
+                .build();
+    }
 }

@@ -23,4 +23,5 @@ public interface InstructorBalanceRepository extends JpaRepository<InstructorBal
         WHERE instructor_id = :instructorId
     """, nativeQuery = true)
     Optional<InstructorBalance> findByInstructorId(@Param("instructorId") String instructorId);
+
 }

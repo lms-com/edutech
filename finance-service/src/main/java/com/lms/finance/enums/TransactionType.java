@@ -11,6 +11,11 @@ public enum TransactionType {
     /** Cộng tiền sau khi học viên mua khóa học */
     DEPOSIT_FROM_ORDER,
 
+    /**
+     * Chuyển tiền từ Pending vào Available
+     */
+    RELEASE_REVENUE,
+
     /** Khóa tiền khi tạo lệnh rút → trừ available, cộng blocked */
     BLOCK_FOR_PAYOUT,
 

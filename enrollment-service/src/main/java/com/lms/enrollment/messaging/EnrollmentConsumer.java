@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class EnrollmentConsumer {
 
-    EnrollmentService enrollmentService;
+    final EnrollmentService enrollmentService;
 
     @RabbitListener(queues = "enrollment.order.completed.queue")
     public void handleOrderCompleted(OrderCompletedEvent event) {
         log.info("Nhận event order.completed — orderId={}, learnerId={}",
-            event.getOrderId(), event.getLearnerId());
+                event.getOrderId(), event.getLearnerId());
         try {
             enrollmentService.enrollFromOrder(event);
         } catch (DataIntegrityViolationException e) {
