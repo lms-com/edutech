@@ -18,7 +18,7 @@ public class RabbitMQConfig {
 
     // Haằng số cho luồng đơn hàng
     public static final String QUEUE_NOTIFICATION_ORDER = "lms.notification.queue.order.completed";
-    public static final String EXCHANGE_ORDER = "lms.order.exchange";
+    public static final String EXCHANGE_ORDER = "order.exchange";
     public static final String ROUTING_KEY_ORDER = "order.completed";
 
     //
@@ -59,9 +59,11 @@ public class RabbitMQConfig {
         return new TopicExchange(EXCHANGE_IAM);
     }
 
+    // Phải khớp khai báo của order-service: order.exchange là DirectExchange.
+    // Khai báo lệch loại trên cùng tên sẽ bị RabbitMQ từ chối (PRECONDITION_FAILED).
     @Bean
-    public TopicExchange orderExchange() {
-        return new TopicExchange(EXCHANGE_ORDER);
+    public DirectExchange orderExchange() {
+        return new DirectExchange(EXCHANGE_ORDER, true, false);
     }
 
     @Bean

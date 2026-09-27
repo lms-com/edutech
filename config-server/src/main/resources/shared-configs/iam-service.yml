@@ -29,7 +29,7 @@ eureka:
 
 application:
   security:
-    internal-key: "my-secret-internal-key"
+    internal-key: RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=
     jwt:
       secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
       expiration: 86400000 # 1 ngay = 86.400.000 ms

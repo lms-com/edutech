@@ -33,7 +33,7 @@ public class RevenueShareServiceImpl implements RevenueShareService {
     private final RevenueShareRepository revenueShareRepository;
     private final InstructorBalanceService balanceService;
 
-    @Value("${application.finance.refund-deadline}")
+    @Value("${application.finance.refund-deadline:7}")
     private String refundDeadline;
 
     @Override

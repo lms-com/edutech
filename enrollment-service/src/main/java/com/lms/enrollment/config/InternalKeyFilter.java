@@ -23,7 +23,7 @@ import java.util.List;
 @Slf4j
 public class InternalKeyFilter extends OncePerRequestFilter {
 
-    @Value("${application.security.internal-key:my-secret-internal-key}")
+    @Value("${application.security.internal-key:RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=}")
     private String internalKey;
 
     @Override

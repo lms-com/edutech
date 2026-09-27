@@ -17,7 +17,7 @@ import java.util.TimeZone;
 @EnableFeignClients
 @EnableScheduling
 public class FinanceServiceApplication {
-    @Value("${application.timezone}")
+    @Value("${application.timezone:Asia/Ho_Chi_Minh}")
     private String appTimezone;
 
     public static void main(String[] args) {

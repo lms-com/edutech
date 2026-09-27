@@ -61,6 +61,11 @@ management:
         include: "*"
 
 application:
+  timezone: Asia/Ho_Chi_Minh
+  cron:
+    balance-settlement: "0 * * * * ?"
+  finance:
+    refund-deadline: 7
   security:
     internal-key: RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=
 

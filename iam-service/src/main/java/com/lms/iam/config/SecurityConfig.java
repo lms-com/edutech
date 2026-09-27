@@ -23,7 +23,7 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
 
-    @org.springframework.beans.factory.annotation.Value("${application.security.internal-key:my-secret-internal-key}")
+    @org.springframework.beans.factory.annotation.Value("${application.security.internal-key:RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=}")
     private String internalKey;
 
     @Bean
