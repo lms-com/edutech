@@ -16,7 +16,12 @@ public class MinioConfig {
     @Value("${minio.access-key}")
     private String accessKey;
 
-    @Value("${minio.url}")
+    /**
+     * Khoá cấu hình là `minio.uri` (application.yml) và CertificateServiceImpl cũng
+     * đọc `minio.uri`. Trước đây chỗ này đọc `minio.url` nên không có giá trị và
+     * notification-service không thể khởi động.
+     */
+    @Value("${minio.uri}")
     private String uri;
 
     @Bean

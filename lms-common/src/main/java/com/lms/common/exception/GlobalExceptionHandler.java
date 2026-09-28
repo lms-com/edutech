@@ -27,8 +27,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(response);
     }
 
-    @ExceptionHandler(value= MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<?>> handlingValidation (MethodArgumentNotValidException e){
+    /**
+     * Lỗi do dữ liệu đầu vào không hợp lệ hoặc tra cứu không thấy, ví dụ mã băm
+     * chứng chỉ không tồn tại. Trước đây rơi vào handler chung nên trả về 500, và
+     * giao diện hiển thị "lỗi hệ thống" thay vì "không tồn tại".
+     */
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<?>> handlingIllegalArgument (IllegalArgumentException e){
+        ApiResponse<?> response = ApiResponse.builder()
+                .code(HttpStatus.BAD_REQUEST.value())
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(value= MethodArgumentNotValidException.class)    public ResponseEntity<ApiResponse<?>> handlingValidation (MethodArgumentNotValidException e){
         String messgage = e.getBindingResult().getFieldError().getDefaultMessage();
 
         ApiResponse<?> response = ApiResponse.builder()

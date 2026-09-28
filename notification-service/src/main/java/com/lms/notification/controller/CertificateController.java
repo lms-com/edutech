@@ -1,7 +1,7 @@
 package com.lms.notification.controller;
 
 import com.lms.common.dto.response.ApiResponse;
-import com.lms.notification.entity.Certificate;
+import com.lms.notification.dto.response.CertificateResponse;
 import com.lms.notification.service.CertificateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,7 +20,7 @@ public class CertificateController {
 
     @Operation(summary = "Lấy danh sách chứng chỉ của tôi")
     @GetMapping("/me")
-    public ApiResponse<List<Certificate>> getMyCertificates(
+    public ApiResponse<List<CertificateResponse>> getMyCertificates(
             @RequestHeader(value = "X-User-Id", required = false) String userId) {
         if (userId == null) {
             throw new IllegalArgumentException("X-User-Id header is missing");
@@ -30,7 +30,7 @@ public class CertificateController {
 
     @Operation(summary = "Xác minh tính hợp lệ của chứng chỉ thông qua mã QR Hash")
     @GetMapping("/verify/{hash}")
-    public ApiResponse<Certificate> verifyCertificate(@PathVariable String hash) {
+    public ApiResponse<CertificateResponse> verifyCertificate(@PathVariable String hash) {
         return ApiResponse.success(certificateService.verifyCertificate(hash));
     }
 }
