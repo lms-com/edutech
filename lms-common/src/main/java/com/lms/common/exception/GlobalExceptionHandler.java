@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -59,6 +60,17 @@ public class GlobalExceptionHandler {
                 .message(e.getMessage())
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(value = AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<?>> handlingAccessDeniedException(AccessDeniedException e) {
+        String traceId = tracer.currentSpan() != null ? tracer.currentSpan().context().traceId() : null;
+        ApiResponse<?> response = ApiResponse.builder()
+                .code(HttpStatus.FORBIDDEN.value())
+                .message("Bạn không có quyền thực hiện thao tác này")
+                .traceId(traceId)
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     @ExceptionHandler(value= DataIntegrityViolationException.class)
