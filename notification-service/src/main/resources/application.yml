@@ -80,6 +80,9 @@ application:
   security:
     # Khóa bảo mật xác thực liên dịch vụ nội bộ (Microservice Internal Key)
     internal-key: ${INTERNAL_KEY:RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=}
+  frontend:
+    # Địa chỉ giao diện, dùng để sinh link trong mã QR trên chứng chỉ
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
 
 resilience4j:
   circuitbreaker:

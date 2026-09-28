@@ -33,6 +33,7 @@ import org.thymeleaf.context.Context;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
@@ -47,6 +48,10 @@ public class CertificateServiceImpl implements CertificateService {
     final CertificateRepository certificateRepository;
     final PdfGeneratorService pdfGeneratorService;
     final MinioClient minioClient;
+
+    /** Địa chỉ giao diện để sinh link xác thực trong mã QR (trước đây hardcode cổng 8000). */
+    @Value("${application.frontend.base-url:http://localhost:5173}")
+    String frontendBaseUrl;
     final IamServiceClient iamServiceClient;
     final CourseServiceClient courseServiceClient;
     final TemplateEngine templateEngine;
@@ -89,7 +94,7 @@ public class CertificateServiceImpl implements CertificateService {
             // 3. Tạo mã QR Code xác thực dạng Base64 chứa URL kiểm tra chứng chỉ
             String qrCodeHash = Base64.getUrlEncoder().withoutPadding()
                     .encodeToString(UUID.randomUUID().toString().getBytes());
-            String verifyUrl = "http://localhost:8000/api/v1/certificates/verify/" + qrCodeHash;
+            String verifyUrl = frontendBaseUrl + "/?verify=" + qrCodeHash;
             String qrCodeBase64 = generateQrCodeBase64(verifyUrl);
 
             // 4. Render HTML Template
