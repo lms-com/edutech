@@ -55,6 +55,7 @@ spring:
           uri: lb://course-service
           predicates:
             - Path=/course-service/api/v1/categories/**, /course-service/api/v1/courses, /course-service/api/v1/courses/*/related, /course-service/v3/api-docs
+            - Method=GET
           filters:
             - StripPrefix=1
         # Secured endpoints of course-service

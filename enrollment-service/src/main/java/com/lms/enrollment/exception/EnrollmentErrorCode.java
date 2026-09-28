@@ -11,7 +11,9 @@ public enum EnrollmentErrorCode implements ErrorCode {
     REVIEW_ALREADY_EXISTS(4005, "Learner has already reviewed this course", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED_ACCESS(4006, "You do not have access to this enrollment data", HttpStatus.FORBIDDEN),
     QUIZ_ANSWERS_REQUIRED(4007, "Quiz answers must not be empty", HttpStatus.BAD_REQUEST),
-    QUIZ_QUESTIONS_NOT_FOUND(4008, "Quiz has no questions to grade", HttpStatus.BAD_REQUEST);
+    QUIZ_QUESTIONS_NOT_FOUND(4008, "Quiz has no questions to grade", HttpStatus.BAD_REQUEST),
+    PAID_COURSE_REQUIRES_PAYMENT(4009, "Paid courses must be enrolled through a completed order", HttpStatus.FORBIDDEN),
+    COURSE_NOT_AVAILABLE(4010, "Course is not available for enrollment", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;
