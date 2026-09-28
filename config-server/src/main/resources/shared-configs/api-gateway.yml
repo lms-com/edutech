@@ -125,7 +125,11 @@ spring:
         - id: enrollment-service-public
           uri: lb://enrollment-service
           predicates:
+            # Chỉ GET mới công khai. Nếu để khớp cả POST, route này nuốt luôn request
+            # tạo đánh giá và bỏ qua AuthenticationFilter -> thiếu header X-User-Id ->
+            # ReviewController trả 400 dù người dùng đã đăng nhập.
             - Path=/enrollment-service/api/v1/reviews/courses/**, /enrollment-service/v3/api-docs
+            - Method=GET
           filters:
             - StripPrefix=1
         - id: enrollment-service-secured
