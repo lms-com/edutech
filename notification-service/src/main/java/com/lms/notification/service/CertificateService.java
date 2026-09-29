@@ -1,12 +1,13 @@
 package com.lms.notification.service;
 
-import com.lms.notification.entity.Certificate;
+import com.lms.notification.dto.response.CertificateResponse;
+
 import java.util.List;
 
 public interface CertificateService {
     void generateCertificate(String learnerId, String courseId, String enrollmentId);
 
-    List<Certificate> getMyCertificates(String learnerId);
+    List<CertificateResponse> getMyCertificates(String learnerId);
 
-    Certificate verifyCertificate(String qrCodeHash);
+    CertificateResponse verifyCertificate(String qrCodeHash);
 }

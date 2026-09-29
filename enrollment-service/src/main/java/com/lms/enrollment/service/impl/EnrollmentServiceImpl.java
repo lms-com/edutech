@@ -22,8 +22,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.lms.enrollment.client.IamServiceClient;
+import com.lms.enrollment.client.CourseServiceClient;
+import com.lms.enrollment.client.dto.CoursePriceInfoDto;
 import com.lms.enrollment.dto.response.LearnerInfoResponse;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +41,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
     EnrollmentRepository enrollmentRepository;
     IamServiceClient iamServiceClient;
+    CourseServiceClient courseServiceClient;
 
     /**
      * Đăng ký khóa học cho học viên (Learner) một cách trực tiếp.
@@ -50,6 +54,14 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     @Override
     @Transactional
     public EnrollmentResponse enrollLearner(String learnerId, String courseId) {
+        var courseResponse = courseServiceClient.getCoursePriceInfo(courseId);
+        CoursePriceInfoDto course = courseResponse == null ? null : courseResponse.getData();
+        if (course == null || !"PUBLISHED".equalsIgnoreCase(course.getStatus())) {
+            throw new AppException(EnrollmentErrorCode.COURSE_NOT_AVAILABLE);
+        }
+        if (course.getBasePrice() == null || course.getBasePrice().compareTo(BigDecimal.ZERO) > 0) {
+            throw new AppException(EnrollmentErrorCode.PAID_COURSE_REQUIRES_PAYMENT);
+        }
         if (enrollmentRepository.existsByLearnerIdAndCourseId(learnerId, courseId)) {
             throw new AppException(EnrollmentErrorCode.ALREADY_ENROLLED);
         }

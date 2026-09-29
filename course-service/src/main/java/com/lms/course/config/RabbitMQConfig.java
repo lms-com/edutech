@@ -15,14 +15,19 @@ public class RabbitMQConfig {
     public static final String VIDEO_COMPLETED_ROUTING_KEY = "video.completed.routing.key";
 
     @Bean
+    public DirectExchange mediaExchange() {
+        return new DirectExchange(MEDIA_EXCHANGE, true, false);
+    }
+
+    @Bean
     public Queue videoCompletedQueue() {
         return new Queue(VIDEO_COMPLETED_QUEUE, true);
     }
 
     @Bean
-    public Binding videoCompletedBinding() {
-        return BindingBuilder.bind(videoCompletedQueue())
-                .to(new DirectExchange(MEDIA_EXCHANGE))
+    public Binding videoCompletedBinding(Queue videoCompletedQueue, DirectExchange mediaExchange) {
+        return BindingBuilder.bind(videoCompletedQueue)
+                .to(mediaExchange)
                 .with(VIDEO_COMPLETED_ROUTING_KEY);
     }
 }

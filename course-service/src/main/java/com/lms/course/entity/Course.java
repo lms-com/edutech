@@ -11,18 +11,18 @@ import java.util.List;
 
 @Entity
 @Table(name = "courses")
+/**
+ * Chỉ fetch `sections`, KHÔNG fetch kèm `lessons` trong cùng graph.
+ *
+ * Hibernate không cho fetch hai collection dạng List (bag) cùng lúc — fetch cả
+ * `sections` lẫn `sections.lessons` sẽ ném MultipleBagFetchException, khiến API
+ * chi tiết khóa học luôn trả 500. `lessons` được nạp lazy bên trong transaction
+ * readOnly của getCourseById nên vẫn đúng.
+ */
 @NamedEntityGraph(
     name = "course.withCurriculum",
     attributeNodes = {
-        @NamedAttributeNode(value = "sections", subgraph = "sections.lessons")
-    },
-    subgraphs = {
-        @NamedSubgraph(
-            name = "sections.lessons",
-            attributeNodes = {
-                @NamedAttributeNode("lessons")
-            }
-        )
+        @NamedAttributeNode("sections")
     }
 )
 @Getter

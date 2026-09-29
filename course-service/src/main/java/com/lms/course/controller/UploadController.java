@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/uploads")
@@ -22,7 +23,7 @@ public class UploadController {
 
     @Operation(summary = "33. Xin cấp URL Upload trực tiếp (Presigned Upload)", description = "Xin cấp URL Upload trực tiếp từ MinIO cho việc upload file ảnh/video.")
     @GetMapping("/presigned-url")
-    // @PreAuthorize("hasAuthority('MEDIA_UPLOAD')")
+    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
     public ApiResponse<PresignedUrlResponse> getPresignedUrl(
             @RequestParam String filename,
             @RequestParam String contentType) {

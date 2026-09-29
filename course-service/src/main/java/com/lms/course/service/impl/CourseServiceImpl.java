@@ -54,7 +54,10 @@ public class CourseServiceImpl implements CourseService {
                 .category(category)
                 .instructorId(instructorId) // Logical ID từ IAM Service
                 .description(request.getDescription())
-                .thumbnailUrl(request.getThumbnailUrl())
+                // Draft creation does not require a thumbnail. The database column is
+                // NOT NULL, while the learner-facing component already renders its
+                // fallback artwork for an empty URL.
+                .thumbnailUrl(request.getThumbnailUrl() == null ? "" : request.getThumbnailUrl())
                 .level(request.getLevel())
                 .basePrice(request.getBasePrice())
                 .currencyCode(request.getCurrencyCode() != null ? request.getCurrencyCode() : "VND")

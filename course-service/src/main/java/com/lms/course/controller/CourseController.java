@@ -10,6 +10,7 @@ import com.lms.course.dto.response.CourseDetailResponse;
 import com.lms.course.dto.response.CourseResponse;
 import com.lms.course.dto.response.SectionResponse;
 import com.lms.course.service.CourseService;
+import com.lms.course.service.CourseAccessService;
 import com.lms.course.service.SectionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Pageable;
@@ -32,16 +34,17 @@ public class CourseController {
 
     private final CourseService courseService;
     private final SectionService sectionService;
+    private final CourseAccessService courseAccessService;
 
     @Operation(
             summary = "12. Tạo khóa học mới (Bản nháp)",
             description = "Tạo bản nháp khóa học mới")
     @PostMapping
-//    @PreAuthorize("hasAuthority('COURSE_CREATE')")
-    public ApiResponse<CourseResponse> createCourse(@Valid @RequestBody CourseRequest request) {
-        // Tạm thời fix cứng instructorId để test CRUD, sau này sẽ lấy từ SecurityContext
-        String mockInstructorId = "uuid-instructor-test-123";
-        CourseResponse response = courseService.createCourse(request, mockInstructorId);
+    @PreAuthorize("hasAuthority('COURSE_CREATE')")
+    public ApiResponse<CourseResponse> createCourse(
+            @Valid @RequestBody CourseRequest request,
+            @RequestHeader("X-User-Id") String instructorId) {
+        CourseResponse response = courseService.createCourse(request, instructorId);
         return ApiResponse.success(response);
     }
 
@@ -49,8 +52,16 @@ public class CourseController {
             summary = "8. Lấy chi tiết khóa học",
             description = "Lấy chi tiết khóa học và cấu trúc chương trình học (Curriculum)")
     @GetMapping("/{courseId}")
-    public ApiResponse<CourseDetailResponse> getCourseById(@PathVariable String courseId){
+    @PreAuthorize("hasAnyAuthority('COURSE_LEARN', 'COURSE_UPDATE', 'COURSE_APPROVE', 'ADMIN')")
+    public ApiResponse<CourseDetailResponse> getCourseById(
+            @PathVariable String courseId,
+            Authentication authentication) {
         CourseDetailResponse response = courseService.getCourseById(courseId);
+        // Course metadata/outline may be shown before enrollment, but never expose
+        // stored video URLs. Playback URLs are issued only by the guarded /play API.
+        if (!courseAccessService.canManageCourse(courseId, authentication)) {
+            response.getSections().forEach(section -> section.getLessons().forEach(lesson -> lesson.setVideoUrl(null)));
+        }
         return ApiResponse.success(response);
 
     }
@@ -75,7 +86,7 @@ public class CourseController {
 
     @Operation(summary = "10. Lấy khóa học của tôi", description = "Lấy danh sách khóa học của Giảng viên đang đăng nhập")
     @GetMapping("/my-courses")
-//    @PreAuthorize("hasAuthority('COURSE_VIEW_OWN')")
+    @PreAuthorize("hasAuthority('COURSE_VIEW_OWN')")
     public ApiResponse<Page<CourseResponse>> getMyCourses(
             // Giả định Gateway parse JWT và truyền userId qua Header. Hoặc lấy từ SecurityContextHolder
             @RequestHeader("X-User-Id") String instructorId,
@@ -86,11 +97,11 @@ public class CourseController {
 
     @Operation(summary = "13a. Cập nhật khóa học (Từng phần)", description = "Cập nhật một hoặc nhiều thông tin của khóa học. Chỉ cần gửi trường nào muốn sửa.")
     @PatchMapping("/{courseId}")
-//    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
+    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
     public ApiResponse<CourseResponse> updateCoursePartial(
                 @PathVariable String courseId,
                 @RequestBody CourseUpdateRequest request,
-                @RequestHeader("X-Instructor-Id") String instructorId) {
+                @RequestHeader("X-User-Id") String instructorId) {
 
             CourseResponse courseResponse = courseService.updateCourse(courseId, request, instructorId);
             return ApiResponse.success(courseResponse);
@@ -99,11 +110,11 @@ public class CourseController {
     
     @Operation(summary = "13b. Cập nhật khóa học (Đầy đủ)", description = "Thay thế toàn bộ thông tin của khóa học. Bắt buộc gửi đủ các trường bắt buộc (title, slug, categoryId, basePrice).")
     @PutMapping("/{courseId}")
-//    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
+    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
     public ApiResponse<CourseResponse> updateCourseFull(
                 @PathVariable String courseId,
                 @Valid @RequestBody CourseRequest request,
-                @RequestHeader("X-Instructor-Id") String instructorId) {
+                @RequestHeader("X-User-Id") String instructorId) {
 
             CourseResponse courseResponse = courseService.updateCourseFull(courseId, request, instructorId);
             return ApiResponse.success(courseResponse);
@@ -112,21 +123,21 @@ public class CourseController {
     
     @Operation(summary = "14. Nhân bản khóa học", description = "Nhân bản khóa học hiện tại thành một bản nháp mới")
     @PostMapping("/{courseId}/clone")
-//    @PreAuthorize("hasAuthority('COURSE_CREATE')")
+    @PreAuthorize("hasAuthority('COURSE_CREATE')")
     public ApiResponse<CourseResponse> cloneCourse(
             @PathVariable String courseId,
-            @RequestHeader("X-Instructor-Id") String instructorId) {
+            @RequestHeader("X-User-Id") String instructorId) {
         CourseResponse response = courseService.cloneCourse(courseId, instructorId);
         return ApiResponse.success(response);
     }
 
     @Operation(summary = "15. Yêu cầu duyệt / Đổi trạng thái khóa học", description = "Chuyển trạng thái khóa học (ví dụ: DRAFT -> PENDING)")
     @PutMapping("/{courseId}/status")
-//    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
+    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
     public ApiResponse<Void> changeCourseStatus(
             @PathVariable String courseId,
             @Valid @RequestBody CourseStatusUpdateRequest request,
-            @RequestHeader("X-Instructor-Id") String instructorId) {
+            @RequestHeader("X-User-Id") String instructorId) {
         courseService.changeCourseStatus(courseId, request.getStatus(), instructorId);
         return ApiResponse.success(null);
     }
@@ -135,10 +146,10 @@ public class CourseController {
             summary = "19. Gỡ khóa học (Soft Delete / Archive)",
             description = "Gỡ/Xóa mềm khóa học")
     @DeleteMapping("/{courseId}")
-//    @PreAuthorize("hasAuthority('COURSE_DELETE')")
+    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
     public ApiResponse<Void> deleteCourse(
             @PathVariable String courseId,
-            @RequestHeader("X-Instructor-Id") String instructorId) {
+            @RequestHeader("X-User-Id") String instructorId) {
 
         courseService.deleteCourse(courseId, instructorId);
         return ApiResponse.success(null);
@@ -147,7 +158,12 @@ public class CourseController {
 
     @Operation(summary = "23. Sắp xếp lại thứ tự các Chương", description = "Sắp xếp lại thứ tự các Chương")
     @PutMapping("/{courseId}/sections/reorder")
-    public ApiResponse<Void> reorderSections(@PathVariable String courseId, @RequestBody ReorderRequest request) {
+    @PreAuthorize("hasAuthority('COURSE_UPDATE')")
+    public ApiResponse<Void> reorderSections(
+            @PathVariable String courseId,
+            @RequestBody ReorderRequest request,
+            Authentication authentication) {
+        courseAccessService.requireManageCourse(courseId, authentication);
         sectionService.reorderSections(courseId, request.getOrderedIds());
         return ApiResponse.success(null);
     }

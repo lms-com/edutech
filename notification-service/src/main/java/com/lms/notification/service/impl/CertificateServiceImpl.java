@@ -8,6 +8,7 @@ import com.lms.common.exception.AppException;
 import com.lms.common.dto.response.ApiResponse;
 import com.lms.notification.client.CourseServiceClient;
 import com.lms.notification.client.IamServiceClient;
+import com.lms.notification.dto.response.CertificateResponse;
 import com.lms.notification.dto.response.CourseBatchResponse;
 import com.lms.notification.dto.response.LearnerInfoResponse;
 import com.lms.notification.entity.Certificate;
@@ -33,10 +34,13 @@ import org.thymeleaf.context.Context;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -47,6 +51,10 @@ public class CertificateServiceImpl implements CertificateService {
     final CertificateRepository certificateRepository;
     final PdfGeneratorService pdfGeneratorService;
     final MinioClient minioClient;
+
+    /** Địa chỉ giao diện để sinh link xác thực trong mã QR (trước đây hardcode cổng 8000). */
+    @Value("${application.frontend.base-url:http://localhost:5173}")
+    String frontendBaseUrl;
     final IamServiceClient iamServiceClient;
     final CourseServiceClient courseServiceClient;
     final TemplateEngine templateEngine;
@@ -89,7 +97,7 @@ public class CertificateServiceImpl implements CertificateService {
             // 3. Tạo mã QR Code xác thực dạng Base64 chứa URL kiểm tra chứng chỉ
             String qrCodeHash = Base64.getUrlEncoder().withoutPadding()
                     .encodeToString(UUID.randomUUID().toString().getBytes());
-            String verifyUrl = "http://localhost:8000/api/v1/certificates/verify/" + qrCodeHash;
+            String verifyUrl = frontendBaseUrl + "/?verify=" + qrCodeHash;
             String qrCodeBase64 = generateQrCodeBase64(verifyUrl);
 
             // 4. Render HTML Template
@@ -143,16 +151,95 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Certificate> getMyCertificates(String learnerId) {
-        return certificateRepository.findByLearnerId(learnerId);
+    public List<CertificateResponse> getMyCertificates(String learnerId) {
+        List<Certificate> certificates = certificateRepository.findByLearnerId(learnerId);
+        if (certificates.isEmpty()) {
+            return List.of();
+        }
+
+        // Gom lại thành 2 lần gọi batch thay vì mỗi chứng chỉ gọi một lần
+        Map<String, String> learnerNames = fetchLearnerNames(List.of(learnerId));
+        Map<String, String> courseTitles = fetchCourseTitles(
+                certificates.stream().map(Certificate::getCourseId).distinct().toList());
+
+        return certificates.stream()
+                .map(certificate -> toResponse(
+                        certificate,
+                        learnerNames.get(certificate.getLearnerId()),
+                        courseTitles.get(certificate.getCourseId())))
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Certificate verifyCertificate(String qrCodeHash) {
-        return certificateRepository.findByQrCodeHash(qrCodeHash)
+    public CertificateResponse verifyCertificate(String qrCodeHash) {
+        Certificate certificate = certificateRepository.findByQrCodeHash(qrCodeHash)
                 .orElseThrow(
                         () -> new IllegalArgumentException("Mã xác thực chứng chỉ không tồn tại hoặc không hợp lệ."));
+
+        return toResponse(
+                certificate,
+                fetchLearnerNames(List.of(certificate.getLearnerId())).get(certificate.getLearnerId()),
+                fetchCourseTitles(List.of(certificate.getCourseId())).get(certificate.getCourseId()));
+    }
+
+    private CertificateResponse toResponse(Certificate certificate, String learnerName, String courseTitle) {
+        return CertificateResponse.builder()
+                .id(certificate.getId())
+                .learnerId(certificate.getLearnerId())
+                .learnerName(learnerName)
+                .courseId(certificate.getCourseId())
+                .courseTitle(courseTitle)
+                .enrollmentId(certificate.getEnrollmentId())
+                .qrCodeHash(certificate.getQrCodeHash())
+                .pdfUrl(certificate.getPdfUrl())
+                .issuedAt(certificate.getIssuedAt())
+                .build();
+    }
+
+    /**
+     * Tên học viên theo ID. Lỗi mạng thì trả map rỗng: thiếu tên còn hơn làm hỏng
+     * cả trang chứng chỉ.
+     */
+    private Map<String, String> fetchLearnerNames(List<String> learnerIds) {
+        if (learnerIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            ApiResponse<List<LearnerInfoResponse>> response = iamServiceClient.getUserByIds(learnerIds);
+            if (response == null || response.getData() == null) {
+                return Map.of();
+            }
+            return response.getData().stream()
+                    .filter(item -> item.getId() != null)
+                    .collect(Collectors.toMap(LearnerInfoResponse::getId,
+                            item -> item.getFullName() != null ? item.getFullName() : "",
+                            (first, second) -> first));
+        } catch (Exception e) {
+            log.warn("Không lấy được tên học viên từ iam-service: {}", e.getMessage());
+            return Map.of();
+        }
+    }
+
+    /** Tên khóa học theo ID, cùng cách xử lý lỗi như trên. */
+    private Map<String, String> fetchCourseTitles(List<String> courseIds) {
+        if (courseIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            ApiResponse<List<CourseBatchResponse>> response = courseServiceClient.getCourseBatch(courseIds);
+            if (response == null || response.getData() == null) {
+                return Map.of();
+            }
+            return response.getData().stream()
+                    .filter(item -> item.getCourseId() != null)
+                    .collect(Collectors.toMap(CourseBatchResponse::getCourseId,
+                            item -> item.getTitle() != null ? item.getTitle() : "",
+                            (first, second) -> first));
+        } catch (Exception e) {
+            log.warn("Không lấy được tên khóa học từ course-service: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
     // --- Helper sinh QR Code dạng Base64 ---

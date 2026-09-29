@@ -1,7 +1,10 @@
 package com.lms.enrollment.service.impl;
 
+import com.lms.common.dto.response.ApiResponse;
 import com.lms.common.exception.AppException;
+import com.lms.enrollment.client.IamServiceClient;
 import com.lms.enrollment.dto.request.ReviewRequest;
+import com.lms.enrollment.dto.response.LearnerInfoResponse;
 import com.lms.enrollment.dto.response.ReviewResponse;
 import com.lms.enrollment.entity.Enrollment;
 import com.lms.enrollment.entity.Review;
@@ -17,7 +20,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +36,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     EnrollmentRepository enrollmentRepository;
     ReviewRepository reviewRepository;
+    IamServiceClient iamServiceClient;
 
     /**
      * Tạo đánh giá (Review) mới cho khóa học.
@@ -75,12 +83,13 @@ public class ReviewServiceImpl implements ReviewService {
             review = reviewRepository.save(review);
         }
 
-        return mapToResponse(review);
+        return mapToResponse(review, fetchLearners(List.of(userId)).get(userId));
     }
 
     /**
      * Lấy danh sách đánh giá của khóa học hỗ trợ phân trang.
      * Tự động ẩn các đánh giá đã bị xóa mềm nhờ cơ chế @SQLRestriction.
+     * Tên học viên được làm giàu một lần cho cả trang thay vì gọi theo từng đánh giá.
      *
      * @param courseId ID khóa học
      * @param pageable Cấu hình phân trang
@@ -89,8 +98,15 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getCourseReviews(String courseId, Pageable pageable) {
-        return reviewRepository.findAllByCourseId(courseId, pageable)
-                .map(this::mapToResponse);
+        Page<Review> reviews = reviewRepository.findAllByCourseId(courseId, pageable);
+
+        Map<String, LearnerInfoResponse> learners = fetchLearners(
+                reviews.getContent().stream()
+                        .map(review -> review.getEnrollment().getLearnerId())
+                        .toList());
+
+        return reviews.map(review ->
+                mapToResponse(review, learners.get(review.getEnrollment().getLearnerId())));
     }
 
     /**
@@ -138,7 +154,7 @@ public class ReviewServiceImpl implements ReviewService {
         review.setComment(request.getComment());
         review = reviewRepository.save(review);
 
-        return mapToResponse(review);
+        return mapToResponse(review, fetchLearners(List.of(userId)).get(userId));
     }
 
     /**
@@ -160,16 +176,45 @@ public class ReviewServiceImpl implements ReviewService {
 
     /**
      * Chuyển đổi thực thể Review sang DTO ReviewResponse.
+     * `learner` có thể null khi iam-service không trả về thông tin.
      */
-    private ReviewResponse mapToResponse(Review review) {
+    private ReviewResponse mapToResponse(Review review, LearnerInfoResponse learner) {
         return ReviewResponse.builder()
                 .id(review.getId())
                 .enrollmentId(review.getEnrollment().getId())
                 .courseId(review.getCourseId())
                 .learnerId(review.getEnrollment().getLearnerId())
+                .learnerName(learner != null ? learner.getFullName() : null)
+                .learnerAvatar(learner != null ? learner.getAvatarUrl() : null)
                 .star(review.getStar())
                 .comment(review.getComment())
                 .createdAt(review.getCreatedAt())
                 .build();
+    }
+
+    /**
+     * Lấy thông tin học viên theo ID bằng một lần gọi batch.
+     * IamServiceClient đã có fallback trả nhãn trung tính khi iam-service không phản hồi.
+     */
+    private Map<String, LearnerInfoResponse> fetchLearners(List<String> learnerIds) {
+        List<String> distinctIds = learnerIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (distinctIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            ApiResponse<List<LearnerInfoResponse>> response = iamServiceClient.getUsersByIds(distinctIds);
+            if (response == null || response.getData() == null) {
+                return Map.of();
+            }
+            return response.getData().stream()
+                    .filter(item -> item.getId() != null)
+                    .collect(Collectors.toMap(LearnerInfoResponse::getId, item -> item, (first, second) -> first));
+        } catch (Exception e) {
+            log.warn("Không lấy được thông tin học viên từ iam-service: {}", e.getMessage());
+            return Map.of();
+        }
     }
 }
