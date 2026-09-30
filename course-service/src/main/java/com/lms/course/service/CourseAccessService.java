@@ -13,11 +13,13 @@ import com.lms.course.repository.LessonRepository;
 import com.lms.course.repository.QuestionRepository;
 import com.lms.course.repository.SectionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CourseAccessService {
 
@@ -27,7 +29,7 @@ public class CourseAccessService {
     private final QuestionRepository questionRepository;
     private final EnrollmentAccessClient enrollmentAccessClient;
 
-    @Value("${application.security.internal-key}")
+    @Value("${application.security.internal-key:RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=}")
     private String internalKey;
 
     public boolean canManageCourse(String courseId, Authentication authentication) {
@@ -46,16 +48,25 @@ public class CourseAccessService {
     }
 
     public boolean hasActiveEnrollment(String courseId, String userId) {
-        ApiResponse<EnrollmentValidationResponse> response = enrollmentAccessClient.validateAccess(
-                userId, courseId, internalKey);
-        return response != null && response.getData() != null
-                && Boolean.TRUE.equals(response.getData().getHasAccess());
+        try {
+            ApiResponse<EnrollmentValidationResponse> response = enrollmentAccessClient.validateAccess(
+                    userId, courseId, internalKey);
+            return response != null && response.getData() != null
+                    && Boolean.TRUE.equals(response.getData().getHasAccess());
+        } catch (Exception e) {
+            log.warn("Cannot validate enrollment with enrollment-service for user {} and course {}: {}", userId, courseId, e.getMessage());
+            return false;
+        }
     }
 
     public void requireLessonAccess(String lessonId, Authentication authentication) {
         if (canManageLesson(lessonId, authentication)) return;
         Lesson lesson = lessonRepository.findByIdAndDeletedFalse(lessonId)
                 .orElseThrow(() -> new AppException(CourseErrorCode.LESSON_NOT_FOUND));
+        if (Boolean.TRUE.equals(lesson.getFreePreview())) {
+            // Cho phép học viên học thử bài học miễn phí
+            return;
+        }
         String courseId = lesson.getSection().getCourse().getId();
         if (authentication == null || !has(authentication, "COURSE_LEARN")
                 || !hasActiveEnrollment(courseId, authentication.getName())) {
