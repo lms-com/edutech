@@ -17,6 +17,7 @@ import com.lms.course.service.LessonService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class LessonServiceImpl implements LessonService {
@@ -154,19 +156,26 @@ public class LessonServiceImpl implements LessonService {
         VideoLesson videoLesson = (VideoLesson) lesson;
         String videoPath = videoLesson.getVideoUrl();
 
-        if (videoPath == null || videoPath.isEmpty()) {
+        if (videoPath == null || videoPath.trim().isEmpty()) {
              throw new AppException(CourseErrorCode.LESSON_CONTENT_MISSING);
         }
 
-        // Gọi sang Media Service thông qua FeignClient
-        ApiResponse<String> response = mediaServiceClient.getViewUrl(videoPath);
-        
-        if (response != null && response.getCode() == 200) {
-            return response.getData();
-        } else {
-             // Có thể ném lỗi từ media service nếu lấy URL thất bại
-             throw new AppException(CourseErrorCode.INTERNAL_SERVER_ERROR);
+        // Nếu đường dẫn là URL đầy đủ (Youtube, CDN, Cloud Storage trực tiếp) thì trả về luôn
+        if (videoPath.startsWith("http://") || videoPath.startsWith("https://")) {
+            return videoPath;
         }
+
+        // Gọi sang Media Service thông qua FeignClient để lấy Presigned URL xem an toàn
+        try {
+            ApiResponse<String> response = mediaServiceClient.getViewUrl(videoPath);
+            if (response != null && response.getCode() == 200 && response.getData() != null) {
+                return response.getData();
+            }
+        } catch (Exception e) {
+            log.warn("Không thể lấy URL xem từ Media Service cho đường dẫn {}: {}", videoPath, e.getMessage());
+        }
+
+        return videoPath;
     }
 
     // Hàm phụ trợ dùng chung để map Entity -> DTO
