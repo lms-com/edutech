@@ -8,4 +8,5 @@ import java.util.List;
 public interface ProgressService {
     LessonProgressResponse updateLessonProgress(String enrollmentId, String lessonId, ProgressUpdateRequest request, String userId);
     List<LessonProgressResponse> getEnrollmentProgress(String enrollmentId, String userId);
+    void recalculateCompletedRate(com.lms.enrollment.entity.Enrollment enrollment);
 }

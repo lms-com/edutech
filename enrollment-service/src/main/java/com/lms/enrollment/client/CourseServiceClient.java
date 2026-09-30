@@ -16,7 +16,7 @@ public interface CourseServiceClient {
     ApiResponse<CoursePriceInfoDto> getCoursePriceInfo(@PathVariable("courseId") String courseId);
 
     @GetMapping("/api/internal/v1/courses/{courseId}/lesson-count")
-    ApiResponse<Object> getLessonCount(@PathVariable("courseId") String courseId);
+    ApiResponse<com.lms.enrollment.client.dto.LessonCountResponse> getLessonCount(@PathVariable("courseId") String courseId);
 
     @GetMapping("/api/internal/v1/lessons/{lessonId}/validation")
     ApiResponse<Object> validateLesson(@PathVariable("lessonId") String lessonId);

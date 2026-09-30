@@ -35,6 +35,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public TopicExchange courseCompletedExchange() {
+        return new TopicExchange("course-exchange", true, false);
+    }
+
+    @Bean
     public Binding enrollmentBinding(Queue enrollmentOrderCompletedQueue,
                                      DirectExchange orderExchange) {
         return BindingBuilder

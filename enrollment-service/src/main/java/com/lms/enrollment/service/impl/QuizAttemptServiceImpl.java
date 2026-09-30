@@ -30,6 +30,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.lms.enrollment.entity.LessonProgress;
+import com.lms.enrollment.repository.LessonProgressRepository;
+import com.lms.enrollment.service.ProgressService;
+import org.springframework.data.redis.core.RedisTemplate;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -38,7 +43,10 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
 
     EnrollmentRepository enrollmentRepository;
     QuizAttemptRepository quizAttemptRepository;
+    LessonProgressRepository lessonProgressRepository;
+    ProgressService progressService;
     CourseServiceClient courseServiceClient;
+    RedisTemplate<String, Object> redisTemplate;
 
     /**
      * Ngưỡng đạt tạm dùng chung cho mọi bài. Đúng ra phải lấy `passScore` của chính
@@ -107,8 +115,32 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
 
         quizAttemptRepository.save(attempt);
 
-        log.info("Chấm bài quiz {} cho enrollment {}: {}/{} câu đúng, điểm {}",
-                quizId, enrollmentId, correctCount, correctAnswers.size(), score);
+        log.info("Chấm bài quiz {} cho enrollment {}: {}/{} câu đúng, điểm {}, đạt: {}",
+                quizId, enrollmentId, correctCount, correctAnswers.size(), score, passed);
+
+        if (passed) {
+            LessonProgress progress = lessonProgressRepository.findByEnrollmentIdAndLessonId(enrollmentId, quizId)
+                    .orElseGet(() -> LessonProgress.builder()
+                            .id(UUID.randomUUID().toString())
+                            .enrollment(enrollment)
+                            .lessonId(quizId)
+                            .isCompleted(false)
+                            .lastWatchTimeSeconds(0)
+                            .build());
+            progress.setIsCompleted(true);
+            lessonProgressRepository.save(progress);
+
+            try {
+                String redisKey = "progress:" + enrollmentId + ":" + quizId;
+                redisTemplate.delete(redisKey);
+                redisTemplate.opsForSet().remove("progress:sync_queue", redisKey);
+            } catch (Exception e) {
+                log.warn("Lỗi dọn Redis cache cho quiz {}: {}", quizId, e.getMessage());
+            }
+
+            // Kích hoạt tính lại tiến độ và cấp chứng chỉ nếu đạt 100%
+            progressService.recalculateCompletedRate(enrollment);
+        }
 
         return QuizResultResponse.builder()
                 .lessonId(quizId)

@@ -159,11 +159,13 @@ public class ProgressServiceImpl implements ProgressService {
      *
      * @param enrollment Thực thể Ghi danh khóa học
      */
-    private void recalculateCompletedRate(Enrollment enrollment) {
+    @Override
+    public void recalculateCompletedRate(Enrollment enrollment) {
         try {
-            com.lms.common.dto.response.ApiResponse<Object> lessonCountResponse = courseServiceClient.getLessonCount(enrollment.getCourseId());
+            com.lms.common.dto.response.ApiResponse<com.lms.enrollment.client.dto.LessonCountResponse> lessonCountResponse =
+                    courseServiceClient.getLessonCount(enrollment.getCourseId());
             if (lessonCountResponse != null && lessonCountResponse.getData() != null) {
-                int totalLessons = ((Number) lessonCountResponse.getData()).intValue();
+                long totalLessons = lessonCountResponse.getData().getTotalLessons();
                 if (totalLessons > 0) {
                     long completedLessons = lessonProgressRepository.countByEnrollmentIdAndIsCompletedTrue(enrollment.getId());
                     int rate = (int) ((completedLessons * 100) / totalLessons);
@@ -172,7 +174,8 @@ public class ProgressServiceImpl implements ProgressService {
                     if (rate != enrollment.getCompletedRate()) {
                         enrollment.setCompletedRate(rate);
                         enrollmentRepository.save(enrollment);
-                        log.info("Enrollment ID {} completed rate updated to {}%", enrollment.getId(), rate);
+                        log.info("Enrollment ID {} completed rate updated to {}% ({}/{} lessons)",
+                                enrollment.getId(), rate, completedLessons, totalLessons);
 
                         if (rate == 100) {
                             CourseCompletedEvent completedEvent = CourseCompletedEvent.builder()
@@ -187,7 +190,7 @@ public class ProgressServiceImpl implements ProgressService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error auto-calculating progress for enrollment ID {}: {}", enrollment.getId(), e.getMessage());
+            log.error("Error auto-calculating progress for enrollment ID {}: {}", enrollment.getId(), e.getMessage(), e);
         }
     }
 
