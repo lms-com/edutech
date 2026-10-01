@@ -16,4 +16,5 @@ public class VnPayConfig {
     private String apiUrl;
     private String returnUrl;
     private String ipnUrl;
+    private String frontendReturnUrl = "http://localhost:5173";
 }

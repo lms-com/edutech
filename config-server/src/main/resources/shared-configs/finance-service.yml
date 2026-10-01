@@ -80,3 +80,4 @@ vnpay:
   api-url: ""
   return-url: http://localhost:8080/finance-service/api/v1/payments/vnpay-callback
   ipn-url: https://acoelous-mark-uncarburetted.ngrok-free.dev
+  frontend-return-url: ${FRONTEND_RETURN_URL:http://localhost:5173}

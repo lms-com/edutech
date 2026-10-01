@@ -100,7 +100,14 @@ public class PaymentServiceImpl implements PaymentService {
             String key = entry.getKey();
             String value = entry.getValue();
             if (key != null &&  !key.equals("vnp_SecureHash") && !key.equals("vnp_SecureHashType")) {
-                fields.put(key, URLDecoder.decode(value, StandardCharsets.US_ASCII));
+                String decoded = value;
+                try {
+                    if (value != null) {
+                        decoded = URLDecoder.decode(value, StandardCharsets.US_ASCII);
+                    }
+                } catch (Exception ignored) {
+                }
+                fields.put(key, decoded);
             }
         }
 
@@ -174,12 +181,16 @@ public class PaymentServiceImpl implements PaymentService {
             String jsonResponse = objectMapper.writeValueAsString(params);
             // Lay thoi gian thanh toan:
             String vnpPayDateStr = params.get("vnp_PayDate");
-            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-            LocalDateTime localDateTime = LocalDateTime.parse(vnpPayDateStr, timeFormatter);
-            // Gan thoi gian la dang theo moc VN
-            ZoneId zonId = ZoneId.systemDefault();
-            ZonedDateTime zonedDateTime = localDateTime.atZone(zonId);
-            paidAt = zonedDateTime.toInstant();
+            if (vnpPayDateStr != null && vnpPayDateStr.length() >= 14) {
+                DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+                LocalDateTime localDateTime = LocalDateTime.parse(vnpPayDateStr, timeFormatter);
+                // Gan thoi gian la dang theo moc VN
+                ZoneId zonId = ZoneId.systemDefault();
+                ZonedDateTime zonedDateTime = localDateTime.atZone(zonId);
+                paidAt = zonedDateTime.toInstant();
+            } else {
+                paidAt = Instant.now();
+            }
             payment.addTransaction(PaymentTransaction.builder()
                     .gatewayTransactionId(params.get("vnp_BankTranNo"))   // Ma giao dich dich thuc tu Ngan hang
                     .gateway(payment.getPaymentMethod().name())
