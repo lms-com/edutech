@@ -3,6 +3,8 @@ server:
   port: 8008
 
 spring:
+  main:
+    lazy-initialization: true
   application:
     name: notification-service
   config:

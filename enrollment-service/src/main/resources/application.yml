@@ -3,6 +3,8 @@ server:
   port: 8006
 
 spring:
+  main:
+    lazy-initialization: true
   application:
     name: enrollment-service
   config:
