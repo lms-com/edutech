@@ -50,9 +50,8 @@ public class CourseController {
 
     @Operation(
             summary = "8. Lấy chi tiết khóa học",
-            description = "Lấy chi tiết khóa học và cấu trúc chương trình học (Curriculum)")
+            description = "Lấy chi tiết khóa học và cấu trúc chương trình học (Curriculum) - Công khai")
     @GetMapping("/{courseId}")
-    @PreAuthorize("hasAnyAuthority('COURSE_LEARN', 'COURSE_UPDATE', 'COURSE_APPROVE', 'ADMIN')")
     public ApiResponse<CourseDetailResponse> getCourseById(
             @PathVariable String courseId,
             Authentication authentication) {

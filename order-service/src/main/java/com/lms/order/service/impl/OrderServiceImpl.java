@@ -22,6 +22,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lms.order.dto.response.OrderResponse;
+import com.lms.order.mapper.OrderMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +42,7 @@ import static com.lms.order.config.RabbitMQConfig.ORDER_COMPLETED_ROUTING_KEY;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderMapper orderMapper;
     private final CourseServiceFeignClient courseClient;
     private final PromotionService promotionService;
     private final FinanceServiceFeignClient financeClient;
@@ -191,5 +197,20 @@ public class OrderServiceImpl implements OrderService {
 
         OrderCompletedMessage message = new OrderCompletedMessage(orderId, learnerId, items);
         rabbitTemplate.convertAndSend(ORDER_EXCHANGE, ORDER_COMPLETED_ROUTING_KEY, message);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getMyOrders(String learnerId, Pageable pageable) {
+        Page<Order> orderPage = orderRepository.findByLearnerIdOrderByCreatedAtDesc(learnerId, pageable);
+        return orderPage.map(orderMapper::toOrderResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderDetailByLearner(String orderId, String learnerId) {
+        Order order = orderRepository.findByIdAndLearnerId(orderId, learnerId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND, "Không tìm thấy đơn hàng: " + orderId));
+        return orderMapper.toOrderResponse(order);
     }
 }

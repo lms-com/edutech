@@ -29,4 +29,25 @@ public class OrderController {
         String vnPayUrl = orderService.createOrderAndGetPaymentUrl(request, userId);
         return ApiResponse.success(Map.of("paymentUrl", vnPayUrl));
     }
+
+    @Operation(summary = "Lấy danh sách đơn hàng của tôi", description = "Trả về lịch sử đơn hàng của học viên có phân trang")
+    @GetMapping("/me")
+    public ApiResponse<org.springframework.data.domain.Page<OrderResponse>> getMyOrders(
+            @RequestHeader("X-User-Id") String userId,
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable
+    ) {
+        org.springframework.data.domain.Page<OrderResponse> orders = orderService.getMyOrders(userId, pageable);
+        return ApiResponse.success(orders);
+    }
+
+    @Operation(summary = "Lấy chi tiết đơn hàng", description = "Trả về chi tiết đơn hàng theo orderId của học viên")
+    @GetMapping("/{orderId}")
+    public ApiResponse<OrderResponse> getOrderDetail(
+            @PathVariable("orderId") String orderId,
+            @RequestHeader("X-User-Id") String userId
+    ) {
+        OrderResponse order = orderService.getOrderDetailByLearner(orderId, userId);
+        return ApiResponse.success(order);
+    }
 }

@@ -2,7 +2,10 @@ package com.lms.order.service;
 
 import com.lms.order.client.feign.course.dto.CourseInternalRequest;
 import com.lms.order.dto.request.CreateOrderRequest;
+import com.lms.order.dto.response.OrderResponse;
 import com.lms.order.dto.response.PendingOrderResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -12,4 +15,6 @@ public interface OrderService {
     PendingOrderResponse createOrder (CreateOrderRequest request, String learnerId);
     List<CourseInternalRequest> getCoursesByOrderId (String orderId);
     void markAsPaid (String orderId);
+    Page<OrderResponse> getMyOrders(String learnerId, Pageable pageable);
+    OrderResponse getOrderDetailByLearner(String orderId, String learnerId);
 }

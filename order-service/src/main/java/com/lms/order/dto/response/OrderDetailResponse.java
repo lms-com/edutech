@@ -13,7 +13,13 @@ import java.math.BigDecimal;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderDetailResponse {
 
+    String id;
+
+    String courseId;
+
     String courseName;
+
+    String instructorId;
 
     BigDecimal originalPrice;
 

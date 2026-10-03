@@ -54,7 +54,7 @@ spring:
         - id: course-service-public
           uri: lb://course-service
           predicates:
-            - Path=/course-service/api/v1/categories/**, /course-service/api/v1/courses, /course-service/api/v1/courses/*/related, /course-service/v3/api-docs
+            - Path=/course-service/api/v1/categories/**, /course-service/api/v1/courses, /course-service/api/v1/courses/*, /course-service/api/v1/courses/*/related, /course-service/v3/api-docs
             - Method=GET
           filters:
             - StripPrefix=1

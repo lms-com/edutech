@@ -12,13 +12,17 @@ import java.util.List;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderResponse {
+    String id;
+
     String learnerId;
 
     BigDecimal totalPrice;
 
-    String currencyCode ;
+    String currencyCode;
 
     OrderStatus status;
+
+    java.time.Instant createdAt;
 
     List<OrderDetailResponse> orderDetails;
 }
