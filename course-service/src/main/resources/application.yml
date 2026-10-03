@@ -1,0 +1,32 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: course-service
+
+
+
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/course_db?useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+  #chỗ này nhớ chỉnh lại false khi deploy để k hiện sql trên console
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_batch_fetch_size: 20
+#trước khi deploy nhớ chỉnh lại warn cho 2 phần dưới để k log
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
