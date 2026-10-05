@@ -5,11 +5,13 @@ import com.lms.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import static com.lms.order.config.RabbitMQConfig.PAYMENT_PROCESSED_QUEUE;
 
 @Component
+@Lazy(false)
 @Slf4j
 @RequiredArgsConstructor
 public class PaymentEventListener {

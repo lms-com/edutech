@@ -18,6 +18,7 @@ public enum OrderErrorCode implements ErrorCode {
     CURRENCY_NOT_SUPPORTED (6007, "Currency not supported", HttpStatus.BAD_REQUEST),
     PAYMENT_NOT_CONNECTED (6008, "Payment not connected", HttpStatus.BAD_REQUEST),
     ORDER_NOT_FOUND (6009, "Order not found", HttpStatus.NOT_FOUND),
+    COURSE_ALREADY_PURCHASED (6010, "Bạn đã sở hữu khóa học này rồi", HttpStatus.BAD_REQUEST),
     ;
     private final int code;
     private final String message;

@@ -2,6 +2,8 @@ server:
   port: 8006
 
 spring:
+  main:
+    lazy-initialization: false
   datasource:
     url: jdbc:mysql://localhost:3306/enrollment_db?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8
     username: ${DB_USERNAME:root}
