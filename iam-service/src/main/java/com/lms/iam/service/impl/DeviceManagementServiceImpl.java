@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DeviceManagementServiceImpl implements DeviceManagementService {
     private final StringRedisTemplate redisTemplate;
+    private final com.lms.iam.repository.UserRepository userRepository;
 
     @Override
     public void registerDevice(String userId, String deviceFingerPrint) {
@@ -97,7 +98,8 @@ public class DeviceManagementServiceImpl implements DeviceManagementService {
     @Override
     public boolean existsInBlackList(String userId, String deviceFingerPrint) {
         String redisKey = getUserBlackListRedisKey(userId);
-        return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(redisKey, deviceFingerPrint));
+        Double score = redisTemplate.opsForZSet().score(redisKey, deviceFingerPrint);
+        return score != null;
     }
 
     @Override
@@ -106,13 +108,71 @@ public class DeviceManagementServiceImpl implements DeviceManagementService {
             return;
         String redisKey = getUserBlackListRedisKey(userId);
         redisTemplate.opsForZSet().add(redisKey, deviceFingerPrint, System.currentTimeMillis());
+        redisTemplate.expire(redisKey, DEVICE_EXPIRATION_DAYS, TimeUnit.DAYS);
     }
-
 
     @Override
     public void deleteAllDevicesOfUser(String userId) {
         String redisKey = getUserDeviceRedisKey(userId);
         redisTemplate.delete(redisKey);
         log.info("All devices of user {} were deleted successfully", userId);
+    }
+
+    @Override
+    public List<com.lms.iam.dto.response.AdminDeviceResponse> getAllActiveDevices(String search) {
+        List<com.lms.iam.dto.response.AdminDeviceResponse> result = new java.util.ArrayList<>();
+        List<com.lms.iam.model.User> users;
+        if (search != null && !search.trim().isEmpty()) {
+            users = userRepository.findAll().stream()
+                    .filter(u -> (u.getEmail() != null && u.getEmail().toLowerCase().contains(search.toLowerCase()))
+                            || (u.getFullName() != null && u.getFullName().toLowerCase().contains(search.toLowerCase())))
+                    .toList();
+        } else {
+            users = userRepository.findAll();
+        }
+
+        for (com.lms.iam.model.User user : users) {
+            String redisKey = getUserDeviceRedisKey(user.getId());
+            Set<ZSetOperations.TypedTuple<String>> tuples = redisTemplate.opsForZSet().reverseRangeWithScores(redisKey, 0, -1);
+            if (tuples != null && !tuples.isEmpty()) {
+                for (ZSetOperations.TypedTuple<String> tuple : tuples) {
+                    if (tuple.getValue() == null || tuple.getScore() == null) continue;
+                    long epochMilli = tuple.getScore().longValue();
+                    LocalDateTime loginAt = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMilli), ZoneId.systemDefault());
+                    boolean blocked = existsInBlackList(user.getId(), tuple.getValue());
+
+                    long diffMinutes = (System.currentTimeMillis() - epochMilli) / (60 * 1000);
+                    String lastActiveStr;
+                    if (diffMinutes < 1) {
+                        lastActiveStr = "Vừa xong";
+                    } else if (diffMinutes < 60) {
+                        lastActiveStr = diffMinutes + " phút trước";
+                    } else if (diffMinutes < 1440) {
+                        lastActiveStr = (diffMinutes / 60) + " giờ trước";
+                    } else {
+                        lastActiveStr = (diffMinutes / 1440) + " ngày trước";
+                    }
+
+                    result.add(com.lms.iam.dto.response.AdminDeviceResponse.builder()
+                            .deviceId(tuple.getValue())
+                            .deviceFingerprint(tuple.getValue())
+                            .userId(user.getId())
+                            .userEmail(user.getEmail())
+                            .userFullName(user.getFullName())
+                            .loginAt(loginAt)
+                            .lastActive(lastActiveStr)
+                            .isBlocked(blocked)
+                            .build());
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void revokeDevice(String userId, String deviceFingerprint) {
+        deleteUserDevice(userId, deviceFingerprint);
+        addToBlackList(userId, deviceFingerprint);
+        log.info("Admin revoked and blacklisted device {} of user {}", deviceFingerprint, userId);
     }
 }

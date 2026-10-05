@@ -1,5 +1,6 @@
 package com.lms.iam.service;
 
+import com.lms.iam.dto.response.AdminDeviceResponse;
 import com.lms.iam.dto.response.UserDeviceResponse;
 
 import java.util.List;
@@ -23,4 +24,8 @@ public interface DeviceManagementService {
     void addToBlackList (String userId, String deviceFingerPrint);
 
     void deleteAllDevicesOfUser (String userId);
+
+    List<AdminDeviceResponse> getAllActiveDevices(String search);
+
+    void revokeDevice(String userId, String deviceFingerprint);
 }

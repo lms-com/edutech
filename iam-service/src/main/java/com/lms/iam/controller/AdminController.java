@@ -22,6 +22,7 @@ import java.util.List;
 public class AdminController {
 
     private final UserService userService;
+    private final com.lms.iam.service.DeviceManagementService deviceService;
 
     @Operation(summary = "Get all users")
     @GetMapping("/users")
@@ -51,5 +52,24 @@ public class AdminController {
     {
         userService.updateUserStatus(userId, request);
         return ApiResponse.success("User status updated successfully");
+    }
+
+    @Operation(summary = "Liệt kê tất cả thiết bị phiên đăng nhập", description = "Lấy danh sách thiết bị đang hoạt động trên hệ thống lưu trong Redis")
+    @GetMapping("/devices")
+    public ApiResponse<List<com.lms.iam.dto.response.AdminDeviceResponse>> getAllActiveDevices(
+            @RequestParam(required = false) String search
+    ) {
+        List<com.lms.iam.dto.response.AdminDeviceResponse> devices = deviceService.getAllActiveDevices(search);
+        return ApiResponse.success(devices, "Lấy danh sách thiết bị thành công");
+    }
+
+    @Operation(summary = "Thu hồi phiên thiết bị", description = "Xóa thiết bị khỏi Redis và đưa vào danh sách đen")
+    @PostMapping("/devices/revoke")
+    public ApiResponse<String> revokeDevice(
+            @RequestParam String userId,
+            @RequestParam String deviceFingerprint
+    ) {
+        deviceService.revokeDevice(userId, deviceFingerprint);
+        return ApiResponse.success("Đã thu hồi phiên và chặn thiết bị thành công");
     }
 }
