@@ -11,6 +11,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class QuestionItemRequest {
     String questionText;
+    String explanation;
     Integer orderIndex;
     List<AnswerItemRequest> answers; // Chứa danh sách các đáp án (thường là 4 đáp án A,B,C,D)
 }

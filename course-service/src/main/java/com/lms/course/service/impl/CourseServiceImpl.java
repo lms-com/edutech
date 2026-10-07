@@ -407,6 +407,7 @@ public class CourseServiceImpl implements CourseService {
             builder.duration(video.getDuration());
         } else if (lesson instanceof Quiz quiz) {
             builder.passScore(quiz.getPassScore());
+            builder.duration(quiz.getDuration() != null && quiz.getDuration() > 0 ? quiz.getDuration() : 900);
         }
 
         return builder.build();

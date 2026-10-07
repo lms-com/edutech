@@ -227,6 +227,10 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND,
                         "Order not found for id: " + orderId));
+        if (order.getStatus() == OrderStatus.PAID) {
+            log.info("Order {} is already PAID. Skipping duplicate processing.", orderId);
+            return;
+        }
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
 
@@ -236,7 +240,9 @@ public class OrderServiceImpl implements OrderService {
                 .peek(id -> log.info("🆔 Promotion id {}", id))
                 .toList();
         // Tang so luot dung cho tung promotion
-        promotionService.increaseUsageCountBatch(promotionIdList);
+        if (!promotionIdList.isEmpty()) {
+            promotionService.increaseUsageCountBatch(promotionIdList);
+        }
 
         // Lay learnerId:
         String learnerId = order.getLearnerId();

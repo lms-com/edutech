@@ -30,6 +30,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -169,14 +171,39 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     @Override
     @Transactional
     public void enrollFromOrder(OrderCompletedEvent event) {
-        List<String> courseIds = event.getItems().stream().map(OrderCompletedEvent.OrderItemDto::getCourseId).toList();
+        if (event == null || event.getItems() == null) {
+            log.warn("OrderCompletedEvent or items is null, skipping enrollment processing.");
+            return;
+        }
+
+        if (event.getLearnerId() == null || event.getLearnerId().isBlank()) {
+            log.warn("LearnerId is null or blank in OrderCompletedEvent, skipping.");
+            return;
+        }
+
+        List<String> courseIds = event.getItems().stream()
+                .map(OrderCompletedEvent.OrderItemDto::getCourseId)
+                .filter(Objects::nonNull)
+                .toList();
+
         log.info("Processing auto-enrollment for learnerId: {} and courses: {}", event.getLearnerId(), courseIds);
         for (String courseId : courseIds) {
             try {
-                if (enrollmentRepository.existsByLearnerIdAndCourseId(event.getLearnerId(), courseId)) {
-                    log.info("Learner {} is already enrolled in course {}, skipping.", event.getLearnerId(), courseId);
+                Optional<Enrollment> existingOpt = enrollmentRepository.findByLearnerIdAndCourseId(event.getLearnerId(), courseId);
+                if (existingOpt.isPresent()) {
+                    Enrollment existing = existingOpt.get();
+                    if (existing.getStatus() != EnrollmentStatus.ACTIVE) {
+                        EnrollmentStatus prevStatus = existing.getStatus();
+                        existing.setStatus(EnrollmentStatus.ACTIVE);
+                        enrollmentRepository.save(existing);
+                        log.info("Re-activated enrollment for learner {} to course {} (previous status: {}).",
+                                event.getLearnerId(), courseId, prevStatus);
+                    } else {
+                        log.info("Learner {} is already enrolled in course {}, skipping.", event.getLearnerId(), courseId);
+                    }
                     continue;
                 }
+
                 Enrollment enrollment = Enrollment.builder()
                         .id(UUID.randomUUID().toString())
                         .learnerId(event.getLearnerId())

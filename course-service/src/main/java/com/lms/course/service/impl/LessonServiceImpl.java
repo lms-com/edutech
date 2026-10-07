@@ -196,6 +196,7 @@ public class LessonServiceImpl implements LessonService {
         } else if (lesson instanceof Quiz) {
             Quiz quiz = (Quiz) lesson;
             response.setPassScore(quiz.getPassScore());
+            response.setDuration(quiz.getDuration() != null && quiz.getDuration() > 0 ? quiz.getDuration() : 900);
         }
 
         return response;

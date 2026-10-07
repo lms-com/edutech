@@ -12,6 +12,8 @@ public class QuestionUpdateRequest {
     @NotBlank(message = "Nội dung câu hỏi không được để trống")
     private String questionText;
 
+    private String explanation;
+
     @NotNull(message = "Danh sách đáp án không được để trống")
     @Valid
     private List<AnswerItemRequest> answers;

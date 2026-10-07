@@ -13,4 +13,6 @@ public class CourseCorrectAnswerDto {
     private String questionId;
     private String questionText;
     private List<String> correctAnswerIds;
+    private String explanation;
+    private Integer passScore;
 }

@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class OrderCompletedMessage {
     String orderId;
     String learnerId;

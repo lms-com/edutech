@@ -51,6 +51,7 @@ public class QuizBankServiceImpl implements QuizBankService {
             Question question = new Question();
             question.setQuiz(quiz);
             question.setQuestionText(qItem.getQuestionText());
+            question.setExplanation(qItem.getExplanation());
             question.setOrderIndex(qItem.getOrderIndex());
             questionsToSave.add(question); // Quăng vào rổ
 
@@ -82,6 +83,9 @@ public class QuizBankServiceImpl implements QuizBankService {
                 .orElseThrow(() -> new AppException(CourseErrorCode.QUESTION_NOT_FOUND));
 
         question.setQuestionText(request.getQuestionText());
+        if (request.getExplanation() != null) {
+            question.setExplanation(request.getExplanation());
+        }
         questionRepository.save(question);
 
         // Đơn giản hóa: Xóa mềm tất cả đáp án cũ và thêm đáp án mới
@@ -180,6 +184,7 @@ public class QuizBankServiceImpl implements QuizBankService {
         return QuestionResponse.builder()
                 .id(question.getId())
                 .questionText(question.getQuestionText())
+                .explanation(hideCorrectAnswer ? null : question.getExplanation())
                 .orderIndex(question.getOrderIndex())
                 .answers(answerResponses)
                 .build();

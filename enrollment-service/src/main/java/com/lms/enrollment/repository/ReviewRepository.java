@@ -18,4 +18,7 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
 
     @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM reviews WHERE enrollment_id = :enrollmentId", nativeQuery = true)
     Optional<Review> findByEnrollmentIdIncludingDeleted(@org.springframework.data.repository.query.Param("enrollmentId") String enrollmentId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT r.star, COUNT(r) FROM Review r WHERE r.courseId = :courseId GROUP BY r.star")
+    List<Object[]> countReviewsByStar(@org.springframework.data.repository.query.Param("courseId") String courseId);
 }

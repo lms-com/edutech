@@ -136,7 +136,15 @@ public class InternalCourseServiceImpl implements InternalCourseService {
             throw new AppException(CourseErrorCode.LESSON_NOT_FOUND);
         }
 
-        // 2. Map từng câu hỏi sang response kèm danh sách ID đáp án đúng
+        int passScore = lessonRepository.findByIdAndDeletedFalse(lessonId)
+                .filter(lesson -> lesson instanceof com.lms.course.entity.Quiz)
+                .map(lesson -> ((com.lms.course.entity.Quiz) lesson).getPassScore())
+                .filter(java.util.Objects::nonNull)
+                .map(java.math.BigDecimal::intValue)
+                .filter(score -> score > 0)
+                .orElse(80);
+
+        // 2. Map từng câu hỏi sang response kèm danh sách ID đáp án đúng, giải thích và điểm đạt
         return questions.stream().map(question -> {
             List<String> correctIds = answerRepository
                     .findByQuestionIdAndDeletedFalseAndCorrectTrue(question.getId())
@@ -146,6 +154,8 @@ public class InternalCourseServiceImpl implements InternalCourseService {
                     .questionId(question.getId())
                     .questionText(question.getQuestionText())
                     .correctAnswerIds(correctIds)
+                    .explanation(question.getExplanation())
+                    .passScore(passScore)
                     .build();
         }).collect(Collectors.toList());
     }
