@@ -1,6 +1,7 @@
 package com.lms.iam.controller;
 
 import com.lms.common.dto.response.ApiResponse;
+import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.iam.dto.request.LoginRequest;
 import com.lms.iam.dto.request.LogoutRequest;
 import com.lms.iam.dto.request.RegisterRequest;
@@ -38,6 +39,7 @@ public class AuthController {
 
     @Operation(summary = "Logout", description = "Logout current device from sign in session")
     @PostMapping("/logout")
+    @RequireJwt
     public ApiResponse<?> logout(
             @RequestHeader(value = "X-User-Id") String userId,
             @RequestBody @Valid LogoutRequest logoutRequest) {

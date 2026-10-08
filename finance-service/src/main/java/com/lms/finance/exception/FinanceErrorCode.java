@@ -14,6 +14,9 @@ public enum FinanceErrorCode implements ErrorCode {
     INVALID_PAYMENT (7004, "Invalid payment", HttpStatus.BAD_REQUEST),
     INSTRUCTOR_BALANCE_NOT_EXISTS (7005, "Instructor balance not exists", HttpStatus.BAD_REQUEST),
     UNKNOWN_TRANSACTION_TYPE (7006, "Unknown transaction type", HttpStatus.BAD_REQUEST),
+    BANK_ACCOUNT_NOT_EXISTS (7007, "Bank account not exists", HttpStatus.BAD_REQUEST),
+    PAYOUT_REQUEST_NOT_EXISTS (7008, "Payout request not found", HttpStatus.BAD_REQUEST),
+    INVALID_PAYOUT_REQUEST_STATUS (7008, "Invalid request status", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;

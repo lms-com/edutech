@@ -2,6 +2,7 @@ package com.lms.iam.controller;
 
 import com.lms.common.dto.response.ApiResponse;
 import com.lms.common.exception.AppException;
+import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.iam.dto.response.UserDeviceResponse;
 import com.lms.iam.dto.response.UserProfileReponse;
 import com.lms.iam.exception.IamErrorCode;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @Tag(name = "User Controller", description = "Personal API for User's deserving")
 @RequestMapping("/api/v1/user")
+@RequireJwt
 @RequiredArgsConstructor
 public class UserController {
 

@@ -1,6 +1,7 @@
 package com.lms.media.controller;
 
 import com.lms.common.dto.response.ApiResponse;
+import com.lms.common.swagger.annotation.RequireInternalKey;
 import com.lms.media.service.MediaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/internal/v1")
+@RequireInternalKey
 @RequiredArgsConstructor
 @Tag(name = "Internal Media Controller", description = "APIs serve internal services")
 public class InternalMediaController {

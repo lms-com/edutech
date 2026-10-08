@@ -66,6 +66,8 @@ application:
     balance-settlement: "0 * * * * ?"
   finance:
     refund-deadline: 7
+    minimum-payout-amount: 500000
+    default-currency: "VND"
   security:
     internal-key: RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=
 

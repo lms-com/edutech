@@ -1,5 +1,6 @@
 package com.lms.finance.controller;
 
+import com.lms.common.swagger.annotation.RequireInternalKey;
 import com.lms.finance.dto.request.CreatePaymentRequest;
 import com.lms.finance.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/internal/v1/payments")
+@RequireInternalKey
 @RequiredArgsConstructor
 public class InternalPaymentController {
     private final PaymentService paymentService;

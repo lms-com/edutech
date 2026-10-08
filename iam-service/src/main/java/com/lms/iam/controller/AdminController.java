@@ -1,6 +1,7 @@
 package com.lms.iam.controller;
 
 import com.lms.common.dto.response.ApiResponse;
+import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.iam.dto.request.UpdateUserStatusRequest;
 import com.lms.iam.dto.response.UserResponse;
 import com.lms.iam.model.User;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @Tag(name = "Admin Controller", description = "API related to system, operations and user administration")
 @RequestMapping("/api/v1/admin")
+@RequireJwt
 @RequiredArgsConstructor
 public class AdminController {
 
