@@ -36,7 +36,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     private final List<String> strictApis = List.of(
             "/api/v1/media/secure/key/**", // Xin chìa khóa video
             "/api/v1/user/password/change", // Đổi pass
-            "/api/v1/order/checkout"
+            "/api/v1/order/checkout",
+            "api/v1/finance/**"
     );
 
     public static class Config {}

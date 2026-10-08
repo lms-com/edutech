@@ -1,6 +1,7 @@
 package com.lms.media.controller;
 
 import com.lms.common.dto.response.ApiResponse;
+import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.media.client.course.CourseServiceFeignClient;
 import com.lms.media.dto.request.GetUploadUrlRequest;
 import com.lms.media.dto.response.GetUploadUrlResponse;
@@ -25,6 +26,7 @@ public class MediaController {
 
     @Operation(summary = "Get video presigned upload url")
     @PostMapping("/upload-url")
+    @RequireJwt
     public ApiResponse<GetUploadUrlResponse> getUploadUrl (@RequestBody GetUploadUrlRequest request){
         return ApiResponse.success(
                 mediaService.requestUploadUrl(request)
@@ -33,6 +35,7 @@ public class MediaController {
 
     @Operation(summary = "Confirm video")
     @PostMapping("/{mediaId}/confirm")
+    @RequireJwt
     public ApiResponse<Void> confirm (@PathVariable("mediaId") String mediaId){
         mediaService.confirmUploadUrl(mediaId);
         return ApiResponse.success(null, "Confirmed successfully!");
@@ -40,6 +43,7 @@ public class MediaController {
 
     @Operation(summary = "Get manifest content", description = "Get manifest content contains paths of .ts files and URL for requesting encryption key in order to decrypt .ts files")
     @GetMapping("/{mediaId}/view")
+    @RequireJwt
     public ResponseEntity<String> getVideoManifest (@RequestHeader(name = "X-User-Id") String learnerId, @PathVariable String mediaId){
 
         String dynamicManifest = mediaService.getVideoManifest(learnerId, mediaId);
@@ -51,17 +55,8 @@ public class MediaController {
     }
 
 
-    private final CourseServiceFeignClient courseServiceFeignClient;
-
-    @GetMapping("/test/tao/lao")
-    public ApiResponse<?> getTaoLao () {
-        if (courseServiceFeignClient.isEnrolled("user123", "media321")) {
-            log.info("😅");
-        }
-        return ApiResponse.success(null, "😁😁😁 Get Internal Key successfully!");
-    }
-
     @GetMapping("/secure/key/{mediaId}")
+    @RequireJwt
     public ResponseEntity<byte[]> getEncryptionKey (
                 @RequestHeader("X-User-Id") String learnerId,
                 @PathVariable("mediaId") String mediaId,

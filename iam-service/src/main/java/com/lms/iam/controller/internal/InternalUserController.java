@@ -1,6 +1,7 @@
 package com.lms.iam.controller.internal;
 
 import com.lms.common.dto.response.ApiResponse;
+import com.lms.common.swagger.annotation.RequireInternalKey;
 import com.lms.iam.dto.response.LearnerInfoResponse;
 import com.lms.iam.model.User;
 import com.lms.iam.repository.UserRepository;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Hidden
+@RequireInternalKey
 public class InternalUserController {
 
     UserRepository userRepository;

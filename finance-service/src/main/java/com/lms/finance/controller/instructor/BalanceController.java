@@ -1,6 +1,7 @@
 package com.lms.finance.controller.instructor;
 
 import com.lms.common.dto.response.ApiResponse;
+import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.finance.dto.request.BalanceHistoryFilterRequest;
 import com.lms.finance.dto.response.BalanceHistoryInstructorResponse;
 import com.lms.finance.dto.response.BalanceInstructorResponse;
@@ -23,6 +24,7 @@ import java.util.List;
 @Tag(name = "Apis for balances")
 @RequestMapping("/api/v1/instructor/balances")
 @RestController
+@RequireJwt
 @RequiredArgsConstructor
 public class BalanceController {
     private final InstructorBalanceService balanceService;

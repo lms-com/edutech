@@ -4,6 +4,8 @@ import com.lms.finance.enums.PayoutStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
@@ -68,4 +70,15 @@ public class PayoutRequest {
     @Column(name = "bank_reference_no", length = 100)
     String bankReferenceNo;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
+    Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
+    Instant updatedAt;
+
+    @Column(name = "version", nullable = false)
+    @Version
+    Long version;
 }

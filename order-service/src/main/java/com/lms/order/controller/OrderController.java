@@ -1,6 +1,7 @@
 package com.lms.order.controller;
 
 import com.lms.common.dto.response.ApiResponse;
+import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.order.dto.request.CreateOrderRequest;
 import com.lms.order.dto.response.OrderResponse;
 import com.lms.order.service.OrderService;
@@ -15,6 +16,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/orders")
+@RequireJwt
 @Tag(name = "Order Controller", description = "Apis serving ordering")
 public class OrderController {
 

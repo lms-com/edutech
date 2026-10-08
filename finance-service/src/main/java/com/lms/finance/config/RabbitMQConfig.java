@@ -23,26 +23,20 @@ public class RabbitMQConfig {
     public static final String PAYMENT_VNPAY_SUCCESS_ROUTING_KEY = "payment.vnpay.success";
     public static final String PAYMENT_VNPAY_FAILURE_ROUTING_KEY = "payment.vnpay.failure";
 
-
-    /*@Bean
-    public Queue paymentProcessedQueue() {
-        return new Queue(PAYMENT_PROCESSED_QUEUE, true);
-    }*/
-
     @Bean
     public TopicExchange paymentExchange() {
         return new TopicExchange(PAYMENT_EXCHANGE, true, false);
     }
 
-    /*@Bean
-    public Binding paymentVnPaySuccessBinding(Queue paymentProcessedQueue, TopicExchange paymentExchange) {
-        return BindingBuilder.bind(paymentProcessedQueue).to(paymentExchange).with(PAYMENT_VNPAY_SUCCESS_ROUTING_KEY);
-    }*/
+    public static final String PAYOUT_EXCHANGE = "payout.exchange";
+    public static final String PAYOUT_PENDING_ROUTING_KEY = "payout.pending";
+    public static final String PAYOUT_SUCCESS_ROUTING_KEY = "payout.success";
+    public static final String PAYOUT_REJECTED_ROUTING_KEY = "payout.rejected";
 
-    /*@Bean
-    public Binding paymentVnPayFailureBinding(Queue paymentProcessedQueue, TopicExchange paymentExchange) {
-        return BindingBuilder.bind(paymentProcessedQueue).to(paymentExchange).with(PAYMENT_VNPAY_FAILURE_ROUTING_KEY);
-    }*/
+    @Bean
+    public TopicExchange payoutExchange() {
+        return new TopicExchange(PAYOUT_EXCHANGE, true, false);
+    }
 
     /**
      * Receiving message

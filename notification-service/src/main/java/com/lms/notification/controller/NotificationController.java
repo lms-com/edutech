@@ -1,6 +1,7 @@
 package com.lms.notification.controller;
 
 import com.lms.common.dto.response.ApiResponse;
+import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.notification.dto.response.NotificationResponse;
 import com.lms.notification.dto.response.UnreadCountResponse;
 import com.lms.notification.service.NotificationService;
@@ -22,6 +23,7 @@ public class NotificationController {
     NotificationService notificationService;
 
     @GetMapping("/me")
+    @RequireJwt
     public ApiResponse<Page<NotificationResponse>> getMyNotification(
             @RequestHeader("X-User-Id") String userId,
             @RequestParam(required = false) Boolean isRead,

@@ -20,11 +20,14 @@ public interface InstructorBalanceRepository extends JpaRepository<InstructorBal
 
     boolean existsByInstructorId(String instructorId);
 
+
     @Query(value = """
         SELECT * FROM instructor_balances
         WHERE instructor_id = :instructorId
+        FOR UPDATE 
     """, nativeQuery = true)
     Optional<InstructorBalance> findByInstructorId(@Param("instructorId") String instructorId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<InstructorBalance> findByInstructorIdIn(Collection<String> instructorIds);
 }

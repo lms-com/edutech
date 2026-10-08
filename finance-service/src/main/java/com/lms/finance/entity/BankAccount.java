@@ -51,7 +51,7 @@ public class BankAccount {
      */
     @Column(name = "is_primary", nullable = false)
     @Builder.Default
-    Boolean primary = false;
+    Boolean isPrimary = false;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
