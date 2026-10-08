@@ -5,9 +5,11 @@ import com.lms.common.exception.AppException;
 import com.lms.enrollment.client.IamServiceClient;
 import com.lms.enrollment.dto.request.ReviewRequest;
 import com.lms.enrollment.dto.response.LearnerInfoResponse;
+import com.lms.enrollment.dto.response.RatingSummaryResponse;
 import com.lms.enrollment.dto.response.ReviewResponse;
 import com.lms.enrollment.entity.Enrollment;
 import com.lms.enrollment.entity.Review;
+import com.lms.enrollment.enums.EnrollmentStatus;
 import com.lms.enrollment.exception.EnrollmentErrorCode;
 import com.lms.enrollment.repository.EnrollmentRepository;
 import com.lms.enrollment.repository.ReviewRepository;
@@ -17,9 +19,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,19 +39,17 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ReviewServiceImpl implements ReviewService {
 
+    static final String SUMMARY_CACHE_PREFIX = "enrollment:reviews:summary:";
+
     EnrollmentRepository enrollmentRepository;
     ReviewRepository reviewRepository;
     IamServiceClient iamServiceClient;
+    RedisTemplate<String, Object> redisTemplate;
 
     /**
      * Tạo đánh giá (Review) mới cho khóa học.
-     * Xác thực học viên đã ghi danh vào khóa học này chưa (nếu chưa thì báo lỗi unauthorized).
+     * Xác thực học viên đã ghi danh vào khóa học này và có trạng thái ACTIVE.
      * Đảm bảo ràng buộc nghiệp vụ: Mỗi lượt ghi danh chỉ được tạo tối đa 1 đánh giá (Review).
-     *
-     * @param courseId ID khóa học cần đánh giá
-     * @param request Nội dung đánh giá (Số sao và bình luận)
-     * @param userId ID người dùng đang gửi yêu cầu
-     * @return ReviewResponse Thông tin đánh giá vừa tạo
      */
     @Override
     @Transactional
@@ -54,8 +57,11 @@ public class ReviewServiceImpl implements ReviewService {
         Enrollment enrollment = enrollmentRepository.findByLearnerIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> new AppException(EnrollmentErrorCode.UNAUTHORIZED_ACCESS));
 
+        if (enrollment.getStatus() != EnrollmentStatus.ACTIVE) {
+            throw new AppException(EnrollmentErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
         // Kiểm tra xem đã tồn tại đánh giá nào (bao gồm cả đã xóa mềm) chưa
-        // Check if any review exists (including soft-deleted ones)
         java.util.Optional<Review> existingReviewOpt = reviewRepository.findByEnrollmentIdIncludingDeleted(enrollment.getId());
 
         Review review;
@@ -83,17 +89,12 @@ public class ReviewServiceImpl implements ReviewService {
             review = reviewRepository.save(review);
         }
 
+        evictRatingSummaryCache(courseId);
         return mapToResponse(review, fetchLearners(List.of(userId)).get(userId));
     }
 
     /**
      * Lấy danh sách đánh giá của khóa học hỗ trợ phân trang.
-     * Tự động ẩn các đánh giá đã bị xóa mềm nhờ cơ chế @SQLRestriction.
-     * Tên học viên được làm giàu một lần cho cả trang thay vì gọi theo từng đánh giá.
-     *
-     * @param courseId ID khóa học
-     * @param pageable Cấu hình phân trang
-     * @return Page<ReviewResponse> Trang danh sách các đánh giá
      */
     @Override
     @Transactional(readOnly = true)
@@ -110,11 +111,67 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
+     * Tổng hợp điểm đánh giá trung bình và phân bố số sao (1-5 sao) cho khóa học.
+     * Có cache Redis để tối ưu hiệu năng khi nhiều người xem chi tiết khóa học.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public RatingSummaryResponse getCourseRatingSummary(String courseId) {
+        String cacheKey = SUMMARY_CACHE_PREFIX + courseId;
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached instanceof RatingSummaryResponse summary) {
+                return summary;
+            }
+        } catch (Exception e) {
+            log.debug("Bỏ qua đọc cache rating summary cho khóa học {}: {}", courseId, e.getMessage());
+        }
+
+        Map<Integer, Long> distribution = new LinkedHashMap<>();
+        for (int star = 5; star >= 1; star--) {
+            distribution.put(star, 0L);
+        }
+
+        List<Object[]> rows = reviewRepository.countReviewsByStar(courseId);
+        long totalReviews = 0L;
+        long weightedSum = 0L;
+
+        if (rows != null) {
+            for (Object[] row : rows) {
+                if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                    int star = ((Number) row[0]).intValue();
+                    long count = ((Number) row[1]).longValue();
+                    if (star >= 1 && star <= 5) {
+                        distribution.put(star, count);
+                        totalReviews += count;
+                        weightedSum += (long) star * count;
+                    }
+                }
+            }
+        }
+
+        double averageRating = totalReviews > 0
+                ? Math.round((weightedSum * 10.0) / totalReviews) / 10.0
+                : 0.0;
+
+        RatingSummaryResponse summary = RatingSummaryResponse.builder()
+                .courseId(courseId)
+                .averageRating(averageRating)
+                .totalReviews(totalReviews)
+                .starDistribution(distribution)
+                .build();
+
+        try {
+            redisTemplate.opsForValue().set(cacheKey, summary, Duration.ofHours(1));
+        } catch (Exception e) {
+            log.debug("Bỏ qua lưu cache rating summary cho khóa học {}: {}", courseId, e.getMessage());
+        }
+
+        return summary;
+    }
+
+    /**
      * Học viên tự thực hiện xóa đánh giá của mình (Xóa mềm - Soft Delete).
-     * Đảm bảo tính bảo mật, chỉ chính chủ nhân đánh giá mới được quyền xóa.
-     *
-     * @param reviewId ID đánh giá
-     * @param userId ID người dùng gửi yêu cầu
      */
     @Override
     @Transactional
@@ -126,19 +183,13 @@ public class ReviewServiceImpl implements ReviewService {
             throw new AppException(EnrollmentErrorCode.UNAUTHORIZED_ACCESS);
         }
 
-        // Thực hiện xóa mềm: Đánh dấu cờ isDeleted là true và lưu lại
         review.setIsDeleted(true);
         reviewRepository.save(review);
+        evictRatingSummaryCache(review.getCourseId());
     }
 
     /**
      * Cập nhật nội dung đánh giá (Số sao và bình luận).
-     * Chỉ cho phép chính học viên tạo đánh giá đó được sửa đổi.
-     *
-     * @param reviewId ID đánh giá cần sửa
-     * @param request Nội dung cập nhật mới
-     * @param userId ID người dùng gửi yêu cầu
-     * @return ReviewResponse Thông tin đánh giá sau khi cập nhật thành công
      */
     @Override
     @Transactional
@@ -153,15 +204,13 @@ public class ReviewServiceImpl implements ReviewService {
         review.setStar(request.getStar());
         review.setComment(request.getComment());
         review = reviewRepository.save(review);
+        evictRatingSummaryCache(review.getCourseId());
 
         return mapToResponse(review, fetchLearners(List.of(userId)).get(userId));
     }
 
     /**
      * Quản trị viên (Admin) thực hiện xóa đánh giá (Xóa mềm - Soft Delete).
-     * Không yêu cầu xác thực ID người dùng là chủ sở hữu.
-     *
-     * @param reviewId ID đánh giá
      */
     @Override
     @Transactional
@@ -169,9 +218,19 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new AppException(EnrollmentErrorCode.PROGRESS_NOT_FOUND));
 
-        // Quản trị viên xóa mềm đánh giá
         review.setIsDeleted(true);
         reviewRepository.save(review);
+        evictRatingSummaryCache(review.getCourseId());
+    }
+
+    private void evictRatingSummaryCache(String courseId) {
+        try {
+            if (courseId != null) {
+                redisTemplate.delete(SUMMARY_CACHE_PREFIX + courseId);
+            }
+        } catch (Exception e) {
+            log.debug("Không xóa được cache rating summary cho khóa học {}: {}", courseId, e.getMessage());
+        }
     }
 
     /**

@@ -2,6 +2,7 @@ package com.lms.enrollment.controller;
 
 import com.lms.common.dto.response.ApiResponse;
 import com.lms.enrollment.dto.request.ReviewRequest;
+import com.lms.enrollment.dto.response.RatingSummaryResponse;
 import com.lms.enrollment.dto.response.ReviewResponse;
 import com.lms.enrollment.service.ReviewService;
 import jakarta.validation.Valid;
@@ -34,6 +35,11 @@ public class ReviewController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ApiResponse.success(reviewService.getCourseReviews(courseId, PageRequest.of(page, size)));
+    }
+
+    @GetMapping("/courses/{courseId}/summary")
+    public ApiResponse<RatingSummaryResponse> getCourseRatingSummary(@PathVariable String courseId) {
+        return ApiResponse.success(reviewService.getCourseRatingSummary(courseId));
     }
 
     @DeleteMapping("/{id}")

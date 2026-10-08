@@ -14,4 +14,6 @@ public class CorrectAnswerResponse {
     private String questionId;
     private String questionText;
     private List<String> correctAnswerIds; // Danh sách ID đáp án đúng
+    private String explanation;
+    private Integer passScore;
 }

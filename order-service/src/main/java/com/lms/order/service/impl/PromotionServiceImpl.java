@@ -64,6 +64,10 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional
     public void increaseUsageCountBatch (List<String> promotionIds) {
+        if (promotionIds == null || promotionIds.isEmpty()) {
+            return;
+        }
+
         Map<String, Integer> promoMapCount = promotionIds.stream()
                 .collect(Collectors.toMap(item -> item, item -> 1,  Integer::sum));
 

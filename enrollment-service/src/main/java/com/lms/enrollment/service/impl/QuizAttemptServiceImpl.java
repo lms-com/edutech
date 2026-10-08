@@ -91,18 +91,41 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
             chosenByQuestion.putIfAbsent(answer.getQuestionId(), answer.getAnswerId());
         }
 
-        long correctCount = correctAnswers.stream()
-                .filter(question -> {
-                    Set<String> accepted = new HashSet<>(
-                            question.getCorrectAnswerIds() != null ? question.getCorrectAnswerIds() : List.of());
-                    return accepted.contains(chosenByQuestion.get(question.getQuestionId()));
-                })
-                .count();
+        int passScore = correctAnswers.stream()
+                .map(CourseCorrectAnswerDto::getPassScore)
+                .filter(java.util.Objects::nonNull)
+                .filter(s -> s > 0)
+                .findFirst()
+                .orElse(DEFAULT_PASS_SCORE);
+
+        List<QuizResultResponse.QuestionResultDetail> details = new java.util.ArrayList<>();
+        long correctCount = 0;
+
+        for (CourseCorrectAnswerDto question : correctAnswers) {
+            List<String> acceptedList = question.getCorrectAnswerIds() != null
+                    ? question.getCorrectAnswerIds()
+                    : List.of();
+            Set<String> accepted = new HashSet<>(acceptedList);
+            String chosenAnswerId = chosenByQuestion.get(question.getQuestionId());
+            boolean isCorrect = chosenAnswerId != null && accepted.contains(chosenAnswerId);
+            if (isCorrect) {
+                correctCount++;
+            }
+
+            details.add(QuizResultResponse.QuestionResultDetail.builder()
+                    .questionId(question.getQuestionId())
+                    .questionText(question.getQuestionText())
+                    .selectedAnswerId(chosenAnswerId)
+                    .correctAnswerIds(acceptedList)
+                    .isCorrect(isCorrect)
+                    .explanation(question.getExplanation())
+                    .build());
+        }
 
         // Mẫu số là TỔNG số câu hỏi, không phải số câu đã trả lời — bỏ trống câu
         // không được làm điểm cao hơn.
         int score = (int) Math.round(correctCount * 100.0 / correctAnswers.size());
-        boolean passed = score >= DEFAULT_PASS_SCORE;
+        boolean passed = score >= passScore;
 
         QuizAttempt attempt = QuizAttempt.builder()
                 .id(UUID.randomUUID().toString())
@@ -145,11 +168,13 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         return QuizResultResponse.builder()
                 .lessonId(quizId)
                 .score(score)
+                .passScore(passScore)
                 .isPassed(passed)
                 .feedback(passed
                         ? "Chúc mừng, bạn đã vượt qua bài kiểm tra!"
                         : String.format("Bạn trả lời đúng %d/%d câu. Vui lòng làm lại để đạt ít nhất %d%% điểm.",
-                                correctCount, correctAnswers.size(), DEFAULT_PASS_SCORE))
+                                correctCount, correctAnswers.size(), passScore))
+                .details(details)
                 .build();
     }
 

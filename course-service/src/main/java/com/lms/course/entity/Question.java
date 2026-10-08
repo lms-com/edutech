@@ -25,6 +25,9 @@ public class Question extends AuditableEntity {
     @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
     private String questionText;
 
+    @Column(name = "explanation", columnDefinition = "TEXT")
+    private String explanation;
+
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 

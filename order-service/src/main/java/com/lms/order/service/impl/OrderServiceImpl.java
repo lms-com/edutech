@@ -1,8 +1,11 @@
 package com.lms.order.service.impl;
 
+import com.lms.common.dto.response.ApiResponse;
 import com.lms.common.exception.AppException;
 import com.lms.order.client.feign.course.CourseServiceFeignClient;
 import com.lms.order.client.feign.course.dto.CourseInternalRequest;
+import com.lms.order.client.feign.enrollment.EnrollmentFeignClient;
+import com.lms.order.client.feign.enrollment.dto.EnrollmentValidationResponse;
 import com.lms.order.client.feign.finance.FinanceServiceFeignClient;
 import com.lms.order.client.feign.finance.dto.CreatePaymentDto;
 import com.lms.order.dto.message.OrderCompletedMessage;
@@ -28,9 +31,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.lms.order.config.RabbitMQConfig.ORDER_EXCHANGE;
@@ -46,6 +52,7 @@ public class OrderServiceImpl implements OrderService {
     private final CourseServiceFeignClient courseClient;
     private final PromotionService promotionService;
     private final FinanceServiceFeignClient financeClient;
+    private final EnrollmentFeignClient enrollmentClient;
     private final RabbitTemplate rabbitTemplate;
     private final String DEFAULT_CURRENCY = "VND";
 
@@ -72,9 +79,57 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    private void validateNotAlreadyEnrolled(CreateOrderRequest request, String learnerId) {
+        if (enrollmentClient == null || request.getItems() == null) return;
+        for (CreateOrderRequest.CartItemRequest item : request.getItems()) {
+            try {
+                ApiResponse<EnrollmentValidationResponse> res = enrollmentClient.validateAccess(learnerId, item.getCourseId());
+                if (res != null && res.getData() != null && Boolean.TRUE.equals(res.getData().getHasAccess())) {
+                    log.warn("⚠️ Học viên {} đã sở hữu khóa học {}", learnerId, item.getCourseId());
+                    throw new AppException(OrderErrorCode.COURSE_ALREADY_PURCHASED, "Bạn đã sở hữu khóa học này rồi");
+                }
+            } catch (AppException e) {
+                throw e;
+            } catch (Exception e) {
+                log.warn("Không thể kiểm tra ghi danh từ enrollment-service: {}", e.getMessage());
+            }
+        }
+    }
+
     @Override
+    @Transactional
     public PendingOrderResponse createOrder(CreateOrderRequest request, String learnerId) {
-        // Tao doi tuong Order
+        // 1. Kiểm tra xem học viên đã sở hữu khóa học nào trong đơn chưa
+        validateNotAlreadyEnrolled(request, learnerId);
+
+        // 2. Kiểm tra các đơn PENDING hiện có của học viên
+        Instant now = Instant.now();
+        Instant fifteenMinutesAgo = now.minus(15, ChronoUnit.MINUTES);
+
+        List<Order> existingPendingOrders = orderRepository.findByLearnerIdAndStatus(learnerId, OrderStatus.PENDING);
+        Set<String> requestCourseIds = request.getItems().stream()
+                .map(CreateOrderRequest.CartItemRequest::getCourseId)
+                .collect(Collectors.toSet());
+
+        for (Order pendingOrder : existingPendingOrders) {
+            if (pendingOrder.getCreatedAt() != null && pendingOrder.getCreatedAt().isBefore(fifteenMinutesAgo)) {
+                // Đơn đã quá 15 phút -> tự động hủy (CANCELLED)
+                pendingOrder.setStatus(OrderStatus.CANCELLED);
+                orderRepository.save(pendingOrder);
+                log.info("⏰ Đơn hàng {} của học viên {} đã quá 15 phút, tự động chuyển sang CANCELLED", pendingOrder.getId(), learnerId);
+            } else {
+                // Đơn còn hiệu lực trong vòng 15 phút -> kiểm tra xem có cùng danh sách khóa học không
+                Set<String> pendingCourseIds = pendingOrder.getOrderDetails().stream()
+                        .map(OrderDetail::getCourseId)
+                        .collect(Collectors.toSet());
+                if (pendingCourseIds.equals(requestCourseIds)) {
+                    log.info("♻️ Tái sử dụng đơn hàng PENDING còn hiệu lực ({}) cho học viên {}", pendingOrder.getId(), learnerId);
+                    return new PendingOrderResponse(pendingOrder.getId(), pendingOrder.getTotalPrice());
+                }
+            }
+        }
+
+        // 3. Nếu không có đơn PENDING trùng khớp còn hiệu lực -> Tạo đơn mới
         Order order = Order.builder()
                 .learnerId(learnerId)
                 .currencyCode(DEFAULT_CURRENCY)
@@ -172,6 +227,10 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND,
                         "Order not found for id: " + orderId));
+        if (order.getStatus() == OrderStatus.PAID) {
+            log.info("Order {} is already PAID. Skipping duplicate processing.", orderId);
+            return;
+        }
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
 
@@ -181,7 +240,9 @@ public class OrderServiceImpl implements OrderService {
                 .peek(id -> log.info("🆔 Promotion id {}", id))
                 .toList();
         // Tang so luot dung cho tung promotion
-        promotionService.increaseUsageCountBatch(promotionIdList);
+        if (!promotionIdList.isEmpty()) {
+            promotionService.increaseUsageCountBatch(promotionIdList);
+        }
 
         // Lay learnerId:
         String learnerId = order.getLearnerId();
