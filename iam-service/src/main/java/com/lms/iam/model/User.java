@@ -30,4 +30,6 @@ public class User extends AuditableEntity {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     Userstatus status;
+    @Column(name = "pin_hash")
+    String pinHash;
 }

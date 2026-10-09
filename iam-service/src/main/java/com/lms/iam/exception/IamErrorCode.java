@@ -26,6 +26,10 @@ public enum IamErrorCode implements ErrorCode {
     OTP_INVALID(2016, "Mã OTP không chính xác", HttpStatus.BAD_REQUEST),
     OTP_EXPIRED(2017, "Mã OTP đã hết hạn hoặc không tồn tại", HttpStatus.BAD_REQUEST),
     INVALID_GOOGLE_TOKEN(2018, "Google token không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
+    PIN_ALREADY_SET(2019, "Mã PIN bảo mật đã được thiết lập. Hãy sử dụng chức năng đổi mã PIN.", HttpStatus.BAD_REQUEST),
+    PIN_NOT_SET(2020, "Tài khoản chưa thiết lập mã PIN bảo mật cấp 2.", HttpStatus.BAD_REQUEST),
+    PIN_INCORRECT(2021, "Mã PIN bảo mật không chính xác.", HttpStatus.BAD_REQUEST),
+    FINANCIAL_SESSION_EXPIRED(2022, "Phiên bảo mật tài chính đã hết hạn hoặc chưa được mở khóa.", HttpStatus.FORBIDDEN),
     ;
 
     private final int code;
