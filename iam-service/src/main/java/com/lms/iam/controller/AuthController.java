@@ -49,4 +49,25 @@ public class AuthController {
                 .message("You have logged out!")
                 .build();
     }
+
+    @Operation(summary = "Forgot Password", description = "Gửi mã OTP xác thực qua email để đặt lại mật khẩu")
+    @PostMapping("/forgot-password")
+    public ApiResponse<String> forgotPassword(@RequestBody @Valid com.lms.iam.dto.request.ForgotPasswordRequest request) {
+        authService.sendForgotPasswordOtp(request);
+        return ApiResponse.success("Mã xác thực OTP đã được gửi đến email của bạn.");
+    }
+
+    @Operation(summary = "Verify OTP", description = "Kiểm tra tính hợp lệ của mã OTP")
+    @PostMapping("/verify-otp")
+    public ApiResponse<String> verifyOtp(@RequestBody @Valid com.lms.iam.dto.request.VerifyOtpRequest request) {
+        authService.verifyOtp(request);
+        return ApiResponse.success("Xác thực mã OTP thành công.");
+    }
+
+    @Operation(summary = "Reset Password", description = "Đặt lại mật khẩu mới bằng mã OTP")
+    @PostMapping("/reset-password")
+    public ApiResponse<String> resetPassword(@RequestBody @Valid com.lms.iam.dto.request.ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ApiResponse.success("Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay với mật khẩu mới.");
+    }
 }

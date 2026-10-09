@@ -23,6 +23,8 @@ public enum IamErrorCode implements ErrorCode {
     JWT_TOKEN_INVALID(2013, "JWT token invalid", HttpStatus.BAD_REQUEST),
     USER_LOCKED(2014, "User locked", HttpStatus.FORBIDDEN),
     USER_DISABLED(2015, "User disabled", HttpStatus.FORBIDDEN),
+    OTP_INVALID(2016, "Mã OTP không chính xác", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(2017, "Mã OTP đã hết hạn hoặc không tồn tại", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;

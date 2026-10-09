@@ -28,6 +28,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+import com.lms.iam.config.RabbitMQConfig;
+import com.lms.iam.dto.event.SendOtpEvent;
+import com.lms.iam.dto.request.ForgotPasswordRequest;
+import com.lms.iam.dto.request.ResetPasswordRequest;
+import com.lms.iam.dto.request.VerifyOtpRequest;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,6 +51,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final DeviceManagementService deviceManagementService;
     private final RoleService roleService;
+    private final RabbitTemplate rabbitTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
@@ -139,5 +151,84 @@ public class AuthServiceImpl implements AuthService {
     public void logout(String userId, LogoutRequest request) {
         // Xoa user:device khoi redis
         deviceManagementService.deleteUserDevice(userId, request.getDeviceFingerPrint());
+    }
+
+    @Override
+    public void sendForgotPasswordOtp(ForgotPasswordRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(IamErrorCode.USER_NOT_EXISTED, "Email không tồn tại trong hệ thống."));
+
+        // Sinh mã OTP 6 chữ số ngẫu nhiên an toàn
+        String otpCode = String.format("%06d", new SecureRandom().nextInt(1_000_000));
+
+        // Lưu mã OTP vào Redis với thời hạn sống 5 phút
+        String redisKey = "auth:otp:" + email;
+        redisTemplate.opsForValue().set(redisKey, otpCode, 5, TimeUnit.MINUTES);
+
+        // Bắn sự kiện lên RabbitMQ để notification-service gửi email ngầm qua SMTP/SendGrid
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE_IAM,
+                    RabbitMQConfig.ROUTING_KEY_OTP,
+                    SendOtpEvent.builder().email(email).otpCode(otpCode).build()
+            );
+            log.info("✔ [IAM] Đã phát sự kiện SendOtpEvent cho email [{}], mã OTP: [{}]", email, otpCode);
+        } catch (Exception e) {
+            log.error("❌ [IAM] Thất bại khi gửi sự kiện OTP qua RabbitMQ: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void verifyOtp(VerifyOtpRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        String redisKey = "auth:otp:" + email;
+        String savedOtp = redisTemplate.opsForValue().get(redisKey);
+
+        if (savedOtp == null) {
+            throw new AppException(IamErrorCode.OTP_EXPIRED, "Mã OTP đã hết hạn hoặc chưa được tạo. Vui lòng gửi lại yêu cầu.");
+        }
+        if (!savedOtp.equals(request.getOtp().trim())) {
+            throw new AppException(IamErrorCode.OTP_INVALID, "Mã OTP không chính xác. Vui lòng kiểm tra lại.");
+        }
+
+        // Đánh dấu email này đã xác thực OTP thành công (thời hạn 10 phút)
+        redisTemplate.opsForValue().set("auth:otp_verified:" + email, "true", 10, TimeUnit.MINUTES);
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(IamErrorCode.USER_NOT_EXISTED, "Tài khoản không tồn tại."));
+
+        String verifiedKey = "auth:otp_verified:" + email;
+        String isVerified = redisTemplate.opsForValue().get(verifiedKey);
+        String otpKey = "auth:otp:" + email;
+        String savedOtp = redisTemplate.opsForValue().get(otpKey);
+
+        boolean otpMatches = savedOtp != null && savedOtp.equals(request.getOtp().trim());
+        boolean alreadyVerified = "true".equals(isVerified);
+
+        if (!otpMatches && !alreadyVerified) {
+            throw new AppException(IamErrorCode.OTP_INVALID, "Mã OTP không hợp lệ hoặc chưa được xác thực.");
+        }
+
+        // Cập nhật mật khẩu mới mã hóa BCrypt
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Thu hồi toàn bộ phiên đăng nhập cũ để bảo mật
+        try {
+            deviceManagementService.deleteAllDevicesOfUser(user.getId());
+        } catch (Exception e) {
+            log.warn("Không thể thu hồi các thiết bị cũ sau khi đổi mật khẩu: {}", e.getMessage());
+        }
+
+        // Xóa sạch các token OTP khỏi Redis
+        redisTemplate.delete(otpKey);
+        redisTemplate.delete(verifiedKey);
+        log.info("✔ [IAM] Đã đặt lại mật khẩu thành công cho tài khoản [{}]", email);
     }
 }
