@@ -25,6 +25,7 @@ public enum IamErrorCode implements ErrorCode {
     USER_DISABLED(2015, "User disabled", HttpStatus.FORBIDDEN),
     OTP_INVALID(2016, "Mã OTP không chính xác", HttpStatus.BAD_REQUEST),
     OTP_EXPIRED(2017, "Mã OTP đã hết hạn hoặc không tồn tại", HttpStatus.BAD_REQUEST),
+    INVALID_GOOGLE_TOKEN(2018, "Google token không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;

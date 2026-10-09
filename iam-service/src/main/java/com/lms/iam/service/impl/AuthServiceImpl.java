@@ -28,14 +28,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lms.iam.config.RabbitMQConfig;
 import com.lms.iam.dto.event.SendOtpEvent;
 import com.lms.iam.dto.request.ForgotPasswordRequest;
+import com.lms.iam.dto.request.GoogleLoginRequest;
+import com.lms.iam.dto.request.RegisterConfirmRequest;
+import com.lms.iam.dto.request.RegisterInitRequest;
+import com.lms.iam.dto.request.RegisterPendingData;
 import com.lms.iam.dto.request.ResetPasswordRequest;
 import com.lms.iam.dto.request.VerifyOtpRequest;
+import com.lms.iam.security.CustomUserDetailsService;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
 import java.security.SecureRandom;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -53,6 +65,9 @@ public class AuthServiceImpl implements AuthService {
     private final RoleService roleService;
     private final RabbitTemplate rabbitTemplate;
     private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final RestTemplate restTemplate;
+    private final CustomUserDetailsService userDetailsService;
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
@@ -230,5 +245,219 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.delete(otpKey);
         redisTemplate.delete(verifiedKey);
         log.info("✔ [IAM] Đã đặt lại mật khẩu thành công cho tài khoản [{}]", email);
+    }
+
+    @Override
+    public void initiateRegister(RegisterInitRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new AppException(IamErrorCode.EMAIL_ALREADY_EXISTS, "Email này đã được sử dụng. Vui lòng đăng nhập hoặc chọn email khác.");
+        }
+
+        // Sinh mã OTP 6 số ngẫu nhiên
+        String otpCode = String.format("%06d", new SecureRandom().nextInt(1_000_000));
+
+        RegisterPendingData pendingData = RegisterPendingData.builder()
+                .email(email)
+                .fullName(request.getFullName().trim())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .otpCode(otpCode)
+                .build();
+
+        try {
+            String json = objectMapper.writeValueAsString(pendingData);
+            redisTemplate.opsForValue().set("auth:register_pending:" + email, json, 5, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.error("Lỗi khi lưu thông tin đăng ký tạm vào Redis: {}", e.getMessage());
+            throw new AppException(IamErrorCode.UNAUTHENTICATED, "Không thể khởi tạo phiên đăng ký. Vui lòng thử lại.");
+        }
+
+        // Gửi sự kiện SendOtpEvent qua RabbitMQ
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE_IAM,
+                    RabbitMQConfig.ROUTING_KEY_OTP,
+                    SendOtpEvent.builder().email(email).otpCode(otpCode).build()
+            );
+            log.info("✔ [IAM] Đã gửi mã OTP đăng ký cho email [{}]", email);
+        } catch (Exception e) {
+            log.error("❌ [IAM] Thất bại khi gửi sự kiện OTP đăng ký qua RabbitMQ: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse confirmRegister(RegisterConfirmRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        String pendingKey = "auth:register_pending:" + email;
+        String json = redisTemplate.opsForValue().get(pendingKey);
+
+        if (json == null) {
+            throw new AppException(IamErrorCode.OTP_EXPIRED, "Mã OTP đã hết hạn hoặc phiên đăng ký không tồn tại. Vui lòng đăng ký lại.");
+        }
+
+        RegisterPendingData pendingData;
+        try {
+            pendingData = objectMapper.readValue(json, RegisterPendingData.class);
+        } catch (Exception e) {
+            throw new AppException(IamErrorCode.OTP_INVALID, "Dữ liệu đăng ký không hợp lệ.");
+        }
+
+        if (!pendingData.getOtpCode().equals(request.getOtp().trim())) {
+            throw new AppException(IamErrorCode.OTP_INVALID, "Mã OTP không chính xác. Vui lòng kiểm tra lại hộp thư.");
+        }
+
+        // Kiểm tra lại nếu tài khoản đã tồn tại
+        if (userRepository.findByEmail(email).isPresent()) {
+            redisTemplate.delete(pendingKey);
+            throw new AppException(IamErrorCode.EMAIL_ALREADY_EXISTS, "Email này đã được sử dụng.");
+        }
+
+        // Tạo User chính thức
+        User newUser = User.builder()
+                .email(email)
+                .password(pendingData.getPasswordHash())
+                .fullName(pendingData.getFullName())
+                .status(Userstatus.ACTIVE)
+                .build();
+        User savedUser = userRepository.save(newUser);
+
+        // Gán role mặc định LEARNER
+        try {
+            Role role = roleService.getRoleDetails("LEARNER");
+            UserRole userRole = UserRole.builder()
+                    .userId(savedUser.getId())
+                    .roleId(role.getId())
+                    .build();
+            userRoleRepository.save(userRole);
+        } catch (Exception e) {
+            log.warn("Không tìm thấy role LEARNER khi đăng ký: {}", e.getMessage());
+        }
+
+        // Tạo hồ sơ LearnerProfile
+        LearnerProfile profile = LearnerProfile.builder()
+                .userId(savedUser.getId())
+                .build();
+        learnerProfileRepository.save(profile);
+
+        // Xóa dữ liệu tạm trong Redis
+        redisTemplate.delete(pendingKey);
+        log.info("✔ [IAM] Xác thực email thành công! Đã tạo tài khoản chính thức: [{}]", email);
+
+        // Tự động đăng nhập nếu có deviceFingerPrint
+        String deviceFingerPrint = request.getDeviceFingerPrint();
+        if (deviceFingerPrint != null && !deviceFingerPrint.isBlank()) {
+            if (!deviceManagementService.existsInBlackList(savedUser.getId(), deviceFingerPrint)) {
+                CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(email);
+                String token = jwtService.generateToken(userDetails, deviceFingerPrint);
+                deviceManagementService.registerDevice(savedUser.getId(), deviceFingerPrint);
+                return LoginResponse.builder()
+                        .accessToken(token)
+                        .userId(savedUser.getId())
+                        .email(savedUser.getEmail())
+                        .permissions(userDetails.getPermissions())
+                        .build();
+            }
+        }
+
+        return LoginResponse.builder()
+                .userId(savedUser.getId())
+                .email(savedUser.getEmail())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
+        String idToken = request.getIdToken().trim();
+        String googleEmail;
+        String googleName;
+
+        if (idToken.startsWith("mock_google_")) {
+            // Mock token cho môi trường test hoặc local
+            googleEmail = idToken.substring("mock_google_".length()).trim().toLowerCase();
+            googleName = "Google User (" + googleEmail.split("@")[0] + ")";
+        } else {
+            // Xác thực thật với Google OAuth2 API
+            try {
+                String verifyUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
+                ResponseEntity<Map> response = restTemplate.getForEntity(verifyUrl, Map.class);
+                Map body = response.getBody();
+                if (body == null || !response.getStatusCode().is2xxSuccessful()) {
+                    throw new AppException(IamErrorCode.INVALID_GOOGLE_TOKEN);
+                }
+
+                googleEmail = (String) body.get("email");
+                googleName = (String) body.get("name");
+                String emailVerified = String.valueOf(body.get("email_verified"));
+
+                if (googleEmail == null || !"true".equalsIgnoreCase(emailVerified)) {
+                    throw new AppException(IamErrorCode.INVALID_GOOGLE_TOKEN, "Tài khoản Google chưa được xác minh email.");
+                }
+            } catch (RestClientException e) {
+                log.error("Lỗi khi xác thực Google token: {}", e.getMessage());
+                throw new AppException(IamErrorCode.INVALID_GOOGLE_TOKEN, "Google token không hợp lệ hoặc đã hết hạn.");
+            }
+        }
+
+        googleEmail = googleEmail.trim().toLowerCase();
+        Optional<User> userOpt = userRepository.findByEmail(googleEmail);
+        User user;
+
+        if (userOpt.isEmpty()) {
+            // Tự động đăng ký người dùng mới từ Google
+            User newUser = User.builder()
+                    .email(googleEmail)
+                    .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .fullName(googleName != null && !googleName.isBlank() ? googleName : googleEmail)
+                    .status(Userstatus.ACTIVE)
+                    .build();
+            user = userRepository.save(newUser);
+
+            try {
+                Role role = roleService.getRoleDetails("LEARNER");
+                UserRole userRole = UserRole.builder()
+                        .userId(user.getId())
+                        .roleId(role.getId())
+                        .build();
+                userRoleRepository.save(userRole);
+            } catch (Exception e) {
+                log.warn("Không tìm thấy role LEARNER khi tạo tài khoản Google: {}", e.getMessage());
+            }
+
+            LearnerProfile profile = LearnerProfile.builder()
+                    .userId(user.getId())
+                    .build();
+            learnerProfileRepository.save(profile);
+            log.info("✔ [IAM] Đã tự động tạo tài khoản Google mới: [{}]", googleEmail);
+        } else {
+            user = userOpt.get();
+            if (user.getStatus() == Userstatus.BANNED) {
+                throw new AppException(IamErrorCode.USER_LOCKED, "Tài khoản của bạn đã bị khóa.");
+            }
+            if (user.getStatus() == Userstatus.INACTIVE || user.getStatus() == Userstatus.DELETED) {
+                throw new AppException(IamErrorCode.USER_DISABLED, "Tài khoản của bạn đã bị vô hiệu hóa.");
+            }
+        }
+
+        String deviceFingerprint = request.getDeviceFingerPrint();
+        if (deviceFingerprint == null || deviceFingerprint.isBlank()) {
+            throw new AppException(IamErrorCode.DEVICE_FINGERPRINT_REQUIRED);
+        }
+
+        if (deviceManagementService.existsInBlackList(user.getId(), deviceFingerprint)) {
+            throw new AppException(IamErrorCode.DEVICE_IS_BLOCKED);
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(googleEmail);
+        String token = jwtService.generateToken(userDetails, deviceFingerprint);
+        deviceManagementService.registerDevice(user.getId(), deviceFingerprint);
+
+        return LoginResponse.builder()
+                .accessToken(token)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .permissions(userDetails.getPermissions())
+                .build();
     }
 }

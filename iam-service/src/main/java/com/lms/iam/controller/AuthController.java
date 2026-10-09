@@ -70,4 +70,25 @@ public class AuthController {
         authService.resetPassword(request);
         return ApiResponse.success("Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay với mật khẩu mới.");
     }
+
+    @Operation(summary = "Register with OTP", description = "Khởi tạo đăng ký và gửi mã OTP xác thực đến email")
+    @PostMapping("/register-otp")
+    public ApiResponse<String> registerOtp(@RequestBody @Valid com.lms.iam.dto.request.RegisterInitRequest request) {
+        authService.initiateRegister(request);
+        return ApiResponse.success("Mã xác thực OTP đã được gửi đến email đăng ký của bạn.");
+    }
+
+    @Operation(summary = "Verify Register OTP", description = "Xác thực mã OTP và hoàn tất tạo tài khoản")
+    @PostMapping("/verify-register-otp")
+    public ApiResponse<LoginResponse> verifyRegisterOtp(@RequestBody @Valid com.lms.iam.dto.request.RegisterConfirmRequest request) {
+        LoginResponse response = authService.confirmRegister(request);
+        return ApiResponse.success(response, "Đăng ký và xác thực tài khoản thành công!");
+    }
+
+    @Operation(summary = "Google Login", description = "Đăng nhập một chạm bằng tài khoản Google OAuth2")
+    @PostMapping("/google")
+    public ApiResponse<LoginResponse> loginGoogle(@RequestBody @Valid com.lms.iam.dto.request.GoogleLoginRequest request) {
+        LoginResponse response = authService.loginWithGoogle(request);
+        return ApiResponse.success(response, "Đăng nhập bằng tài khoản Google thành công!");
+    }
 }
