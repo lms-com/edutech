@@ -180,4 +180,14 @@ public class InternalCourseServiceImpl implements InternalCourseService {
                 .build()
         ).collect(Collectors.toList());
     }
+
+    // ======================== API 41 ========================
+    /**
+     * Đếm tổng số khóa học của giảng viên (không tính các khóa đã bị xóa mềm).
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public long getInstructorCourseCount(String instructorId) {
+        return courseRepository.countByInstructorIdAndDeletedFalse(instructorId);
+    }
 }

@@ -26,4 +26,7 @@ public interface InternalCourseService {
 
     /** API 40: Lấy thông tin cơ bản + giá của nhiều khóa học (Finance Service gọi để Revenue Split) */
     List<CourseBulkResponse> getCourseBulk(List<String> courseIds);
+
+    /** API 41: Đếm tổng số khóa học của một giảng viên */
+    long getInstructorCourseCount(String instructorId);
 }

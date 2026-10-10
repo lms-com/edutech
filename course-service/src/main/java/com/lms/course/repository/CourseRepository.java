@@ -55,4 +55,8 @@ public interface CourseRepository extends JpaRepository<Course, String> {
     // 9. Internal: Lấy nhiều khóa học theo danh sách ID (batch lookup)
     @Query("SELECT c FROM Course c WHERE c.id IN :ids AND c.deleted = false")
     List<Course> findAllByIdInAndNotDeleted(@Param("ids") List<String> ids);
+
+    // 10. Internal: Đếm tổng số khóa học của giảng viên
+    @Query("SELECT COUNT(c) FROM Course c WHERE c.instructorId = :instructorId AND c.deleted = false")
+    long countByInstructorIdAndDeletedFalse(@Param("instructorId") String instructorId);
 }

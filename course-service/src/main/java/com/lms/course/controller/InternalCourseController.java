@@ -67,4 +67,11 @@ public class InternalCourseController {
     public List<CourseBulkResponse> getCourseBulk(@RequestBody List<String> courseIds) {
         return internalCourseService.getCourseBulk(courseIds);
     }
+
+    @Operation(summary = "41. Đếm tổng số khóa học của giảng viên",
+               description = "Finance / Analytics Service gọi để thống kê tổng số khóa học của giảng viên.")
+    @GetMapping("/instructors/{instructorId}/course-count")
+    public ApiResponse<Long> getInstructorCourseCount(@PathVariable String instructorId) {
+        return ApiResponse.success(internalCourseService.getInstructorCourseCount(instructorId));
+    }
 }
