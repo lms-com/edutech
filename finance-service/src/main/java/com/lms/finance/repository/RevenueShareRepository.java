@@ -17,6 +17,8 @@ import java.util.List;
 public interface RevenueShareRepository extends JpaRepository<RevenueShare, String> {
     List<RevenueShare> findByStatusAndReleaseAtLessThanEqual(RevenueShareStatus status, Instant currentTime);
 
+    boolean existsByOrderIdAndCourseId(String orderId, String courseId);
+
     List<RevenueShare> findByInstructorIdAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(String instructorId, Instant since);
 
     @Query("SELECT COALESCE(SUM(rs.instructorAmount), 0) FROM RevenueShare rs WHERE rs.instructorId = :instructorId")

@@ -35,6 +35,7 @@ public class InstructorBalanceServiceImpl implements InstructorBalanceService {
     private final RevenueShareRepository revenueShareRepository;
 
     @Override
+    @Transactional
     public void depositToPendingBalance(
             BigDecimal amount,
             String currencyCode,
@@ -43,11 +44,16 @@ public class InstructorBalanceServiceImpl implements InstructorBalanceService {
             String referenceType,
             String note
     ) {
-        log.info("👇 Come in Function depositing to pending balance");
-        InstructorBalance instructorBalance = balanceRepository.findByInstructorId((instructorId))
-                .orElseThrow(() -> new AppException(FinanceErrorCode.INSTRUCTOR_BALANCE_NOT_EXISTS,
-                        String.format("Instructor balance not exists for instructorId: %s", instructorId)
-                ));
+        log.info("👇 Come in Function depositing to pending balance for instructor {}", instructorId);
+        InstructorBalance instructorBalance = balanceRepository.findByInstructorId(instructorId)
+                .orElseGet(() -> {
+                    log.info("Khởi tạo ví mới tự động cho giảng viên: {}", instructorId);
+                    InstructorBalance newWallet = InstructorBalance.createNewWallet(instructorId);
+                    if (currencyCode != null && !currencyCode.isBlank()) {
+                        newWallet.setCurrencyCode(currencyCode);
+                    }
+                    return balanceRepository.saveAndFlush(newWallet);
+                });
         BigDecimal pendingBalanceBefore = instructorBalance.getPendingBalance();
         instructorBalance.depositComission(amount);
         balanceHistoryRepository.save(BalanceHistory.createLog(

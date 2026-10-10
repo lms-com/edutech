@@ -21,6 +21,10 @@ public class PaymentEventListener {
     @RabbitListener(queues = ORDER_COMPLETED_QUEUE)
     public void onPaymentSuccess (OrderCompletedMessage message) {
         log.info("Received PaymentProcessMessage {}", message);
+        if (message == null || message.getOrderId() == null || message.getItems() == null) {
+            log.warn("⚠️ Bỏ qua OrderCompletedMessage không hợp lệ (null hoặc rỗng)");
+            return;
+        }
         try {
             revenueShareService.processRevenueDistribution(message);
             log.info("✅ Payment successful for order {}",  message.getOrderId());

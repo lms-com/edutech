@@ -84,6 +84,7 @@ public class InstructorBalance {
     public static InstructorBalance createNewWallet (String instructorId) {
         InstructorBalance wallet = new InstructorBalance();
         wallet.instructorId = instructorId;
+        wallet.currencyCode = "VND";
         wallet.actualBalance = BigDecimal.ZERO;
         wallet.availableBalance = BigDecimal.ZERO;
         wallet.blockedBalance = BigDecimal.ZERO;
@@ -118,8 +119,8 @@ public class InstructorBalance {
      * Chu y, tien se vao pendingBalance de cho chinh sach 7 ngay sau moi vao available balance
      */
     public void depositComission (BigDecimal amount) {
-        if (this.availableBalance.compareTo(BigDecimal.ZERO) < 0) {
-            throw new AppException(FinanceErrorCode.INVALID_AMOUNT, "The amount must be greater than 0");
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new AppException(FinanceErrorCode.INVALID_AMOUNT, "The amount must be greater than or equal to 0");
         }
         this.pendingBalance = this.pendingBalance.add(amount);
         this.recalculateActualBalance();

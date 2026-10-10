@@ -46,6 +46,12 @@ public class RevenueShareServiceImpl implements RevenueShareService {
         Instant now = Instant.now();
         Instant releaseAt = now.plus(Integer.parseInt(refundDeadline), ChronoUnit.DAYS);
         for (OrderCompletedMessage.OrderItemDto course : courses) {
+            if (revenueShareRepository.existsByOrderIdAndCourseId(orderId, course.getCourseId())) {
+                log.info("⏩ RevenueShare đã tồn tại cho order {} và course {}. Bỏ qua để tránh xử lý trùng.",
+                        orderId, course.getCourseId());
+                continue;
+            }
+
             BigDecimal grossAmount = course.getFinalPrice();
             BigDecimal commissionRate = course.getCommissionRate();
             BigDecimal instructorAmount = grossAmount.multiply(commissionRate);
