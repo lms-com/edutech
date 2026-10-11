@@ -2,6 +2,7 @@ package com.lms.analytics.repository;
 
 import com.lms.analytics.dto.response.CoursePerformanceDto;
 import com.lms.analytics.dto.response.DailyChartDto;
+import com.lms.analytics.dto.response.InstructorPerformanceDto;
 import com.lms.analytics.model.DailyCourseStatistic;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -76,7 +77,6 @@ public interface DailyCourseStatisticRepository extends JpaRepository<DailyCours
     List<CoursePerformanceDto> findTopCoursesSystemWide(Pageable pageable);
 
     // 4. Top Giảng viên mang lại doanh thu cao nhất
-    // (Lưu ý: Bạn cần tạo thêm một class DTO tên là InstructorPerformanceDto tương tự như CoursePerformanceDto)
     @Query("SELECT new com.lms.analytics.dto.response.InstructorPerformanceDto(d.instructorId, SUM(d.totalOrderAmount), SUM(d.dailyEnrollments)) " +
             "FROM DailyCourseStatistic d " +
             "GROUP BY d.instructorId ORDER BY SUM(d.totalOrderAmount) DESC")
