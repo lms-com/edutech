@@ -136,7 +136,7 @@ public class InstructorBalanceServiceImpl implements InstructorBalanceService {
 
     @Override
     public BalanceInstructorResponse getMyBalances(String userId) {
-        InstructorBalance balance = balanceRepository.findByInstructorId(userId)
+        InstructorBalance balance = balanceRepository.findReadOnlyByInstructorId(userId)
                 .orElseThrow(() -> new AppException(FinanceErrorCode.INSTRUCTOR_BALANCE_NOT_EXISTS));
 
         return BalanceInstructorResponse.builder()

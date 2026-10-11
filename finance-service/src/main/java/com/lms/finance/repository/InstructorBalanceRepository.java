@@ -28,6 +28,12 @@ public interface InstructorBalanceRepository extends JpaRepository<InstructorBal
     """, nativeQuery = true)
     Optional<InstructorBalance> findByInstructorId(@Param("instructorId") String instructorId);
 
+    @Query(value = """
+        SELECT * FROM instructor_balances
+        WHERE instructor_id = :instructorId
+    """, nativeQuery = true)
+    Optional<InstructorBalance> findReadOnlyByInstructorId(@Param("instructorId") String instructorId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<InstructorBalance> findByInstructorIdIn(Collection<String> instructorIds);
 }

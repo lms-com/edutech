@@ -15,6 +15,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -176,7 +177,7 @@ public class InternalCourseServiceImpl implements InternalCourseService {
                 .title(course.getTitle())
                 .basePrice(course.getBasePrice())
                 .instructorId(course.getInstructorId())
-                .commissionRate(course.getOverrideCommissionRate())
+                .commissionRate(course.getOverrideCommissionRate() != null ? course.getOverrideCommissionRate() : new BigDecimal("0.70"))
                 .build()
         ).collect(Collectors.toList());
     }

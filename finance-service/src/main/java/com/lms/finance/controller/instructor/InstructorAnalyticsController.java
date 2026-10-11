@@ -37,4 +37,11 @@ public class InstructorAnalyticsController {
             @RequestHeader(value = "X-User-Id") String instructorId) {
         return ApiResponse.success(analyticsService.getRevenueChart(instructorId));
     }
+
+    @Operation(summary = "Lấy thống kê doanh thu chi tiết theo từng khóa học")
+    @GetMapping("/courses-breakdown")
+    public ApiResponse<List<com.lms.finance.dto.response.CourseRevenueBreakdownResponse>> getCourseBreakdown(
+            @RequestHeader(value = "X-User-Id") String instructorId) {
+        return ApiResponse.success(analyticsService.getCourseBreakdown(instructorId));
+    }
 }
