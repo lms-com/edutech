@@ -25,6 +25,8 @@ public class User extends AuditableEntity {
     String password;
     @Column(name = "full_name")
     String fullName;
+    @Column(name = "avatar_url", length = 500)
+    String avatarUrl;
     @Column(name = "dob")
     LocalDate dob;
     @Column(name = "status")
