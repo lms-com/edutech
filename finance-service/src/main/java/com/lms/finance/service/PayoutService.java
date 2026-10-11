@@ -1,4 +1,4 @@
-package com.lms.finance.service.impl;
+package com.lms.finance.service;
 
 import com.lms.finance.dto.request.PayoutFilterRequest;
 import com.lms.finance.dto.request.ProcessPayoutRequestDto;

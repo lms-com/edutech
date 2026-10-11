@@ -40,6 +40,7 @@ spring:
 application:
   security:
     internal-key: RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=
+  timezone: ${TIMEZONE:Asia/Ho_Chi_Minh}
 
 resilience4j:  # Bắt các lỗi trong gọi internal api và trả về fallback
   circuitbreaker:

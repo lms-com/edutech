@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import java.util.List;
 public class OrderCompletedMessage {
     String orderId;
     String learnerId;
+    Instant completedAt;
     List<OrderItemDto> items;
 
     @Data

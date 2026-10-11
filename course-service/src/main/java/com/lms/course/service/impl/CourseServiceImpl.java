@@ -1,6 +1,7 @@
 package com.lms.course.service.impl;
 
 import com.lms.common.exception.AppException;
+import com.lms.course.dto.message.CourseSyncEventMessage;
 import com.lms.course.dto.request.CourseRequest;
 import com.lms.course.dto.request.CourseUpdateRequest;
 import com.lms.course.dto.response.CourseDetailResponse;
@@ -16,6 +17,7 @@ import com.lms.course.repository.SectionRepository;
 import com.lms.course.service.CourseService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -34,6 +36,7 @@ public class CourseServiceImpl implements CourseService {
     private final CategoryRepository categoryRepository;
     private final SectionRepository sectionRepository;
     private final LessonRepository lessonRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -326,6 +329,16 @@ public class CourseServiceImpl implements CourseService {
         course.setStatus("PUBLISHED");
         course.setRejectionNote(null); // Xóa ghi chú từ chối khi duyệt thành công
         courseRepository.save(course);
+
+        // Phát ra một Event nội bộ (Spring sẽ tự động bắt nó và chuyển cho file Publisher ở trên)
+        eventPublisher.publishEvent(new CourseSyncEventMessage(
+                course.getId(),
+                course.getInstructorId(),
+                course.getTitle(),
+                course.getThumbnailUrl(),
+                course.getStatus(),
+                course.getDeleted()
+        ));
     }
 
     @Override

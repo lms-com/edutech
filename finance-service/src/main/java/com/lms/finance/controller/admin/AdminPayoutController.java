@@ -5,7 +5,7 @@ import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.finance.dto.request.PayoutFilterRequest;
 import com.lms.finance.dto.request.ProcessPayoutRequestDto;
 import com.lms.finance.dto.response.PayoutRequestResponse;
-import com.lms.finance.service.impl.PayoutService;
+import com.lms.finance.service.PayoutService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

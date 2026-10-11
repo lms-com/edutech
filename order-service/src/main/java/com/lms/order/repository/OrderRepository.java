@@ -17,4 +17,6 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     Optional<Order> findByIdAndLearnerId(String id, String learnerId);
     List<Order> findByLearnerIdAndStatus(String learnerId, OrderStatus status);
     List<Order> findByStatusAndCreatedAtBefore(OrderStatus status, Instant expiryTime);
+
+    List<Order> findAllByStatus(OrderStatus status);
 }

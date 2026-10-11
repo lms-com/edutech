@@ -1,4 +1,4 @@
-package com.lms.finance.controller;
+package com.lms.finance.controller.internal;
 
 import com.lms.common.swagger.annotation.RequireInternalKey;
 import com.lms.finance.dto.request.CreatePaymentRequest;

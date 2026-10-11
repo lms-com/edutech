@@ -61,7 +61,7 @@ management:
         include: "*"
 
 application:
-  timezone: Asia/Ho_Chi_Minh
+  timezone: ${TIMEZONE:Asia/Ho_Chi_Minh}
   cron:
     balance-settlement: "0 * * * * ?"
   finance:

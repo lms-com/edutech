@@ -33,6 +33,7 @@ spring:
         enabled: true
 
 application:
+  timezone: ${TIMEZONE:Asia/Ho_Chi_Minh}
   security:
     internal-key: RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=
 

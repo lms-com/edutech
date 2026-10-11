@@ -2,6 +2,7 @@ package com.lms.finance.service.impl;
 
 import com.lms.common.exception.AppException;
 import com.lms.common.util.TimeConverter;
+import com.lms.finance.dto.message.BalanceUpdatedEventMessage;
 import com.lms.finance.dto.message.PayoutEventMessage;
 import com.lms.finance.dto.request.PayoutFilterRequest;
 import com.lms.finance.dto.request.ProcessPayoutRequestDto;
@@ -16,10 +17,12 @@ import com.lms.finance.enums.ReferenceType;
 import com.lms.finance.enums.TransactionType;
 import com.lms.finance.exception.FinanceErrorCode;
 import com.lms.finance.repository.*;
+import com.lms.finance.service.PayoutService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +47,7 @@ public class PayoutServiceImpl implements PayoutService {
     final BankAccountRepository bankAccountRepository;
     final BalanceHistoryRepository historyRepository;
     final RabbitTemplate rabbitTemplate;
+    final ApplicationEventPublisher eventPublisher;
 
     @Value("${application.finance.minimum-payout-amount}")
     String MIN_PAYOUT_AMOUNT;
@@ -79,6 +83,12 @@ public class PayoutServiceImpl implements PayoutService {
         // Block fund for payout:
         balance.blockFundsForPayout(amount);
         balanceRepository.save(balance);
+
+        // Báo cáo số dư mới
+        eventPublisher.publishEvent(new BalanceUpdatedEventMessage(
+                balance.getInstructorId(),
+                balance.getAvailableBalance()
+        ));
 
         // Create payout request
         String bankCode = bankAccount.getBankCode();
@@ -215,6 +225,12 @@ public class PayoutServiceImpl implements PayoutService {
 
         balance.rejectPayout(amount);
         balanceRepository.save(balance);
+
+        // Báo cáo số dư mới
+        eventPublisher.publishEvent(new BalanceUpdatedEventMessage(
+                balance.getInstructorId(),
+                balance.getAvailableBalance()
+        ));
 
         String note = String.format("Từ chối rút tiền: %s", rejectReason);
         historyRepository.save(BalanceHistory.createLog(

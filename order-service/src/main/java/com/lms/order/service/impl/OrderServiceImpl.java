@@ -256,7 +256,7 @@ public class OrderServiceImpl implements OrderService {
                 .build()
         ).toList();
 
-        OrderCompletedMessage message = new OrderCompletedMessage(orderId, learnerId, items);
+        OrderCompletedMessage message = new OrderCompletedMessage(orderId, learnerId, order.getUpdatedAt(), items);
         rabbitTemplate.convertAndSend(ORDER_EXCHANGE, ORDER_COMPLETED_ROUTING_KEY, message);
     }
 

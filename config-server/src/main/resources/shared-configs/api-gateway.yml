@@ -141,6 +141,15 @@ spring:
             - StripPrefix=1
             - AuthenticationFilter
 
+      ##### ANALYTICS SERVICE ROUTES #####
+        - id: analytics-service-secured
+          uri: lb://analytics-service
+          predicates:
+            - Path=/analytics-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+
       globalcors:
         cors-configurations:
           '[/**]':
@@ -194,6 +203,8 @@ springdoc:
         url: /notification-service/v3/api-docs
       - name: 07. Enrollment Service
         url: /enrollment-service/v3/api-docs
+      - name: 08. Analytics Service
+        url: /analytics-service/v3/api-docs
 
   api-docs:
     path: /v3/api-docs

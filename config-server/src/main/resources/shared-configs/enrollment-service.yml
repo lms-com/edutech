@@ -61,6 +61,7 @@ lms:
       dlq: enrollment.order.completed.queue.dlq
 
 application:
+  timezone: ${TIMEZONE:Asia/Ho_Chi_Minh}
   security:
     internal-key: ${INTERNAL_KEY:RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=}
 

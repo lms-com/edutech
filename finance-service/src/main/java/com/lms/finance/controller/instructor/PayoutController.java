@@ -4,19 +4,16 @@ import com.lms.common.dto.response.ApiResponse;
 import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.finance.dto.request.PayoutFilterRequest;
 import com.lms.finance.dto.response.PayoutRequestResponse;
-import com.lms.finance.service.impl.PayoutService;
+import com.lms.finance.service.PayoutService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 @Tag(name = "Payout Apis for Instructor")
 @RestController

@@ -1,6 +1,7 @@
 package com.lms.finance.service.impl;
 
 import com.lms.common.exception.AppException;
+import com.lms.finance.dto.message.BalanceUpdatedEventMessage;
 import com.lms.finance.dto.response.BalanceInstructorResponse;
 import com.lms.finance.entity.BalanceHistory;
 import com.lms.finance.entity.InstructorBalance;
@@ -16,6 +17,7 @@ import com.lms.finance.repository.RevenueShareRepository;
 import com.lms.finance.service.InstructorBalanceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class InstructorBalanceServiceImpl implements InstructorBalanceService {
     private final InstructorBalanceRepository balanceRepository;
     private final BalanceHistoryRepository balanceHistoryRepository;
     private final RevenueShareRepository revenueShareRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void depositToPendingBalance(
@@ -100,6 +103,12 @@ public class InstructorBalanceServiceImpl implements InstructorBalanceService {
 
             // InstructorBalance chuyen tu pending sang available
             balance.releasePendingToAvailable(amount);
+
+            // Báo cáo số dư mới
+            eventPublisher.publishEvent(new BalanceUpdatedEventMessage(
+                    balance.getInstructorId(),
+                    balance.getAvailableBalance()
+            ));
 
             // Tao Balance history
             String note = String.format("Giải phóng số dư đóng băng %s %s cho khóa học [ID: %s] - Đơn hàng #%s",
