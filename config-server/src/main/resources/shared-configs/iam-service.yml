@@ -9,6 +9,9 @@ spring:
     password: "1234"
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  jpa:
+    show-sql: true
+
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -26,6 +29,15 @@ spring:
     port: ${RABBITMQ:5672}
     username: ${RABBITMQ_USERNAME:admin}
     password: ${RABBITMQ_PASSWORD:admin123}
+
+  logging:
+    level:
+      org:
+        hibernate:
+          SQL: DEBUG
+          orm:
+            jdbc:
+              bind: TRACE
 
 
 eureka:

@@ -39,12 +39,14 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<User> findAll();
 
     @Query("""
-                SELECT DISTINCT u from User u
-                LEFT JOIN UserRole ur ON ur.userId = u.id
-                LEFT JOIN Role r ON r.id = ur.roleId
-                WHERE (:search IS NULL OR u.fullName LIKE %:search% OR u.email LIKE %:search%)
-                AND (:status IS NULL OR u.status = :status)
-                AND (:roleName IS NULL OR r.roleName = :roleName)
+    SELECT DISTINCT u FROM User u
+    WHERE (:search IS NULL OR :search = '' OR u.fullName LIKE %:search% OR u.email LIKE %:search%)
+    AND (:status IS NULL OR u.status = :status)
+    AND (:roleName IS NULL OR :roleName = '' OR EXISTS (
+        SELECT 1 FROM UserRole ur 
+        JOIN Role r ON ur.roleId = r.id 
+        WHERE ur.userId = u.id AND UPPER(TRIM(r.roleName)) = UPPER(TRIM(:roleName))
+    ))
 """)
     Page<User> findAllWithFilters (
             @Param("search") String search,

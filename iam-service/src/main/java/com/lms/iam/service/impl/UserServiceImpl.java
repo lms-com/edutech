@@ -100,7 +100,7 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .status(user.getStatus())
-                .roles(rolesMap.getOrDefault(user.getEmail(), new HashSet<>()))
+                .roles(rolesMap.getOrDefault(user.getId(), new HashSet<>()))
                 .build()
         );
     }
