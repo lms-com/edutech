@@ -2,12 +2,14 @@ package com.lms.analytics.controller;
 
 import com.lms.analytics.dto.response.AdminOverviewResponse;
 import com.lms.analytics.dto.response.CoursePerformanceDto;
+import com.lms.analytics.dto.response.DailyChartDto;
 import com.lms.analytics.dto.response.InstructorPerformanceDto;
 import com.lms.analytics.service.AdminAnalyticsService;
 import com.lms.common.dto.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -35,5 +37,11 @@ public class AdminAnalyticsController {
     @GetMapping("/top-instructors")
     public ApiResponse<List<InstructorPerformanceDto>> getTopInstructors() {
         return ApiResponse.success(adminAnalyticsService.getTop5InstructorsSystemWide());
+    }
+
+    // 4. Biểu đồ doanh thu toàn sàn
+    @GetMapping("/chart")
+    public ApiResponse<List<DailyChartDto>> getChart(@RequestParam(defaultValue = "30") int days) {
+        return ApiResponse.success(adminAnalyticsService.getAdminRevenueChart(days));
     }
 }

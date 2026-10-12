@@ -82,4 +82,12 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
         }
         return topInstructors;
     }
+
+    @Override
+    public List<DailyChartDto> getAdminRevenueChart(int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
+        // Cần tạo hàm getPlatformChartData trong DailyCourseStatisticRepository
+        return repository.getPlatformChartData(startDate, endDate);
+    }
 }

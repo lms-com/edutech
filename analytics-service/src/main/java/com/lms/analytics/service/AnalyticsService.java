@@ -13,4 +13,6 @@ public interface AnalyticsService {
     List<CoursePerformanceDto> getTop5PerformingCourses(String instructorId);
 
     List<DailyChartDto> getInstructorRevenueChart (String instructorId, int days);
+
+
 }

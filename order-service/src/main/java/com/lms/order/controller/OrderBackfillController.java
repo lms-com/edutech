@@ -53,7 +53,7 @@ public class OrderBackfillController {
                 OrderCompletedMessage message = new OrderCompletedMessage(
                         order.getId(),
                         order.getLearnerId(),
-                        order.getCreatedAt(), // THỜI GIAN GỐC CỦA ĐƠN HÀNG
+                        order.getUpdatedAt(), // THỜI GIAN GỐC CỦA ĐƠN HÀNG
                         items
                 );
 

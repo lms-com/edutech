@@ -6,10 +6,7 @@ import com.lms.analytics.dto.message.OrderCompletedMessage; // Đảm bảo impo
 import com.lms.common.util.TimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.Exchange;
-import org.springframework.amqp.rabbit.annotation.Queue;
-import org.springframework.amqp.rabbit.annotation.QueueBinding;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.annotation.*;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +27,14 @@ public class AnalyticsEventListener {
     private final DailyCourseStatisticRepository dailyStatisticRepo;
 
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "analytics.order.completed.queue", durable = "true"),
+            value = @Queue(
+                    value = "analytics.order.completed.queue",
+                    durable = "true",
+                    arguments = {
+                            @Argument(name = "x-dead-letter-exchange", value = "analytics.dlx"),
+                            @Argument(name = "x-dead-letter-routing-key", value = "analytics.dlq.routing-key")
+                    }
+            ),
             exchange = @Exchange(value = "order.exchange", type = "direct"),
             key = "order.completed"
     ))

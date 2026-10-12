@@ -82,9 +82,16 @@ public interface DailyCourseStatisticRepository extends JpaRepository<DailyCours
             "GROUP BY d.instructorId ORDER BY SUM(d.totalOrderAmount) DESC")
     List<InstructorPerformanceDto> findTopInstructorsSystemWide(Pageable pageable);
 
-
     // 5. Lay Daily Statistic data cho admin
+    @Query("SELECT new com.lms.analytics.dto.response.DailyChartDto(d.recordDate, SUM(d.platformFee), SUM(CAST(d.dailyEnrollments AS long))) " +
+            "FROM DailyCourseStatistic d " +
+            "WHERE d.recordDate BETWEEN :startDate AND :endDate " +
+            "GROUP BY d.recordDate " +
+            "ORDER BY d.recordDate ASC")
+    List<DailyChartDto> getPlatformChartData(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
-    
 }
 

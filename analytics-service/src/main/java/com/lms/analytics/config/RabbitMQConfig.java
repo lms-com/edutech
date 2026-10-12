@@ -52,7 +52,10 @@ public class RabbitMQConfig {
 
         // THÊM ĐOẠN NÀY ĐỂ ÉP KIỂU KHÉP KÍN, TRỊ LỖI CLASSNOTFOUND
         Map<String, Class<?>> idClassMapping = new HashMap<>();
+
         idClassMapping.put("com.lms.course.dto.message.CourseSyncEventMessage", com.lms.analytics.dto.message.CourseSyncEventMessage.class);
+        idClassMapping.put("com.lms.order.dto.message.OrderCompletedMessage", com.lms.analytics.dto.message.OrderCompletedMessage.class);
+
         typeMapper.setIdClassMapping(idClassMapping);
 
         converter.setJavaTypeMapper(typeMapper);
