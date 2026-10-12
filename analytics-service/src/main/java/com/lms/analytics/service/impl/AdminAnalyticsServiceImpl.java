@@ -2,6 +2,7 @@ package com.lms.analytics.service.impl;
 
 import com.lms.analytics.dto.response.AdminOverviewResponse;
 import com.lms.analytics.dto.response.CoursePerformanceDto;
+import com.lms.analytics.dto.response.DailyChartDto;
 import com.lms.analytics.dto.response.InstructorPerformanceDto;
 import com.lms.analytics.repository.DailyCourseStatisticRepository;
 import com.lms.analytics.service.AdminAnalyticsService;
@@ -34,9 +35,12 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
         BigDecimal gmv = repository.sumPlatformGmvByDateRange(startOfMonth, endOfMonth);
         BigDecimal netRevenue = repository.sumPlatformNetRevenueByDateRange(startOfMonth, endOfMonth);
 
-        // TODO: Chờ User-Service/Course-Service hoàn thiện API hoặc đẩy Redis để lấy data này
-        Integer totalUsers = 0;
-        Integer totalCourses = 0;
+        // Lấy Tổng User từ Redis
+        Long usersCount = redisTemplate.opsForSet().size("analytics:system_users");
+        Integer totalUsers = usersCount != null ? usersCount.intValue() : 0;
+
+        Long courseCount = redisTemplate.opsForSet().size("analytics:system_courses");
+        Integer totalCourses = courseCount != null ? courseCount.intValue() : 0;
 
         return AdminOverviewResponse.builder()
                 .totalGmvThisMonth(gmv)
@@ -66,7 +70,16 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     @Override
     public List<InstructorPerformanceDto> getTop5InstructorsSystemWide() {
         List<InstructorPerformanceDto> topInstructors = repository.findTopInstructorsSystemWide(PageRequest.of(0, 5));
-        // TODO: Chặng tới lấy Tên/Avatar Giảng viên từ Redis đắp vào
+        // Lấy Tên/Avatar Giảng viên từ Redis đắp vào
+        for (InstructorPerformanceDto dto : topInstructors) {
+            String userKey = "analytics:user:" + dto.getInstructorId();
+
+            Object nameObj = redisTemplate.opsForHash().get(userKey, "fullName");
+            Object avatarObj = redisTemplate.opsForHash().get(userKey, "avatarUrl");
+
+            dto.setInstructorName(nameObj != null ? nameObj.toString() : "Giảng viên ẩn danh");
+            dto.setAvatarUrl(avatarObj != null ? avatarObj.toString() : "");
+        }
         return topInstructors;
     }
 }

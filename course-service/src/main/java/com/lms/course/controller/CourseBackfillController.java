@@ -1,5 +1,6 @@
 package com.lms.course.controller;
 
+import com.lms.course.dto.message.CourseSyncEventMessage;
 import com.lms.course.entity.Course;
 import com.lms.course.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,12 +35,15 @@ public class CourseBackfillController {
 
             for (Course course : coursePage.getContent()) {
                 if ("PUBLISHED".equals(course.getStatus())) {
-                    Map<String, Object> message = Map.of(
-                            "courseId", course.getId(),
-                            "instructorId", course.getInstructorId(),
-                            "title", course.getTitle(),
-                            "thumbnailUrl", course.getThumbnailUrl()
+                    CourseSyncEventMessage message =  new CourseSyncEventMessage(
+                            course.getId(),
+                            course.getInstructorId(),
+                            course.getTitle(),
+                            course.getThumbnailUrl() == null ? "" : course.getThumbnailUrl(),
+                            course.getStatus(),
+                            course.getDeleted() != null && course.getDeleted()
                     );
+
                     rabbitTemplate.convertAndSend("course.exchange", "course.info.updated", message);
                     totalProcessed++;
                 }

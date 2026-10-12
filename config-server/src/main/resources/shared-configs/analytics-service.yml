@@ -30,6 +30,15 @@ spring:
     port: 5672 #${RABBITMQ_PORT:5672}
     username: admin #${RABBITMQ_USERNAME:admin}
     password: admin123 #${RABBITMQ_PASSWORD:admin123}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2000ms
+          max-interval: 10000ms
+          multiplier: 2.0
+        default-requeue-rejected: false   # Rất quan trọng: false để ném vào DLX thay vì kẹt lại hàng đợi gốc
 
   data:
     redis:

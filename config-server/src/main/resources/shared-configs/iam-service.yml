@@ -21,6 +21,12 @@ spring:
       host: localhost
       port: 6379
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:admin123}
+
 
 eureka:
   client:

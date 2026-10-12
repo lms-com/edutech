@@ -81,5 +81,10 @@ public interface DailyCourseStatisticRepository extends JpaRepository<DailyCours
             "FROM DailyCourseStatistic d " +
             "GROUP BY d.instructorId ORDER BY SUM(d.totalOrderAmount) DESC")
     List<InstructorPerformanceDto> findTopInstructorsSystemWide(Pageable pageable);
+
+
+    // 5. Lay Daily Statistic data cho admin
+
+    
 }
 

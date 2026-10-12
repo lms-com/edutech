@@ -142,6 +142,14 @@ spring:
             - AuthenticationFilter
 
       ##### ANALYTICS SERVICE ROUTES #####
+        ### Public endpoints of analytics-service
+        - id: analytics-service-public
+          uri: lb://analytics-service
+          predicates:
+            - Path=/analytics-service/v3/api-docs, /analytics-service/v3/swagger-ui.html
+          filters:
+            - StripPrefix=1
+        ### Secured endpoints of analytics-service
         - id: analytics-service-secured
           uri: lb://analytics-service
           predicates:
