@@ -46,6 +46,13 @@ public class RevenueShareServiceImpl implements RevenueShareService {
         Instant now = Instant.now();
         Instant releaseAt = now.plus(Integer.parseInt(refundDeadline), ChronoUnit.DAYS);
         for (OrderCompletedMessage.OrderItemDto course : courses) {
+            // TẠO KEY VÀ KIỂM TRA TỒN TẠI TRƯỚC KHI XỬ LÝ
+            String idempotencyKey = String.format("%s:%s:%s", orderId, course.getCourseId(), RevenueShareStatus.HOLDING.name());
+            if (revenueShareRepository.existsByIdempotencyKey(idempotencyKey)) {
+                log.warn("⚠️ Bỏ qua: Đơn hàng {} khóa {} đã được chia tiền trước đó.", orderId, course.getCourseId());
+                continue; // Chuyển sang khóa học tiếp theo
+            }
+
             BigDecimal grossAmount = course.getFinalPrice();
             BigDecimal commissionRate = course.getCommissionRate();
             BigDecimal instructorAmount = grossAmount.multiply(commissionRate);
@@ -67,7 +74,7 @@ public class RevenueShareServiceImpl implements RevenueShareService {
                         .instructorAmount(instructorAmount)
                         .platformFee(platformFee)
                         .status(RevenueShareStatus.HOLDING)
-                        .idempotencyKey(String.format("%s:%s:%s", orderId, course.getCourseId(), RevenueShareStatus.HOLDING.name()))  // orderId:courseId:status
+                        .idempotencyKey(idempotencyKey)  // orderId:courseId:status
                         .releaseAt(releaseAt)
                         .build()
             );

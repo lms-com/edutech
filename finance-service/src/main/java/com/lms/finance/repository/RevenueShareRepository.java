@@ -13,4 +13,6 @@ import java.util.List;
 @Repository
 public interface RevenueShareRepository extends JpaRepository<RevenueShare, String> {
     List<RevenueShare> findByStatusAndReleaseAtLessThanEqual(RevenueShareStatus status, Instant currentTime);
+
+    boolean existsByIdempotencyKey(String idempotencyKey);
 }
