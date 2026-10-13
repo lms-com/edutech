@@ -56,6 +56,25 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(orderCompletedQueue).to(orderExchange).with(ORDER_COMPLETED_ROUTING_KEY);
     }
 
+    public static final String EXCHANGE_IAM = "lms.iam.exchange";
+    public static final String INSTRUCTOR_APPROVED_FINANCE_QUEUE = "finance.instructor.approved.queue";
+    public static final String ROUTING_KEY_INSTRUCTOR_APPROVED = "instructor.application.approved";
+
+    @Bean
+    public Queue instructorApprovedFinanceQueue() {
+        return new Queue(INSTRUCTOR_APPROVED_FINANCE_QUEUE, true);
+    }
+
+    @Bean
+    public TopicExchange iamExchange() {
+        return new TopicExchange(EXCHANGE_IAM, true, false);
+    }
+
+    @Bean
+    public Binding bindingInstructorApproved(Queue instructorApprovedFinanceQueue, TopicExchange iamExchange) {
+        return BindingBuilder.bind(instructorApprovedFinanceQueue).to(iamExchange).with(ROUTING_KEY_INSTRUCTOR_APPROVED);
+    }
+
 
     /**
      * Cau hinh Converter va Template
