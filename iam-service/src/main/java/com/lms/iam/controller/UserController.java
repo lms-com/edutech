@@ -48,4 +48,30 @@ public class UserController {
                 "Get user's devices successfully"
         );
     }
+
+    private final com.lms.iam.service.InstructorApplicationService applicationService;
+
+    @Operation(summary = "Nộp đơn đăng ký làm giảng viên", description = "Học viên gửi thông tin chuyên môn để xin xét duyệt làm giảng viên")
+    @org.springframework.web.bind.annotation.PostMapping("/me/instructor-applications")
+    public ApiResponse<com.lms.iam.dto.response.InstructorApplicationResponse> submitInstructorApplication(
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody com.lms.iam.dto.request.SubmitInstructorApplicationRequest request
+    ) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is null");
+        }
+        com.lms.iam.dto.response.InstructorApplicationResponse result = applicationService.submitApplication(userId, request);
+        return ApiResponse.success(result, "Nộp đơn đăng ký làm giảng viên thành công. Vui lòng chờ quản trị viên phê duyệt.");
+    }
+
+    @Operation(summary = "Xem lịch sử đơn đăng ký giảng viên của tôi", description = "Kiểm tra trạng thái các đơn đăng ký giảng viên đã nộp")
+    @GetMapping("/me/instructor-applications")
+    public ApiResponse<List<com.lms.iam.dto.response.InstructorApplicationResponse>> getMyInstructorApplications(
+            @RequestHeader(value = "X-User-Id", required = false) String userId
+    ) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is null");
+        }
+        return ApiResponse.success(applicationService.getMyApplications(userId), "Lấy danh sách đơn đăng ký thành công");
+    }
 }
