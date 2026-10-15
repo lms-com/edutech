@@ -116,7 +116,7 @@ public class InstructorBalance {
 
     /**
      * Ham cong tien cho giang vien sau khi khoa hoc duoc ban
-     * Chu y, tien se vao pendingBalance de cho chinh sach 7 ngay sau moi vao available balance
+     * Chu y, tien se vao pendingBalance de cho chinh sach 3 ngay sau moi vao available balance
      */
     public void depositComission (BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0) {
@@ -127,7 +127,7 @@ public class InstructorBalance {
     }
 
     /**
-     *  Hàm giải phóng tiền (Chạy tự động sau 7 ngày).
+     *  Hàm giải phóng tiền (Chạy tự động sau 3 ngày).
      * Chuyển tiền từ ví PENDING sang ví AVAILABLE để giảng viên được quyền rút.
      */
     public void releasePendingToAvailable(BigDecimal amount) {
@@ -141,7 +141,7 @@ public class InstructorBalance {
     }
 
     /**
-     *  Hàm xử lý khi đơn hàng bị hoàn tiền trong vòng 7 ngày (Học viên đòi REFUND).
+     *  Hàm xử lý khi đơn hàng bị hoàn tiền trong vòng 3 ngày (Học viên đòi REFUND).
      * Hệ thống sẽ khấu trừ trực tiếp vào ví PENDING của giảng viên.
      */
     public void deductRefundFromPending(BigDecimal amount) {
