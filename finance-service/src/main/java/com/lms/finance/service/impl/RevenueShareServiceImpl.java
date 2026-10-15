@@ -24,6 +24,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+import com.lms.finance.entity.BalanceHistory;
+import com.lms.finance.entity.InstructorBalance;
+import com.lms.finance.enums.EntryType;
+import com.lms.finance.enums.PaymentStatus;
+import com.lms.finance.enums.TransactionType;
+import com.lms.finance.repository.BalanceHistoryRepository;
+import com.lms.finance.repository.InstructorBalanceRepository;
+import com.lms.finance.repository.PaymentRepository;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,6 +41,9 @@ public class RevenueShareServiceImpl implements RevenueShareService {
     private final OrderServiceFeignClient orderService;
     private final RevenueShareRepository revenueShareRepository;
     private final InstructorBalanceService balanceService;
+    private final InstructorBalanceRepository balanceRepository;
+    private final BalanceHistoryRepository balanceHistoryRepository;
+    private final PaymentRepository paymentRepository;
 
     @Value("${application.finance.refund-deadline:3}")
     private String refundDeadline;
@@ -97,5 +109,69 @@ public class RevenueShareServiceImpl implements RevenueShareService {
                         note
                 );
         }
+    }
+
+    @Override
+    @Transactional
+    public void processRefund(String orderId) {
+        log.info("🔄 Bắt đầu xử lý khấu trừ tài chính hoàn tiền cho đơn hàng [{}]", orderId);
+        List<RevenueShare> shares = revenueShareRepository.findByOrderId(orderId);
+        if (shares.isEmpty()) {
+            log.warn("⚠️ Không tìm thấy bản ghi RevenueShare nào cho đơn hàng [{}]", orderId);
+            return;
+        }
+
+        for (RevenueShare share : shares) {
+            if (share.getStatus() == RevenueShareStatus.REFUNDED) {
+                log.info("RevenueShare ID [{}] đã hoàn tiền trước đó, bỏ qua.", share.getId());
+                continue;
+            }
+
+            InstructorBalance balance = balanceRepository.findByInstructorId(share.getInstructorId())
+                    .orElse(null);
+
+            if (balance != null) {
+                BigDecimal pendingBefore = balance.getPendingBalance();
+                BigDecimal availableBefore = balance.getAvailableBalance();
+                BigDecimal blockedBefore = balance.getBlockedBalance();
+
+                if (share.getStatus() == RevenueShareStatus.HOLDING) {
+                    balance.deductRefundFromPending(share.getInstructorAmount());
+                } else if (share.getStatus() == RevenueShareStatus.RELEASED) {
+                    balance.setAvailableBalance(balance.getAvailableBalance().subtract(share.getInstructorAmount()));
+                }
+
+                String note = String.format("Khấu trừ hoàn tiền đơn hàng #%s - Khóa học %s (Chính sách 3 ngày)",
+                        orderId.length() >= 8 ? orderId.substring(0, 8) : orderId, share.getCourseId());
+
+                balanceHistoryRepository.save(BalanceHistory.createLog(
+                        share.getInstructorId(),
+                        balance,
+                        EntryType.DEBIT,
+                        TransactionType.REFUND_DEDUCTION,
+                        share.getInstructorAmount().negate(),
+                        pendingBefore,
+                        availableBefore,
+                        blockedBefore,
+                        share.getId(),
+                        ReferenceType.REVENUE_SHARE.name(),
+                        note
+                ));
+                balanceRepository.save(balance);
+                log.info("✔ Đã khấu trừ {} VND từ ví của giảng viên [{}]", share.getInstructorAmount(), share.getInstructorId());
+            }
+
+            share.setStatus(RevenueShareStatus.REFUNDED);
+            revenueShareRepository.save(share);
+        }
+
+        // Cập nhật payment nếu có
+        paymentRepository.findByOrderId(orderId).ifPresent(payment -> {
+            payment.setStatus(PaymentStatus.REFUNDED);
+            paymentRepository.save(payment);
+            log.info("✔ Đã cập nhật trạng thái Payment sang REFUNDED cho order [{}]", orderId);
+        });
+
+        log.info("✅ Hoàn tất xử lý hoàn tiền tài chính cho đơn hàng [{}]", orderId);
     }
 }

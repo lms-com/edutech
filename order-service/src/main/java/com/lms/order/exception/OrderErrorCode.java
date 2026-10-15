@@ -19,6 +19,10 @@ public enum OrderErrorCode implements ErrorCode {
     PAYMENT_NOT_CONNECTED (6008, "Payment not connected", HttpStatus.BAD_REQUEST),
     ORDER_NOT_FOUND (6009, "Order not found", HttpStatus.NOT_FOUND),
     COURSE_ALREADY_PURCHASED (6010, "Bạn đã sở hữu khóa học này rồi", HttpStatus.BAD_REQUEST),
+    REFUND_NOT_FOUND (6011, "Không tìm thấy yêu cầu hoàn tiền", HttpStatus.NOT_FOUND),
+    REFUND_EXPIRED (6012, "Đã quá thời hạn khiếu nại hoàn tiền 3 ngày theo quy định", HttpStatus.BAD_REQUEST),
+    REFUND_ALREADY_EXISTS (6013, "Đơn hàng này đã có yêu cầu hoàn tiền đang được xử lý", HttpStatus.BAD_REQUEST),
+    ORDER_NOT_PAID (6014, "Chỉ đơn hàng đã thanh toán thành công mới có thể khiếu nại hoàn tiền", HttpStatus.BAD_REQUEST),
     ;
     private final int code;
     private final String message;

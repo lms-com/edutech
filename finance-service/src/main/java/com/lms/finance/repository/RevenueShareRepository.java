@@ -19,6 +19,8 @@ public interface RevenueShareRepository extends JpaRepository<RevenueShare, Stri
 
     boolean existsByOrderIdAndCourseId(String orderId, String courseId);
 
+    List<RevenueShare> findByOrderId(String orderId);
+
     List<RevenueShare> findByInstructorIdAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(String instructorId, Instant since);
 
     @Query("SELECT COALESCE(SUM(rs.instructorAmount), 0) FROM RevenueShare rs WHERE rs.instructorId = :instructorId")

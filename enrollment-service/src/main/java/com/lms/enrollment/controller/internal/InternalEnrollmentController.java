@@ -32,4 +32,16 @@ public class InternalEnrollmentController {
             .data(result)
             .build());
     }
+
+    @PostMapping("/revoke")
+    public ResponseEntity<ApiResponse<Void>> revokeAccess(
+            @RequestParam String learnerId,
+            @RequestParam String courseId) {
+
+        enrollmentService.revokeByLearnerAndCourse(learnerId, courseId);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+            .code(200)
+            .message("Revoked course access successfully")
+            .build());
+    }
 }
