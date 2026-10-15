@@ -5,5 +5,7 @@ public enum NotificationType {
     COURSE_APPROVED,    // Admin duyệt khóa học
     COURSE_REJECTED,    // Admin từ chối khóa học
     COURSE_COMPLETED,   // Học viên hoàn thành 100%
-    OTP_SENT            // Gửi OTP quên mật khẩu
+    OTP_SENT,           // Gửi OTP quên mật khẩu
+    PAYOUT_APPROVED,    // Admin duyệt lệnh rút tiền
+    PAYOUT_REJECTED     // Admin từ chối lệnh rút tiền
 }

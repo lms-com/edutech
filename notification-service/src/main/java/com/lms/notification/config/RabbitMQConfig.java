@@ -35,6 +35,12 @@ public class RabbitMQConfig {
     public static final String EXCHANGE_COURSE_COMPLETED = "course-exchange";
     public static final String ROUTING_KEY_COURSE_COMPLETED = "course.completed";
 
+    // Hằng số cho luồng Payout (Rút tiền giảng viên)
+    public static final String QUEUE_NOTIFICATION_PAYOUT = "lms.notification.queue.payout";
+    public static final String EXCHANGE_PAYOUT = "payout.exchange";
+    public static final String ROUTING_KEY_PAYOUT_SUCCESS = "payout.success";
+    public static final String ROUTING_KEY_PAYOUT_REJECTED = "payout.rejected";
+
     // Khai báo Hàng đợi (Durable = true giúp tin nhắn không bị mất nếu server
     // RabbitMQ bị restart)
     @Bean
@@ -55,6 +61,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue courseCompletedQueue() {
         return new Queue(QUEUE_NOTIFICATION_COURSE_COMPLETED, true);
+    }
+
+    @Bean
+    public Queue payoutNotificationQueue() {
+        return new Queue(QUEUE_NOTIFICATION_PAYOUT, true);
     }
 
     // Khai báo Topic Exchange để lắng nghe sự kiện từ IAM Service
@@ -78,6 +89,11 @@ public class RabbitMQConfig {
     @Bean
     public TopicExchange courseCompletedExchange() {
         return new TopicExchange(EXCHANGE_COURSE_COMPLETED);
+    }
+
+    @Bean
+    public TopicExchange payoutExchange() {
+        return new TopicExchange(EXCHANGE_PAYOUT, true, false);
     }
 
     // 3. Đấu nối (Binding) Queue vào Exchange thông qua Routing Key chuẩn:
@@ -112,6 +128,22 @@ public class RabbitMQConfig {
                 .bind(courseCompletedQueue())
                 .to(courseCompletedExchange())
                 .with(ROUTING_KEY_COURSE_COMPLETED);
+    }
+
+    @Bean
+    public Binding bindingPayoutSuccess() {
+        return BindingBuilder
+                .bind(payoutNotificationQueue())
+                .to(payoutExchange())
+                .with(ROUTING_KEY_PAYOUT_SUCCESS);
+    }
+
+    @Bean
+    public Binding bindingPayoutRejected() {
+        return BindingBuilder
+                .bind(payoutNotificationQueue())
+                .to(payoutExchange())
+                .with(ROUTING_KEY_PAYOUT_REJECTED);
     }
 
     // Cấu hình bộ chuyển đổi để Spring tự động dịch chuỗi dữ liệu JSON từ Queue
