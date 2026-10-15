@@ -13,4 +13,6 @@ public class LoginResponse {
     String userId;
     String email;
     Set<String> permissions;
+    Boolean isNewUser;
+    String fullName;
 }
