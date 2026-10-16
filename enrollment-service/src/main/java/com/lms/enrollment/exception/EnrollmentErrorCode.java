@@ -13,7 +13,9 @@ public enum EnrollmentErrorCode implements ErrorCode {
     QUIZ_ANSWERS_REQUIRED(4007, "Quiz answers must not be empty", HttpStatus.BAD_REQUEST),
     QUIZ_QUESTIONS_NOT_FOUND(4008, "Quiz has no questions to grade", HttpStatus.BAD_REQUEST),
     PAID_COURSE_REQUIRES_PAYMENT(4009, "Paid courses must be enrolled through a completed order", HttpStatus.FORBIDDEN),
-    COURSE_NOT_AVAILABLE(4010, "Course is not available for enrollment", HttpStatus.BAD_REQUEST);
+    COURSE_NOT_AVAILABLE(4010, "Course is not available for enrollment", HttpStatus.BAD_REQUEST),
+    COMMENT_NOT_FOUND(4011, "Không tìm thấy bình luận", HttpStatus.NOT_FOUND),
+    ENROLLMENT_REVOKED(4012, "Quyền học đã bị thu hồi", HttpStatus.FORBIDDEN);
 
     private final int code;
     private final String message;
