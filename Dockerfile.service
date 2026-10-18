@@ -4,10 +4,10 @@
 # -------------------------------------------------------------
 FROM eclipse-temurin:21-jre-alpine
 
-# Cài đặt tzdata và curl để hỗ trợ Health Check và múi giờ Việt Nam
-RUN apk add --no-cache tzdata curl && \
-    cp /usr/share/zoneinfo/Asia/HoChiMinh /etc/localtime && \
-    echo "Asia/HoChiMinh" > /etc/timezone
+# Cài đặt curl để hỗ trợ Docker Health Check
+RUN apk add --no-cache curl
+
+ENV TZ=Asia/HoChiMinh
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ ARG JAR_FILE
 COPY ${JAR_FILE} app.jar
 
 # Biến môi trường mặc định giới hạn bộ nhớ JVM để chạy an toàn trên VPS
-ENV JAVA_OPTS="-Xms150m -Xmx300m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
+ENV JAVA_OPTS="-Xms150m -Xmx300m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/HoChiMinh"
 ENV SPRING_PROFILES_ACTIVE="prod"
 
 # Chạy ứng dụng dưới user non-root để tăng cường bảo mật
