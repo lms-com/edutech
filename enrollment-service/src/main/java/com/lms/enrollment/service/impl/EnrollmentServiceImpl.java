@@ -230,6 +230,17 @@ public class EnrollmentServiceImpl implements EnrollmentService {
      */
     @Override
     @Transactional
+    public void revokeByLearnerAndCourse(String learnerId, String courseId) {
+        enrollmentRepository.findByLearnerIdAndCourseId(learnerId, courseId)
+                .ifPresent(enrollment -> {
+                    enrollment.setStatus(EnrollmentStatus.REVOKED);
+                    enrollmentRepository.save(enrollment);
+                    log.info("Thu hồi quyền truy cập (REVOKED) của học viên {} đối với khóa học {}", learnerId, courseId);
+                });
+    }
+
+    @Override
+    @Transactional
     public void revokeEnrollment(String enrollmentId) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new AppException(EnrollmentErrorCode.ENROLLMENT_NOT_FOUND));

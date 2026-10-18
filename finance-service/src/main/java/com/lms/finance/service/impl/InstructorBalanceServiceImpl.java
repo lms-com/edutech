@@ -136,8 +136,12 @@ public class InstructorBalanceServiceImpl implements InstructorBalanceService {
 
     @Override
     public BalanceInstructorResponse getMyBalances(String userId) {
-        InstructorBalance balance = balanceRepository.findByInstructorId(userId)
-                .orElseThrow(() -> new AppException(FinanceErrorCode.INSTRUCTOR_BALANCE_NOT_EXISTS));
+        InstructorBalance balance = balanceRepository.findReadOnlyByInstructorId(userId)
+                .orElseGet(() -> {
+                    log.info("ℹ️ Tự động tạo ví rỗng (0đ) cho giảng viên {} khi truy vấn số dư lần đầu", userId);
+                    InstructorBalance newWallet = InstructorBalance.createNewWallet(userId);
+                    return balanceRepository.save(newWallet);
+                });
 
         return BalanceInstructorResponse.builder()
                 .actualBalance(balance.getActualBalance())

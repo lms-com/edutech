@@ -21,6 +21,7 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -75,7 +76,7 @@ public class InstructorAnalyticsServiceImpl implements InstructorAnalyticsServic
         }
 
         // 3. Số dư ví thực tế từ InstructorBalance
-        InstructorBalance balance = balanceRepository.findByInstructorId(instructorId).orElse(null);
+        InstructorBalance balance = balanceRepository.findReadOnlyByInstructorId(instructorId).orElse(null);
         BigDecimal availableBalance = balance != null ? balance.getAvailableBalance() : BigDecimal.ZERO;
         BigDecimal pendingBalance = balance != null ? balance.getPendingBalance() : BigDecimal.ZERO;
         BigDecimal actualBalance = balance != null ? balance.getActualBalance() : BigDecimal.ZERO;
@@ -152,5 +153,78 @@ public class InstructorAnalyticsServiceImpl implements InstructorAnalyticsServic
         }
 
         return new ArrayList<>(chartMap.values());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.lms.finance.dto.response.CourseRevenueBreakdownResponse> getCourseBreakdown(String instructorId) {
+        log.info("📊 Generating course revenue breakdown for instructor: {}", instructorId);
+
+        // 1. Lấy tất cả RevenueShare của giảng viên
+        List<RevenueShare> shares = revenueShareRepository
+                .findByInstructorIdAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(instructorId, Instant.EPOCH);
+
+        // 2. Gom nhóm RevenueShare theo courseId
+        Map<String, List<RevenueShare>> grouped = shares.stream()
+                .filter(s -> s.getCourseId() != null)
+                .collect(Collectors.groupingBy(RevenueShare::getCourseId));
+
+        if (grouped.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 3. Gọi Course Service lấy thông tin tiêu đề và giá gốc của các khóa học
+        List<String> courseIds = new ArrayList<>(grouped.keySet());
+        Map<String, com.lms.finance.client.feign.course.dto.CourseBulkResponse> courseMap = new HashMap<>();
+        try {
+            List<com.lms.finance.client.feign.course.dto.CourseBulkResponse> bulkList = courseServiceFeignClient.getCourseBulk(courseIds);
+            if (bulkList != null) {
+                for (var c : bulkList) {
+                    courseMap.put(c.getId(), c);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Không thể lấy thông tin chi tiết khóa học từ course-service: {}", e.getMessage());
+        }
+
+        // 4. Tính toán số liệu phân tích cho từng khóa
+        List<com.lms.finance.dto.response.CourseRevenueBreakdownResponse> result = new ArrayList<>();
+        for (Map.Entry<String, List<RevenueShare>> entry : grouped.entrySet()) {
+            String courseId = entry.getKey();
+            List<RevenueShare> list = entry.getValue();
+
+            BigDecimal gross = BigDecimal.ZERO;
+            BigDecimal net = BigDecimal.ZERO;
+            BigDecimal fee = BigDecimal.ZERO;
+            BigDecimal lastRate = new BigDecimal("0.70");
+
+            for (RevenueShare rs : list) {
+                gross = gross.add(rs.getGrossAmount() != null ? rs.getGrossAmount() : BigDecimal.ZERO);
+                net = net.add(rs.getInstructorAmount() != null ? rs.getInstructorAmount() : BigDecimal.ZERO);
+                fee = fee.add(rs.getPlatformFee() != null ? rs.getPlatformFee() : BigDecimal.ZERO);
+                if (rs.getCommissionRate() != null) {
+                    lastRate = rs.getCommissionRate();
+                }
+            }
+
+            var courseInfo = courseMap.get(courseId);
+            String title = courseInfo != null && courseInfo.getTitle() != null ? courseInfo.getTitle() : "Khóa học #" + courseId;
+            BigDecimal basePrice = courseInfo != null && courseInfo.getBasePrice() != null ? courseInfo.getBasePrice() : BigDecimal.ZERO;
+
+            result.add(com.lms.finance.dto.response.CourseRevenueBreakdownResponse.builder()
+                    .courseId(courseId)
+                    .courseTitle(title)
+                    .basePrice(basePrice)
+                    .grossRevenue(gross)
+                    .netRevenue(net)
+                    .platformFee(fee)
+                    .commissionRate(lastRate)
+                    .salesCount(list.size())
+                    .build());
+        }
+
+        // Sắp xếp khóa có doanh thu cao nhất lên đầu
+        result.sort((a, b) -> b.getNetRevenue().compareTo(a.getNetRevenue()));
+        return result;
     }
 }

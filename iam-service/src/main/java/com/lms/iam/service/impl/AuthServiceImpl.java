@@ -405,10 +405,26 @@ public class AuthServiceImpl implements AuthService {
         User user;
 
         if (userOpt.isEmpty()) {
-            // Tự động đăng ký người dùng mới từ Google
+            // Bước 1: Nếu chưa gửi kèm mật khẩu, trả về isNewUser = true để FE hiển thị màn hình thiết lập mật khẩu
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                log.info("ℹ [IAM] Tài khoản Google [{}] chưa tồn tại trong hệ thống. Yêu cầu người dùng thiết lập mật khẩu để hoàn tất đăng ký.", googleEmail);
+                return LoginResponse.builder()
+                        .isNewUser(true)
+                        .email(googleEmail)
+                        .fullName(googleName != null && !googleName.isBlank() ? googleName : googleEmail)
+                        .build();
+            }
+
+            // Bước 2: Khi người dùng đã nhập mật khẩu
+            String rawPassword = request.getPassword().trim();
+            if (rawPassword.length() < 6) {
+                throw new AppException(IamErrorCode.INVALID_PASSWORD_FORMAT, "Mật khẩu phải chứa ít nhất 6 ký tự.");
+            }
+
+            // Tạo người dùng mới với mật khẩu do người dùng thiết lập
             User newUser = User.builder()
                     .email(googleEmail)
-                    .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .password(passwordEncoder.encode(rawPassword))
                     .fullName(googleName != null && !googleName.isBlank() ? googleName : googleEmail)
                     .status(Userstatus.ACTIVE)
                     .build();
@@ -429,7 +445,7 @@ public class AuthServiceImpl implements AuthService {
                     .userId(user.getId())
                     .build();
             learnerProfileRepository.save(profile);
-            log.info("✔ [IAM] Đã tự động tạo tài khoản Google mới: [{}]", googleEmail);
+            log.info("✔ [IAM] Đã hoàn tất đăng ký tài khoản Google mới với mật khẩu cho: [{}]", googleEmail);
         } else {
             user = userOpt.get();
             if (user.getStatus() == Userstatus.BANNED) {
@@ -457,7 +473,9 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(token)
                 .userId(user.getId())
                 .email(user.getEmail())
+                .fullName(user.getFullName())
                 .permissions(userDetails.getPermissions())
+                .isNewUser(false)
                 .build();
     }
 }

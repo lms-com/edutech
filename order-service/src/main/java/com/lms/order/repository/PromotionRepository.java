@@ -1,6 +1,8 @@
 package com.lms.order.repository;
 
 import com.lms.order.model.Promotion;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +21,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, String> {
         WHERE p.id IN :promotionIds
     """)
     List<Promotion> findAllByIds (@Param("promotionIds") List<String> promotionIds);
+
+    // Giảng viên lấy danh sách mã do mình tạo (theo created_by)
+    Page<Promotion> findByCreatedBy(String createdBy, Pageable pageable);
 }

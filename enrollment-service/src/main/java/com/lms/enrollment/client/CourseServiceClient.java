@@ -24,4 +24,7 @@ public interface CourseServiceClient {
     /** Đáp án đúng của bài kiểm tra, phục vụ chấm điểm ở phía server. */
     @GetMapping("/api/internal/v1/lessons/{lessonId}/correct-answers")
     ApiResponse<List<CourseCorrectAnswerDto>> getCorrectAnswers(@PathVariable("lessonId") String lessonId);
+
+    @org.springframework.web.bind.annotation.PostMapping("/api/internal/v1/courses/bulk")
+    List<com.lms.enrollment.client.dto.CourseBulkDto> getCourseBulk(@org.springframework.web.bind.annotation.RequestBody List<String> courseIds);
 }

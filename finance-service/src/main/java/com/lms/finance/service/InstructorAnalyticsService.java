@@ -16,4 +16,9 @@ public interface InstructorAnalyticsService {
      * Lấy dữ liệu biểu đồ doanh thu theo 6 tháng gần nhất của giảng viên.
      */
     List<RevenueChartPointResponse> getRevenueChart(String instructorId);
+
+    /**
+     * Lấy thống kê chi tiết doanh thu theo từng khóa học (doanh thu gộp, phí sàn, thực nhận, số lượt bán).
+     */
+    List<com.lms.finance.dto.response.CourseRevenueBreakdownResponse> getCourseBreakdown(String instructorId);
 }

@@ -1,5 +1,13 @@
 package com.lms.order.service.impl;
 
+import com.lms.order.client.feign.notification.NotificationFeignClient;
+import com.lms.order.dto.request.CreateRefundRequest;
+import com.lms.order.dto.request.ReviewRefundRequest;
+import com.lms.order.dto.response.RefundRequestResponse;
+import com.lms.order.model.RefundRequest;
+import com.lms.order.model.RefundStatus;
+import com.lms.order.repository.RefundRequestRepository;
+
 import com.lms.common.dto.response.ApiResponse;
 import com.lms.common.exception.AppException;
 import com.lms.order.client.feign.course.CourseServiceFeignClient;
@@ -54,6 +62,8 @@ public class OrderServiceImpl implements OrderService {
     private final FinanceServiceFeignClient financeClient;
     private final EnrollmentFeignClient enrollmentClient;
     private final RabbitTemplate rabbitTemplate;
+    private final RefundRequestRepository refundRequestRepository;
+    private final NotificationFeignClient notificationClient;
     private final String DEFAULT_CURRENCY = "VND";
 
 
@@ -273,5 +283,234 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findByIdAndLearnerId(orderId, learnerId)
                 .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND, "Không tìm thấy đơn hàng: " + orderId));
         return orderMapper.toOrderResponse(order);
+    }
+
+    @Override
+    @Transactional
+    public RefundRequestResponse createRefundRequest(String orderId, String learnerId, CreateRefundRequest request) {
+        log.info("📌 Học viên {} gửi yêu cầu khiếu nại / hoàn tiền cho đơn hàng {}", learnerId, orderId);
+        Order order = orderRepository.findByIdAndLearnerId(orderId, learnerId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND, "Không tìm thấy đơn hàng: " + orderId));
+
+        if (order.getStatus() != OrderStatus.PAID) {
+            throw new AppException(OrderErrorCode.ORDER_NOT_PAID);
+        }
+
+        // Kiểm tra chính sách 3 ngày
+        Instant orderTime = order.getCreatedAt();
+        long days = ChronoUnit.DAYS.between(orderTime, Instant.now());
+        if (days > 3) {
+            log.warn("⚠️ Đơn hàng {} đã quá 3 ngày ({} ngày), không thể yêu cầu hoàn tiền", orderId, days);
+            throw new AppException(OrderErrorCode.REFUND_EXPIRED);
+        }
+
+        // Kiểm tra xem đã có khiếu nại đang chờ hay chưa
+        refundRequestRepository.findByOrderIdAndStatus(orderId, RefundStatus.PENDING)
+                .ifPresent(r -> {
+                    throw new AppException(OrderErrorCode.REFUND_ALREADY_EXISTS);
+                });
+
+        RefundRequest refundRequest = RefundRequest.builder()
+                .orderId(orderId)
+                .learnerId(learnerId)
+                .amount(order.getTotalPrice())
+                .currencyCode(order.getCurrencyCode())
+                .reason(request.getReason())
+                .detail(request.getDetail())
+                .status(RefundStatus.PENDING)
+                .build();
+        refundRequestRepository.save(refundRequest);
+
+        order.setStatus(OrderStatus.REFUND_REQUESTED);
+        orderRepository.save(order);
+
+        // Bắn thông báo xác nhận đã tiếp nhận khiếu nại cho học viên
+        try {
+            notificationClient.sendCustomNotification(
+                    learnerId,
+                    "Tiếp nhận yêu cầu khiếu nại hoàn tiền",
+                    String.format("Yêu cầu hoàn tiền đơn hàng #%s (%s đ) đã được gửi đến Ban Quản Trị để thẩm định theo chính sách 3 ngày.",
+                            orderId.length() >= 8 ? orderId.substring(0, 8) : orderId, order.getTotalPrice().toPlainString()),
+                    "ORDER_COMPLETED",
+                    orderId,
+                    "Order"
+            );
+        } catch (Exception e) {
+            log.error("Không thể gửi thông báo cho học viên: {}", e.getMessage());
+        }
+
+        log.info("✔ Tạo yêu cầu hoàn tiền thành công ID: {} cho đơn hàng {}", refundRequest.getId(), orderId);
+        return toRefundResponse(refundRequest, order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RefundRequestResponse getRefundRequestByOrder(String orderId, String learnerId) {
+        Order order = orderRepository.findByIdAndLearnerId(orderId, learnerId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND, "Không tìm thấy đơn hàng: " + orderId));
+        RefundRequest req = refundRequestRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.REFUND_NOT_FOUND));
+        return toRefundResponse(req, order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RefundRequestResponse> getAdminRefundRequests(RefundStatus status, Pageable pageable) {
+        Page<RefundRequest> page = (status != null)
+                ? refundRequestRepository.findByStatus(status, pageable)
+                : refundRequestRepository.findAllByOrderByCreatedAtDesc(pageable);
+
+        return page.map(req -> {
+            Order order = orderRepository.findById(req.getOrderId()).orElse(null);
+            return toRefundResponse(req, order);
+        });
+    }
+
+    @Override
+    @Transactional
+    public RefundRequestResponse approveRefund(String requestId, String adminId, ReviewRefundRequest request) {
+        log.info("⭐ Admin {} phê duyệt yêu cầu hoàn tiền {}", adminId, requestId);
+        RefundRequest refundReq = refundRequestRepository.findById(requestId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.REFUND_NOT_FOUND));
+        Order order = orderRepository.findById(refundReq.getOrderId())
+                .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND));
+
+        refundReq.setStatus(RefundStatus.APPROVED);
+        refundReq.setResolvedBy(adminId);
+        refundReq.setResolvedAt(Instant.now());
+        refundReq.setAdminNote(request != null && request.getNote() != null && !request.getNote().isBlank()
+                ? request.getNote() : "Chấp thuận yêu cầu hoàn tiền theo chính sách 3 ngày");
+        refundRequestRepository.save(refundReq);
+
+        order.setStatus(OrderStatus.REFUNDED);
+        orderRepository.save(order);
+
+        // 1. Gọi finance-service khấu trừ ví Pending của giảng viên
+        try {
+            financeClient.refundOrder(order.getId());
+            log.info("✔ Finance refund executed successfully for order: {}", order.getId());
+        } catch (Exception e) {
+            log.error("❌ Lỗi khi gọi financeClient.refundOrder: {}", e.getMessage());
+        }
+
+        // 2. Thu hồi quyền học trong enrollment-service cho tất cả khóa trong đơn
+        if (order.getOrderDetails() != null) {
+            for (OrderDetail item : order.getOrderDetails()) {
+                try {
+                    enrollmentClient.revokeAccess(order.getLearnerId(), item.getCourseId());
+                    log.info("✔ Đã thu hồi quyền học của học viên {} đối với khóa học {}", order.getLearnerId(), item.getCourseId());
+                } catch (Exception e) {
+                    log.error("❌ Lỗi khi gọi enrollmentClient.revokeAccess: {}", e.getMessage());
+                }
+            }
+        }
+
+        // 3. Gửi thông báo real-time SSE cho Học viên và từng Giảng viên
+        try {
+            String shortOrderId = order.getId().length() >= 8 ? order.getId().substring(0, 8) : order.getId();
+            notificationClient.sendCustomNotification(
+                    order.getLearnerId(),
+                    "Yêu cầu hoàn tiền đã được chấp thuận!",
+                    String.format("Đơn hàng #%s (%s đ) đã được Admin duyệt hoàn tiền. Khóa học đã được thu hồi.",
+                            shortOrderId, order.getTotalPrice().toPlainString()),
+                    "REFUND_APPROVED",
+                    order.getId(),
+                    "Order"
+            );
+
+            // Bắn thông báo cho từng giảng viên
+            if (order.getOrderDetails() != null) {
+                for (OrderDetail item : order.getOrderDetails()) {
+                    if (item.getInstructorId() != null && !item.getInstructorId().isBlank()) {
+                        notificationClient.sendCustomNotification(
+                                item.getInstructorId(),
+                                "Đơn hàng đã hoàn tiền (Chính sách 3 ngày)",
+                                String.format("Khóa học [%s] thuộc đơn hàng #%s đã được hoàn tiền cho học viên. Doanh thu tạm giữ tương ứng đã được khấu trừ.",
+                                        item.getCourseName(), shortOrderId),
+                                "REFUND_APPROVED",
+                                order.getId(),
+                                "Order"
+                        );
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi bắn thông báo duyệt hoàn tiền: {}", e.getMessage());
+        }
+
+        return toRefundResponse(refundReq, order);
+    }
+
+    @Override
+    @Transactional
+    public RefundRequestResponse rejectRefund(String requestId, String adminId, ReviewRefundRequest request) {
+        log.info("⛔ Admin {} từ chối yêu cầu hoàn tiền {}", adminId, requestId);
+        RefundRequest refundReq = refundRequestRepository.findById(requestId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.REFUND_NOT_FOUND));
+        Order order = orderRepository.findById(refundReq.getOrderId())
+                .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND));
+
+        String rejectReason = request != null && request.getNote() != null && !request.getNote().isBlank()
+                ? request.getNote() : "Không thỏa mãn điều kiện chính sách hoàn tiền 3 ngày";
+
+        refundReq.setStatus(RefundStatus.REJECTED);
+        refundReq.setResolvedBy(adminId);
+        refundReq.setResolvedAt(Instant.now());
+        refundReq.setAdminNote(rejectReason);
+        refundRequestRepository.save(refundReq);
+
+        order.setStatus(OrderStatus.PAID);
+        orderRepository.save(order);
+
+        // Bắn thông báo từ chối cho Học viên
+        try {
+            String shortOrderId = order.getId().length() >= 8 ? order.getId().substring(0, 8) : order.getId();
+            notificationClient.sendCustomNotification(
+                    order.getLearnerId(),
+                    "Yêu cầu hoàn tiền bị từ chối",
+                    String.format("Yêu cầu hoàn tiền đơn hàng #%s bị từ chối. Lý do: %s.",
+                            shortOrderId, rejectReason),
+                    "REFUND_REJECTED",
+                    order.getId(),
+                    "Order"
+            );
+        } catch (Exception e) {
+            log.error("Lỗi khi bắn thông báo từ chối hoàn tiền: {}", e.getMessage());
+        }
+
+        return toRefundResponse(refundReq, order);
+    }
+
+    private RefundRequestResponse toRefundResponse(RefundRequest req, Order order) {
+        List<RefundRequestResponse.RefundOrderItemDto> items = null;
+        Instant orderCreatedAt = null;
+        if (order != null) {
+            orderCreatedAt = order.getCreatedAt();
+            if (order.getOrderDetails() != null) {
+                items = order.getOrderDetails().stream().map(d -> RefundRequestResponse.RefundOrderItemDto.builder()
+                        .courseId(d.getCourseId())
+                        .courseName(d.getCourseName())
+                        .instructorId(d.getInstructorId())
+                        .finalPrice(d.getFinalPrice())
+                        .build()
+                ).toList();
+            }
+        }
+        return RefundRequestResponse.builder()
+                .id(req.getId())
+                .orderId(req.getOrderId())
+                .learnerId(req.getLearnerId())
+                .amount(req.getAmount())
+                .currencyCode(req.getCurrencyCode())
+                .reason(req.getReason())
+                .detail(req.getDetail())
+                .status(req.getStatus())
+                .adminNote(req.getAdminNote())
+                .resolvedBy(req.getResolvedBy())
+                .resolvedAt(req.getResolvedAt())
+                .createdAt(req.getCreatedAt())
+                .orderCreatedAt(orderCreatedAt)
+                .items(items)
+                .build();
     }
 }

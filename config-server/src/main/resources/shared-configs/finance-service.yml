@@ -65,7 +65,7 @@ application:
   cron:
     balance-settlement: "0 * * * * ?"
   finance:
-    refund-deadline: 7
+    refund-deadline: 3
     minimum-payout-amount: 500000
     default-currency: "VND"
   security:

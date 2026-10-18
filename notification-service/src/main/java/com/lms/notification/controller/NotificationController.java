@@ -56,6 +56,26 @@ public class NotificationController {
         return ApiResponse.success(null, "Marked all notifications as read successfully");
     }
 
+    // API gửi thông báo tùy biến từ hệ thống / các microservice
+    @PostMapping("/send-custom")
+    public ApiResponse<Void> sendCustomNotification(
+            @RequestParam String userId,
+            @RequestParam String title,
+            @RequestParam String content,
+            @RequestParam com.lms.notification.enums.NotificationType type,
+            @RequestParam(required = false) String refId,
+            @RequestParam(required = false) String refType) {
+
+        notificationService.createAndSendNotification(
+                userId,
+                title,
+                content,
+                type,
+                refId,
+                refType != null ? refType : "SYSTEM");
+        return ApiResponse.success(null, "Sent notification successfully");
+    }
+
     // API tạm thời để test đẩy thông báo real-time
     @PostMapping("/simulate-trigger")
     public ApiResponse<Void> simulateTrigger(

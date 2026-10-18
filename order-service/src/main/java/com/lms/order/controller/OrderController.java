@@ -52,4 +52,53 @@ public class OrderController {
         OrderResponse order = orderService.getOrderDetailByLearner(orderId, userId);
         return ApiResponse.success(order);
     }
+
+    @Operation(summary = "Gửi yêu cầu khiếu nại hoàn tiền (Chính sách 3 ngày)")
+    @PostMapping("/{orderId}/refund-request")
+    public ApiResponse<com.lms.order.dto.response.RefundRequestResponse> createRefundRequest(
+            @PathVariable("orderId") String orderId,
+            @RequestHeader("X-User-Id") String userId,
+            @Valid @RequestBody com.lms.order.dto.request.CreateRefundRequest request
+    ) {
+        return ApiResponse.success(orderService.createRefundRequest(orderId, userId, request));
+    }
+
+    @Operation(summary = "Xem trạng thái khiếu nại của đơn hàng")
+    @GetMapping("/{orderId}/refund-request")
+    public ApiResponse<com.lms.order.dto.response.RefundRequestResponse> getRefundRequest(
+            @PathVariable("orderId") String orderId,
+            @RequestHeader("X-User-Id") String userId
+    ) {
+        return ApiResponse.success(orderService.getRefundRequestByOrder(orderId, userId));
+    }
+
+    @Operation(summary = "Admin: Lấy danh sách yêu cầu khiếu nại hoàn tiền")
+    @GetMapping("/admin/refund-requests")
+    public ApiResponse<org.springframework.data.domain.Page<com.lms.order.dto.response.RefundRequestResponse>> getAdminRefundRequests(
+            @RequestParam(required = false) com.lms.order.model.RefundStatus status,
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable
+    ) {
+        return ApiResponse.success(orderService.getAdminRefundRequests(status, pageable));
+    }
+
+    @Operation(summary = "Admin: Duyệt hoàn tiền đơn hàng")
+    @PutMapping("/admin/refund-requests/{requestId}/approve")
+    public ApiResponse<com.lms.order.dto.response.RefundRequestResponse> approveRefund(
+            @PathVariable("requestId") String requestId,
+            @RequestHeader(value = "X-User-Id", required = false) String adminId,
+            @RequestBody(required = false) com.lms.order.dto.request.ReviewRefundRequest request
+    ) {
+        return ApiResponse.success(orderService.approveRefund(requestId, adminId != null ? adminId : "ADMIN", request));
+    }
+
+    @Operation(summary = "Admin: Từ chối hoàn tiền đơn hàng")
+    @PutMapping("/admin/refund-requests/{requestId}/reject")
+    public ApiResponse<com.lms.order.dto.response.RefundRequestResponse> rejectRefund(
+            @PathVariable("requestId") String requestId,
+            @RequestHeader(value = "X-User-Id", required = false) String adminId,
+            @RequestBody(required = false) com.lms.order.dto.request.ReviewRefundRequest request
+    ) {
+        return ApiResponse.success(orderService.rejectRefund(requestId, adminId != null ? adminId : "ADMIN", request));
+    }
 }

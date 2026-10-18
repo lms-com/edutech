@@ -17,4 +17,6 @@ public class GoogleLoginRequest {
 
     @NotBlank(message = "Dấu vân tay thiết bị không được để trống")
     String deviceFingerPrint;
+
+    String password;
 }

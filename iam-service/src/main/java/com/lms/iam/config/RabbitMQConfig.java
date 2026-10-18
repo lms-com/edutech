@@ -11,6 +11,7 @@ public class RabbitMQConfig {
 
     public static final String EXCHANGE_IAM = "lms.iam.exchange";
     public static final String ROUTING_KEY_OTP = "auth.email.send_otp";
+    public static final String ROUTING_KEY_INSTRUCTOR_APPROVED = "instructor.application.approved";
 
     @Bean
     public TopicExchange iamExchange() {

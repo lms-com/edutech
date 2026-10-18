@@ -8,6 +8,7 @@ import com.lms.notification.enums.NotificationType;
 import com.lms.notification.event.payload.CourseStatusChangedEvent;
 import com.lms.notification.event.payload.SendOrderCompletedEvent;
 import com.lms.notification.event.payload.SendOtpEvent;
+import com.lms.notification.event.payload.LessonCommentEvent;
 import com.lms.notification.service.EmailService;
 import com.lms.notification.service.NotificationService;
 import com.lms.notification.event.payload.CourseCompletedEvent;
@@ -63,9 +64,7 @@ public class NotificationConsumer {
         log.info("➔ [RabbitMQ] Nhận được Event Order Completed. Đơn hàng: [{}], Học viên: [{}]",
                 event.getOrderId(), event.getLearnerId());
 
-        // Tác vụ 1: Tạo thông báo lưu DB và kích hoạt đẩy SSE lên Quả Chuông Real-time.
-        // Tách riêng khỏi bước gửi mail để việc tra cứu email qua IAM có lỗi cũng
-        // không làm mất thông báo trên chuông.
+        // Tác vụ 1: Tạo thông báo lưu DB và kích hoạt đẩy SSE lên Quả Chuông Real-time cho Học viên.
         try {
             notificationService.createAndSendNotification(
                     event.getLearnerId(),
@@ -77,6 +76,29 @@ public class NotificationConsumer {
         } catch (Exception e) {
             log.error("❌ Thất bại khi tạo thông báo cho Đơn hàng [{}]. Chi tiết: {}", event.getOrderId(),
                     e.getMessage());
+        }
+
+        // Tác vụ 1b: Tạo thông báo gửi cho từng Giảng viên có khóa học trong đơn hàng
+        if (event.getItems() != null) {
+            for (SendOrderCompletedEvent.OrderItem item : event.getItems()) {
+                if (item.getInstructorId() != null && !item.getInstructorId().isBlank()) {
+                    try {
+                        String title = "Học viên mới đăng ký khóa học!";
+                        String content = "Khóa học của bạn vừa có học viên mới đăng ký. Doanh thu tạm giữ đã được cộng vào ví của bạn (tự động giải phóng sau 3 ngày).";
+                        notificationService.createAndSendNotification(
+                                item.getInstructorId(),
+                                title,
+                                content,
+                                NotificationType.ORDER_COMPLETED,
+                                event.getOrderId(),
+                                "Order"
+                        );
+                        log.info("✔ Đã gửi thông báo đơn hàng mới cho Giảng viên [{}]", item.getInstructorId());
+                    } catch (Exception e) {
+                        log.error("❌ Lỗi gửi thông báo cho Giảng viên [{}]: {}", item.getInstructorId(), e.getMessage());
+                    }
+                }
+            }
         }
 
         // Tác vụ 2: Gửi Email biên lai hóa đơn ngầm
@@ -92,6 +114,42 @@ public class NotificationConsumer {
         } catch (Exception e) {
             log.error("❌ Thất bại khi gửi email biên lai Đơn hàng [{}]. Chi tiết: {}", event.getOrderId(),
                     e.getMessage());
+        }
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_NOTIFICATION_PAYOUT)
+    public void listenPayoutEvent(com.lms.notification.event.payload.PayoutEventMessage event) {
+        log.info("➔ [RabbitMQ] Nhận được Event Payout. Giảng viên: [{}], Trạng thái: [{}]",
+                event.getInstructorId(), event.getStatus());
+        try {
+            if ("SUCCESS".equalsIgnoreCase(event.getStatus())) {
+                String title = "Yêu cầu rút tiền thành công!";
+                String amountStr = event.getAmount() != null ? event.getAmount().toPlainString() : "0";
+                String content = String.format("Lệnh rút tiền %s đ của bạn đã được Admin phê duyệt thành công.", amountStr);
+                notificationService.createAndSendNotification(
+                        event.getInstructorId(),
+                        title,
+                        content,
+                        NotificationType.PAYOUT_APPROVED,
+                        event.getPayoutId(),
+                        "Payout"
+                );
+            } else if ("REJECTED".equalsIgnoreCase(event.getStatus())) {
+                String title = "Yêu cầu rút tiền bị từ chối";
+                String amountStr = event.getAmount() != null ? event.getAmount().toPlainString() : "0";
+                String reason = event.getNote() != null ? event.getNote() : "Không có lý do cụ thể";
+                String content = String.format("Lệnh rút tiền %s đ của bạn bị từ chối. Lý do: %s. Số tiền đã được hoàn lại số dư khả dụng.", amountStr, reason);
+                notificationService.createAndSendNotification(
+                        event.getInstructorId(),
+                        title,
+                        content,
+                        NotificationType.PAYOUT_REJECTED,
+                        event.getPayoutId(),
+                        "Payout"
+                );
+            }
+        } catch (Exception e) {
+            log.error("❌ Thất bại khi gửi thông báo Payout cho Giảng viên [{}]: {}", event.getInstructorId(), e.getMessage());
         }
     }
 
@@ -173,6 +231,23 @@ public class NotificationConsumer {
         } catch (Exception e) {
             log.error("❌ Thất bại khi xử lý sinh chứng chỉ cho học viên [{}]. Chi tiết: {}",
                     event.getLearnerId(), e.getMessage());
+        }
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_NOTIFICATION_COMMENT)
+    public void listenCommentEvent(LessonCommentEvent event) {
+        log.info("➔ [RabbitMQ] Nhận được Event Q&A Comment cho user [{}]: {}", event.getRecipientId(), event.getTitle());
+        try {
+            notificationService.createAndSendNotification(
+                    event.getRecipientId(),
+                    event.getTitle(),
+                    event.getContent(),
+                    NotificationType.LESSON_COMMENT,
+                    event.getCommentId(),
+                    "LESSON_COMMENT"
+            );
+        } catch (Exception e) {
+            log.error("❌ Lỗi khi xử lý thông báo Q&A: {}", e.getMessage());
         }
     }
 

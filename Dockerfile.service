@@ -1,0 +1,28 @@
+# -------------------------------------------------------------
+# Dockerfile tối ưu cho các Spring Boot Microservices (Java 21)
+# Base Image: Eclipse Temurin JRE 21 Alpine siêu nhẹ (~160MB)
+# -------------------------------------------------------------
+FROM eclipse-temurin:21-jre-alpine
+
+# Cài đặt curl để hỗ trợ Docker Health Check
+RUN apk add --no-cache curl
+
+ENV TZ=Asia/HoChiMinh
+
+WORKDIR /app
+
+# Khai báo argument nhận đường dẫn file JAR của từng service
+ARG JAR_FILE
+
+# Copy file jar vào container
+COPY ${JAR_FILE} app.jar
+
+# Biến môi trường mặc định giới hạn bộ nhớ JVM để chạy an toàn trên VPS
+ENV JAVA_OPTS="-Xms150m -Xmx300m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/HoChiMinh"
+ENV SPRING_PROFILES_ACTIVE="prod"
+
+# Chạy ứng dụng dưới user non-root để tăng cường bảo mật
+RUN addgroup -S lmsgroup && adduser -S lmsuser -G lmsgroup
+USER lmsuser:lmsgroup
+
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

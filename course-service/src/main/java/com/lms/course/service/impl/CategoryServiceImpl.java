@@ -11,6 +11,9 @@ import com.lms.course.service.CategoryService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import com.lms.course.config.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ public class CategoryServiceImpl implements CategoryService {
     CategoryRepository categoryRepository;
 
     @Override
+    @Cacheable(value = CacheConfig.CACHE_CATEGORIES, key = "#isTree")
     public List<CategoryResponse> getCategories(boolean isTree) {
         List<Category> categories = categoryRepository.findByDeletedFalseOrderByOrderIndexAsc();
 
@@ -56,6 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_CATEGORIES, allEntries = true)
     public CategoryResponse createCategory(CategoryRequest request) {
         if (categoryRepository.existsBySlug(request.getSlug())) {
             throw new AppException(CourseErrorCode.CATEGORY_SLUG_EXISTS);
@@ -73,6 +78,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_CATEGORIES, allEntries = true)
     public CategoryResponse updateCategory(String id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
@@ -90,6 +96,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_CATEGORIES, allEntries = true)
     public void deleteCategory(String id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(CourseErrorCode.CATEGORY_NOT_FOUND));
@@ -101,6 +108,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_CATEGORIES, allEntries = true)
     public void reorderCategories(List<String> orderedIds) {
         for (int i = 0; i < orderedIds.size(); i++) {
             String id = orderedIds.get(i);

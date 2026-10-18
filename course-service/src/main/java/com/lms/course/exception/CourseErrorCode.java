@@ -44,6 +44,7 @@ public enum CourseErrorCode implements ErrorCode {
     UPLOAD_FAILED(3501, "Tải tệp lên thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_INVALID_TYPE(3502, "Định dạng tệp không hợp lệ", HttpStatus.BAD_REQUEST),
     FILE_TOO_LARGE(3503, "Kích thước tệp vượt quá giới hạn", HttpStatus.PAYLOAD_TOO_LARGE),
+    ATTACHMENT_NOT_FOUND(3504, "Không tìm thấy tài liệu đính kèm", HttpStatus.NOT_FOUND),
 
     // 39xx: General / Others
     UNAUTHORIZED_ACTION(3901, "Không có quyền thực hiện hành động này", HttpStatus.UNAUTHORIZED),

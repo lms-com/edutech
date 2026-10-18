@@ -50,6 +50,15 @@ spring:
               - AuthenticationFilter
 
       ##### COURSE SERVICE ROUTES #####
+        # Secured endpoints of course-service (Đặt trước để các endpoint như /my-courses qua AuthenticationFilter)
+        - id: course-service-my-courses
+          uri: lb://course-service
+          predicates:
+            - Path=/course-service/api/v1/courses/my-courses
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+
         # Public endpoints of course-service:
         - id: course-service-public
           uri: lb://course-service
@@ -58,7 +67,8 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
-        # Secured endpoints of course-service
+
+        # Secured endpoints of course-service (các API còn lại: POST, PUT, DELETE, PATCH...)
         - id: course-service-secured
           uri: lb://course-service
           predicates:

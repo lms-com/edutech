@@ -15,6 +15,7 @@ public interface EnrollmentService {
     void completeEnrollment(String enrollmentId);
     void enrollFromOrder(com.lms.enrollment.dto.event.OrderCompletedEvent event);
     void revokeEnrollment(String enrollmentId);
+    void revokeByLearnerAndCourse(String learnerId, String courseId);
     EnrollmentResponse getEnrollment(String learnerId, String courseId);
     EnrollmentValidationResponse validateAccess(String learnerId, String courseId);
     Page<EnrollmentResponse> getCourseEnrollments(String courseId, Pageable pageable);

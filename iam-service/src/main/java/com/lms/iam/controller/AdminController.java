@@ -74,4 +74,30 @@ public class AdminController {
         deviceService.revokeDevice(userId, deviceFingerprint);
         return ApiResponse.success("Đã thu hồi phiên và chặn thiết bị thành công");
     }
+
+    private final com.lms.iam.service.InstructorApplicationService applicationService;
+
+    @Operation(summary = "Danh sách đơn đăng ký giảng viên", description = "Lấy danh sách đơn đăng ký giảng viên của học viên")
+    @GetMapping("/instructor-applications")
+    public ApiResponse<Page<com.lms.iam.dto.response.InstructorApplicationResponse>> getInstructorApplications(
+            @RequestParam(required = false) com.lms.iam.model.ApplicationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        Page<com.lms.iam.dto.response.InstructorApplicationResponse> result = applicationService.getApplicationsForAdmin(status, pageable);
+        return ApiResponse.success(result, "Lấy danh sách đơn đăng ký giảng viên thành công");
+    }
+
+    @Operation(summary = "Xét duyệt đơn đăng ký giảng viên", description = "Phê duyệt hoặc từ chối đơn đăng ký làm giảng viên")
+    @PutMapping("/instructor-applications/{applicationId}/review")
+    public ApiResponse<com.lms.iam.dto.response.InstructorApplicationResponse> reviewInstructorApplication(
+            @RequestHeader(value = "X-User-Id", required = false) String adminId,
+            @PathVariable String applicationId,
+            @RequestBody com.lms.iam.dto.request.ReviewInstructorApplicationRequest request
+    ) {
+        String reviewer = (adminId != null && !adminId.isBlank()) ? adminId : "system-admin";
+        com.lms.iam.dto.response.InstructorApplicationResponse result = applicationService.reviewApplication(reviewer, applicationId, request);
+        return ApiResponse.success(result, Boolean.TRUE.equals(request.getApproved()) ? "Đã phê duyệt đơn và cấp quyền Giảng viên thành công" : "Đã từ chối đơn đăng ký giảng viên");
+    }
 }
