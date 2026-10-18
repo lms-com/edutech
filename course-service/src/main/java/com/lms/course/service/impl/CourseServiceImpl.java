@@ -14,8 +14,10 @@ import com.lms.course.repository.CourseRepository;
 import com.lms.course.repository.LessonRepository;
 import com.lms.course.repository.SectionRepository;
 import com.lms.course.service.CourseService;
+import com.lms.course.config.CacheConfig;
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -80,6 +82,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheConfig.CACHE_COURSE_DETAIL, key = "#courseId")
     public CourseDetailResponse getCourseById(String courseId){
         Course course = courseRepository.findByIdWithCurriculum(courseId)
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
@@ -165,6 +168,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {CacheConfig.CACHE_COURSE_DETAIL, CacheConfig.CACHE_PUBLISHED_COURSES}, allEntries = true)
     public CourseResponse updateCourse(String courseId, CourseUpdateRequest request, String instructorId){
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
@@ -219,6 +223,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {CacheConfig.CACHE_COURSE_DETAIL, CacheConfig.CACHE_PUBLISHED_COURSES}, allEntries = true)
     public CourseResponse updateCourseFull(String courseId, CourseRequest request, String instructorId){
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
@@ -257,6 +262,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {CacheConfig.CACHE_COURSE_DETAIL, CacheConfig.CACHE_PUBLISHED_COURSES}, allEntries = true)
     public void deleteCourse(String courseId, String instructorId){
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(()->new AppException(CourseErrorCode.COURSE_NOT_FOUND));
@@ -297,6 +303,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {CacheConfig.CACHE_COURSE_DETAIL, CacheConfig.CACHE_PUBLISHED_COURSES}, allEntries = true)
     public void changeCourseStatus(String courseId, String status, String instructorId) {
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));
@@ -314,6 +321,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {CacheConfig.CACHE_COURSE_DETAIL, CacheConfig.CACHE_PUBLISHED_COURSES}, allEntries = true)
     public void approveCourse(String courseId) {
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));
@@ -330,6 +338,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {CacheConfig.CACHE_COURSE_DETAIL, CacheConfig.CACHE_PUBLISHED_COURSES}, allEntries = true)
     public void rejectCourse(String courseId, String rejectionNote) {
         Course course = courseRepository.findByIdAndNotDeleted(courseId)
                 .orElseThrow(() -> new AppException(CourseErrorCode.COURSE_NOT_FOUND));

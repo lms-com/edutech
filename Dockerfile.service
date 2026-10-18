@@ -1,0 +1,28 @@
+# -------------------------------------------------------------
+# Dockerfile tối ưu cho các Spring Boot Microservices (Java 21)
+# Base Image: Eclipse Temurin JRE 21 Alpine siêu nhẹ (~160MB)
+# -------------------------------------------------------------
+FROM eclipse-temurin:21-jre-alpine
+
+# Cài đặt tzdata và curl để hỗ trợ Health Check và múi giờ Việt Nam
+RUN apk add --no-cache tzdata curl && \
+    cp /usr/share/zoneinfo/Asia/HoChiMinh /etc/localtime && \
+    echo "Asia/HoChiMinh" > /etc/timezone
+
+WORKDIR /app
+
+# Khai báo argument nhận đường dẫn file JAR của từng service
+ARG JAR_FILE
+
+# Copy file jar vào container
+COPY ${JAR_FILE} app.jar
+
+# Biến môi trường mặc định giới hạn bộ nhớ JVM để chạy an toàn trên VPS
+ENV JAVA_OPTS="-Xms150m -Xmx300m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
+ENV SPRING_PROFILES_ACTIVE="prod"
+
+# Chạy ứng dụng dưới user non-root để tăng cường bảo mật
+RUN addgroup -S lmsgroup && adduser -S lmsuser -G lmsgroup
+USER lmsuser:lmsgroup
+
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

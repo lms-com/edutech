@@ -26,6 +26,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.lms.enrollment.config.RabbitMQConfig;
+import com.lms.enrollment.client.CourseServiceClient;
+import com.lms.enrollment.client.dto.CourseBulkDto;
+import com.lms.enrollment.event.LessonCommentEvent;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -35,6 +44,8 @@ public class LessonCommentServiceImpl implements LessonCommentService {
     LessonCommentRepository commentRepository;
     EnrollmentRepository enrollmentRepository;
     IamServiceClient iamServiceClient;
+    CourseServiceClient courseServiceClient;
+    RabbitTemplate rabbitTemplate;
 
     @Override
     @Transactional(readOnly = true)
@@ -105,6 +116,56 @@ public class LessonCommentServiceImpl implements LessonCommentService {
 
         LessonComment saved = commentRepository.save(comment);
         log.info("💬 Tạo bình luận mới [{}] tại bài học [{}] bởi user [{}]", saved.getId(), lessonId, userId);
+
+        // Bắn sự kiện thông báo thời gian thực (Real-time Q&A Notification)
+        try {
+            String shortContent = comment.getContent().length() > 80
+                    ? comment.getContent().substring(0, 80) + "..."
+                    : comment.getContent();
+
+            if (request.getParentId() == null) {
+                // Câu hỏi mới của học viên -> Gửi thông báo cho Giảng viên
+                List<CourseBulkDto> bulk = courseServiceClient.getCourseBulk(List.of(courseId));
+                if (bulk != null && !bulk.isEmpty()) {
+                    CourseBulkDto courseInfo = bulk.get(0);
+                    String instructorId = courseInfo.getInstructorId();
+                    if (instructorId != null && !instructorId.equals(userId)) {
+                        LessonCommentEvent event = LessonCommentEvent.builder()
+                                .recipientId(instructorId)
+                                .senderId(userId)
+                                .senderName(userName)
+                                .title("Câu hỏi mới trong khóa học: " + courseInfo.getTitle())
+                                .content(userName + ": \"" + shortContent + "\"")
+                                .courseId(courseId)
+                                .lessonId(lessonId)
+                                .commentId(saved.getId())
+                                .build();
+                        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_ENROLLMENT, RabbitMQConfig.ROUTING_KEY_COMMENT, event);
+                        log.info("✔ Đã phát thông báo câu hỏi mới tới giảng viên [{}]", instructorId);
+                    }
+                }
+            } else {
+                // Phản hồi câu hỏi -> Gửi thông báo cho tác giả của câu hỏi gốc
+                commentRepository.findById(request.getParentId()).ifPresent(parent -> {
+                    if (!parent.getUserId().equals(userId)) {
+                        LessonCommentEvent event = LessonCommentEvent.builder()
+                                .recipientId(parent.getUserId())
+                                .senderId(userId)
+                                .senderName(userName)
+                                .title(userName + " đã trả lời câu hỏi của bạn")
+                                .content("\"" + shortContent + "\"")
+                                .courseId(courseId)
+                                .lessonId(lessonId)
+                                .commentId(saved.getId())
+                                .build();
+                        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_ENROLLMENT, RabbitMQConfig.ROUTING_KEY_COMMENT, event);
+                        log.info("✔ Đã phát thông báo phản hồi tới học viên [{}]", parent.getUserId());
+                    }
+                });
+            }
+        } catch (Exception e) {
+            log.warn("Không thể gửi sự kiện thông báo Q&A qua RabbitMQ: {}", e.getMessage());
+        }
 
         return mapToResponse(saved, userMap, Collections.emptyList());
     }

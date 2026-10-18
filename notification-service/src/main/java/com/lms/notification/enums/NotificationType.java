@@ -9,5 +9,6 @@ public enum NotificationType {
     PAYOUT_APPROVED,    // Admin duyệt lệnh rút tiền
     PAYOUT_REJECTED,    // Admin từ chối lệnh rút tiền
     REFUND_APPROVED,    // Admin duyệt hoàn tiền đơn hàng
-    REFUND_REJECTED     // Admin từ chối hoàn tiền đơn hàng
+    REFUND_REJECTED,    // Admin từ chối hoàn tiền đơn hàng
+    LESSON_COMMENT      // Bình luận hoặc hỏi đáp bài học mới
 }

@@ -8,6 +8,7 @@ import com.lms.notification.enums.NotificationType;
 import com.lms.notification.event.payload.CourseStatusChangedEvent;
 import com.lms.notification.event.payload.SendOrderCompletedEvent;
 import com.lms.notification.event.payload.SendOtpEvent;
+import com.lms.notification.event.payload.LessonCommentEvent;
 import com.lms.notification.service.EmailService;
 import com.lms.notification.service.NotificationService;
 import com.lms.notification.event.payload.CourseCompletedEvent;
@@ -230,6 +231,23 @@ public class NotificationConsumer {
         } catch (Exception e) {
             log.error("❌ Thất bại khi xử lý sinh chứng chỉ cho học viên [{}]. Chi tiết: {}",
                     event.getLearnerId(), e.getMessage());
+        }
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_NOTIFICATION_COMMENT)
+    public void listenCommentEvent(LessonCommentEvent event) {
+        log.info("➔ [RabbitMQ] Nhận được Event Q&A Comment cho user [{}]: {}", event.getRecipientId(), event.getTitle());
+        try {
+            notificationService.createAndSendNotification(
+                    event.getRecipientId(),
+                    event.getTitle(),
+                    event.getContent(),
+                    NotificationType.LESSON_COMMENT,
+                    event.getCommentId(),
+                    "LESSON_COMMENT"
+            );
+        } catch (Exception e) {
+            log.error("❌ Lỗi khi xử lý thông báo Q&A: {}", e.getMessage());
         }
     }
 

@@ -34,9 +34,17 @@ public class RabbitMQConfig {
         return QueueBuilder.durable("enrollment.order.completed.queue.dlq").build();
     }
 
+    public static final String EXCHANGE_ENROLLMENT = "enrollment.exchange";
+    public static final String ROUTING_KEY_COMMENT = "comment.created";
+
     @Bean
     public DirectExchange orderExchange() {
         return new DirectExchange("order.exchange", true, false);
+    }
+
+    @Bean
+    public TopicExchange enrollmentExchange() {
+        return new TopicExchange(EXCHANGE_ENROLLMENT, true, false);
     }
 
     @Bean
