@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh Toán Thành Công</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background-color: #2ecc71;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 6px 6px 0 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 20px 0;
+        }
+
+        .invoice-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #2ecc71;
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777777;
+            margin-top: 20px;
+            border-top: 1px solid #eeeeee;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">THANH TOÁN THÀNH CÔNG!</div>
+        <div class="content">
+            <p>Xin chào Học viên,</p>
+            <p>Hệ thống giáo dục điện tử <strong>EDUTECH</strong> xác nhận bạn đã hoàn tất giao dịch mua khóa học thành
+                công. Dưới
+                đây là thông tin biên lai điện tử của bạn:</p>
+
+            <div class="invoice-box">
+                <strong>Mã đơn hàng:</strong> <span th:text="${orderId}"></span><br />
+                <strong>Tổng số tiền:</strong> <span
+                    th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' VND'"></span><br />
+                <strong>Mã sản phẩm kích hoạt:</strong> <span th:text="${courseIds}"></span>
+            </div>
+
+            <p>Khóa học của bạn đã được kích hoạt ngay trong tài khoản. Hãy đăng nhập vào hệ thống và bắt đầu chặng
+                đường chinh phục tri thức ngay hôm nay!</p>
+        </div>
+        <div class="footer">
+            Đây là email tự động từ hệ thống EDUTECH LMS.<br />
+            Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ đội ngũ CSKH để được hỗ trợ 24/7.
+        </div>
+    </div>
+</body>
+
+</html>

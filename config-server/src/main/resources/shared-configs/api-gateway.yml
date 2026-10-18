@@ -1,0 +1,199 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+          lower-case-service-id: true
+      routes:
+        - id: block-internal-api
+          uri: no://op # Lấy đại tên ko tồn tại nha
+          predicates:
+            - Path=/api/internal/**
+          filters:
+            - SetStatus=403
+
+      ##### IAM SERVICE ROUTES #####
+        # Secured enpoints of iam-service:
+        - id: iam-service-secured
+          uri: lb://iam-service
+          predicates:
+            - Path=/iam-service/api/v1/admin/**, /iam-service/api/v1/user/**, /iam-service/api/v1/auth/logout
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+        # Public endpoints of iam-service:
+        - id: iam-service-public
+          uri: lb://iam-service
+          predicates:
+            - Path=/iam-service/api/v1/auth/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html, /iam-service/dev/**
+          filters:
+            - StripPrefix=1
+
+      ##### CONFIG SERVER ROUTES #####
+        - id: config-server
+          uri: lb://config-server
+          predicates:
+            - Path=/config-server/**
+            - RemoteAddr=127.0.0.1/32
+
+      ##### MEDIA SERVICE ROUTES #####
+        - id: media-service
+          uri: lb://media-service
+          predicates:
+            - Path=/media-service/**
+          filters:
+              - StripPrefix=1
+              - AuthenticationFilter
+
+      ##### COURSE SERVICE ROUTES #####
+        # Public endpoints of course-service:
+        - id: course-service-public
+          uri: lb://course-service
+          predicates:
+            - Path=/course-service/api/v1/categories/**, /course-service/api/v1/courses, /course-service/api/v1/courses/*, /course-service/api/v1/courses/*/related, /course-service/v3/api-docs
+            - Method=GET
+          filters:
+            - StripPrefix=1
+        # Secured endpoints of course-service
+        - id: course-service-secured
+          uri: lb://course-service
+          predicates:
+            - Path=/course-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+
+      ##### ORDER SERVICE ROUTES #####
+        # Public Endpoints of Order Service
+        - id: order-service-public
+          uri: lb://order-service
+          predicates:
+            - Path=/order-service/dev/**, /order-service/v3/api-docs, /order-service/v3/swagger-ui.html
+          filters:
+            - StripPrefix=1
+        # Secured endpoints of order service
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/order-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+
+      ##### FINANCE SERVICE ROUTES #####
+        # Public Endpoints of Finance Service
+        - id: finance-service-public
+          uri: lb://finance-service
+          predicates:
+            - name: Path
+              args:
+                patterns:
+                  - /finance-service/api/v1/payments/vnpay-ipn
+                  - /finance-service/v3/api-docs
+                  - /finance-service/api/v1/payments/create
+                  - /finance-service/api/v1/payments/vnpay-callback
+          filters:
+            - StripPrefix=1
+        # Secured Endpoint of Finance Service
+        - id: finance-service-secured
+          uri: lb://finance-service
+          predicates:
+            - Path=/finance-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+
+      ##### NOTIFICATION SERVICE ROUTES #####
+        - id: notification-service-public
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification-service/api/v1/notifications/subscribe, /notification-service/api/v1/certificates/verify/**, /notification-service/v3/api-docs
+          filters:
+            - StripPrefix=1
+        - id: notification-service-secured
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+
+      ##### ENROLLMENT SERVICE ROUTES #####
+        - id: enrollment-service-public
+          uri: lb://enrollment-service
+          predicates:
+            # Chỉ GET mới công khai. Nếu để khớp cả POST, route này nuốt luôn request
+            # tạo đánh giá và bỏ qua AuthenticationFilter -> thiếu header X-User-Id ->
+            # ReviewController trả 400 dù người dùng đã đăng nhập.
+            - Path=/enrollment-service/api/v1/reviews/courses/**, /enrollment-service/v3/api-docs
+            - Method=GET
+          filters:
+            - StripPrefix=1
+        - id: enrollment-service-secured
+          uri: lb://enrollment-service
+          predicates:
+            - Path=/enrollment-service/api/v1/**
+          filters:
+            - StripPrefix=1
+            - AuthenticationFilter
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            maxAge: 3600
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*" # "refresh,health,info,env"
+
+application:
+  security:
+    jwt:  # Luu secret-key de decode Token
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html    # URL cua Swagger UI tren Gateway
+    urls:
+      - name: 01. IAM Service
+        url: /iam-service/v3/api-docs  # phan route den service phai dung voi khai bao tren spring.cloud.gateway.routes
+      - name: 02. Course Service
+        url: /course-service/v3/api-docs
+      - name: 03. Media-service
+        url: /media-service/v3/api-docs
+      - name: 04. Order Service
+        url: /order-service/v3/api-docs
+      - name: 05. Finance Service
+        url: /finance-service/v3/api-docs
+      - name: 06. Notification Service
+        url: /notification-service/v3/api-docs
+      - name: 07. Enrollment Service
+        url: /enrollment-service/v3/api-docs
+
+  api-docs:
+    path: /v3/api-docs

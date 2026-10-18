@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: order-service
+  config:
+    import: "configserver:http://localhost:8888"
+  cloud:
+    config:
+      fail-fast: true
+      retry:
+        initial-interval: 2000
+        max-interval: 3000
+        max-attempts: 5
+
+
+
+logging:
+  pattern:
+    level: "%5p [order-service]"
