@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests( auth -> auth
                         .requestMatchers("/api/internal/**").hasAnyAuthority("INTERNAL")
                         .requestMatchers(
+                                "/actuator/**",
                                 "/api/v1/payments/**",
                                 "/v3/api-docs/**"
                         ).permitAll()

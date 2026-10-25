@@ -35,7 +35,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         // Nếu người dùng không muốn lấy dạng cây, trả về danh sách phẳng
         if (!isTree) {
-            return categories.stream().map(this::mapToResponse).toList();
+            return categories.stream().map(this::mapToResponse).collect(Collectors.toList());
         }
 
         // Thuật toán xây dựng cấu trúc cây (O(N) hiệu năng cao)
@@ -48,7 +48,7 @@ public class CategoryServiceImpl implements CategoryService {
         return categories.stream()
                 .filter(c -> c.getParentId() == null)
                 .map(c -> buildTree(c, childrenMap))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override

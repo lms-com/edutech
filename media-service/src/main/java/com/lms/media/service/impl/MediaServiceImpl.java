@@ -122,9 +122,9 @@ public class MediaServiceImpl implements MediaService {
     @Override
     @Transactional
     public void autoCleanPendingFilesAfter12Hours () {
-        Instant threshold = Instant.now().minusSeconds(70);
+        Instant threshold = Instant.now().minus(java.time.Duration.ofHours(12));
         mediaFileRepository.deleteByStatusAndUpdatedAtBefore(MediaStatus.PENDING, threshold);
-        log.info("🧹 Auto clean pending files after 12 hours");
+        log.info("đŸ§¹ Auto clean pending files after 12 hours");
     }
 
 
@@ -157,9 +157,10 @@ public class MediaServiceImpl implements MediaService {
         }
 
         // Goi kiem tra user nay da mua khoa hoc cua video nay chua (Feign client: course-service)
-        boolean isAccessible = courseServiceFeignClient.isEnrolled(learnerId, mediaId);
+        boolean isOwner = learnerId != null && learnerId.equals(mediaFile.getCreatedBy());
+        boolean isAccessible = isOwner || courseServiceFeignClient.isEnrolled(learnerId, mediaId);
         if (!isAccessible) {
-            log.warn("❌ User {} has not been enrolled Course containing media file {}", learnerId, mediaFile.getOriginalFileName());
+            log.warn("âŒ User {} has not been enrolled Course containing media file {}", learnerId, mediaFile.getOriginalFileName());
             throw new AppException(MediaErrorCode.UNACCEPTABLE, "user " + learnerId + "has not been enrolled Course containing media file " + mediaFile.getOriginalFileName());
         }
 
@@ -196,8 +197,8 @@ public class MediaServiceImpl implements MediaService {
                 }).collect(Collectors.joining("\n"));
             }
         }catch (Exception e) {
-            log.error("Lỗi khi sinh Dynamic Manifest: ", e);
-            throw new RuntimeException("Không thể tạo luồng phát Video");
+            log.error("Lá»—i khi sinh Dynamic Manifest: ", e);
+            throw new RuntimeException("KhĂ´ng thá»ƒ táº¡o luá»“ng phĂ¡t Video");
         }
     }
 
@@ -210,7 +211,7 @@ public class MediaServiceImpl implements MediaService {
         String userRequestingKey = redisTemplate.opsForValue().get(redisKey);
         // Neu session het han (= null) hoac nguoi khac mao danh (!= learnerId)
         if (userRequestingKey == null || !userRequestingKey.equals(learnerId)) {
-            log.warn("🚨 Attack alert: Unauthorized key dectected or Session has expired! User: {}, Media: {}", learnerId, mediaId);
+            log.warn("đŸ¨ Attack alert: Unauthorized key dectected or Session has expired! User: {}, Media: {}", learnerId, mediaId);
             throw new AppException(MediaErrorCode.UNAUTHORIZED, "Invalid or expired Session!");
         }
         // Hop le, lay mediaFile ra
@@ -231,6 +232,13 @@ public class MediaServiceImpl implements MediaService {
     /**
      * Cac Service chi danh cho Admin
      */
+
+    @Override
+    @Transactional(readOnly = true)
+    public MediaFile getMediaFile(String mediaId) {
+        return mediaFileRepository.findById(mediaId)
+                .orElseThrow(() -> new AppException(MediaErrorCode.FILE_NOT_FOUND, "media file " + mediaId + " not found."));
+    }
 
     @Override
     public List<MediaFile> getAllMediaFiles() {

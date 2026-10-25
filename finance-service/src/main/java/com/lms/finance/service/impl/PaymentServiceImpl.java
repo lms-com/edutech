@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -184,8 +185,8 @@ public class PaymentServiceImpl implements PaymentService {
             if (vnpPayDateStr != null && vnpPayDateStr.length() >= 14) {
                 DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
                 LocalDateTime localDateTime = LocalDateTime.parse(vnpPayDateStr, timeFormatter);
-                // Gan thoi gian la dang theo moc VN
-                ZoneId zonId = ZoneId.systemDefault();
+                // Gan thoi gian la dang theo moc VN (UTC+7)
+                ZoneId zonId = ZoneOffset.ofHours(7);
                 ZonedDateTime zonedDateTime = localDateTime.atZone(zonId);
                 paidAt = zonedDateTime.toInstant();
             } else {

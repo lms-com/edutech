@@ -1,6 +1,5 @@
 package com.lms.course.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,9 +23,9 @@ public class CacheConfig {
     public static final String CACHE_PUBLISHED_COURSES = "published_courses";
 
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
-        // Cấu hình serializer chuẩn cho Redis
-        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        // Cấu hình serializer chuẩn cho Redis hỗ trợ đầy đủ polymorphic typing (@class)
+        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer();
 
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(15))

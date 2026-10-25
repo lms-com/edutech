@@ -61,7 +61,7 @@ public class VideoProcessingWorker {
             Files.createDirectories(outputDirPath);
 
 
-            log.info("⏳ [WORKER] Downloading the original file...");
+            log.info("⏳ [WORKER] Downloading original file {} (mediaId: {})...", message.getStoredFileName(), mediaId);
             minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(bucketName)
@@ -87,25 +87,57 @@ public class VideoProcessingWorker {
                             + keyFilePath.toAbsolutePath().toString();
             Files.writeString( keyInfoFilePath, infoContent);
 
-            // Goi ffmpeg xu li
-            log.info("⏳ [WORKER] Start operating FFmpeg (This process may take a few minutes)...");
             Path outputM3u8Path = outputDirPath.resolve("index.m3u8");
+
+            // Bước 1: Ưu tiên Stream Copy trực tiếp (-c:v copy -c:a copy)
+            // Giữ nguyên 100% chất lượng gốc, cực kỳ nhanh (2-5s cho file hàng trăm MB) và tiêu tốn cực ít RAM (<30MB)
+            log.info("⏳ [WORKER] Đang bẻ chunk HLS và mã hóa AES-128 bằng Stream Copy (-c:v copy -c:a copy)...");
             ProcessBuilder processBuilder = new ProcessBuilder(
-                    "ffmpeg",               // Ten phan mem xu li
-                    "-i", inputFilePath.toString(),    // Duong dan tuyet doi cua file goc sau khi tai ve
-                    "-profile:v", "baseline",          // Cau hinh bo quy chuan nen: baseline la nhe nhat va tuong thich duoc voi thiet bi cu
-                    "-level", "3.0",                   // Cau hinh gioi han bang thong: 3.0 phu hop voi do nen baseline o tren
-                    "-start_number", "0",              // So thu tu bat dau cua cac file
-                    "-hls_time", "10",                 // Do dai thoi gian cua cac file video nho sau khi xu li
-                    "-hls_list_size", "0",             // Gioi han so luong file thanh pham: 0 la khong gioi han
-                    "-hls_key_info_file", keyInfoFilePath.toString(),   // file chua thong tin path den key aes
-                    "-f", "hls",                       // Kieu dinh dang: dinh dang kieu hls
-                    outputM3u8Path.toString()          // Duong dan cua file tong index.m3u8
+                    "ffmpeg",
+                    "-y",
+                    "-i", inputFilePath.toString(),
+                    "-c:v", "copy",
+                    "-c:a", "copy",
+                    "-start_number", "0",
+                    "-hls_time", "10",
+                    "-hls_list_size", "0",
+                    "-hls_key_info_file", keyInfoFilePath.toString(),
+                    "-f", "hls",
+                    outputM3u8Path.toString()
             );
             processBuilder.redirectErrorStream(true);
             processBuilder.inheritIO();
             Process process = processBuilder.start();
             int exitCode = process.waitFor();
+
+            // Bước 2: Nếu video gốc dùng codec không tương thích với MPEG-TS hoặc bitstream lỗi,
+            // Fallback sang encode lại có giới hạn tài nguyên nghiêm ngặt (-threads 2) để không vượt quá giới hạn RAM
+            if (exitCode != 0) {
+                log.warn("⚠️ Stream copy không thành công (exitCode: {}). Tiến hành encode lại có kiểm soát bộ nhớ (-threads 2)...", exitCode);
+                ProcessBuilder fallbackBuilder = new ProcessBuilder(
+                        "ffmpeg",
+                        "-y",
+                        "-threads", "2",
+                        "-i", inputFilePath.toString(),
+                        "-c:v", "libx264",
+                        "-preset", "veryfast",
+                        "-crf", "23",
+                        "-threads", "2",
+                        "-c:a", "aac",
+                        "-b:a", "128k",
+                        "-start_number", "0",
+                        "-hls_time", "10",
+                        "-hls_list_size", "0",
+                        "-hls_key_info_file", keyInfoFilePath.toString(),
+                        "-f", "hls",
+                        outputM3u8Path.toString()
+                );
+                fallbackBuilder.redirectErrorStream(true);
+                fallbackBuilder.inheritIO();
+                Process fallbackProcess = fallbackBuilder.start();
+                exitCode = fallbackProcess.waitFor();
+            }
+
             if (exitCode != 0) {
                 throw new AppException(VideoWorkerErrorCode.FAILED_PROCESSING_FILE,
                         "Could not process file. Exit code: " + exitCode);

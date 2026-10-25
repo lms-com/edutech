@@ -73,7 +73,7 @@ application:
   security:
     internal-key: ${INTERNAL_KEY:RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=}
   frontend:
-    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+    base-url: ${FRONTEND_BASE_URL:http://localhost}
 
 resilience4j:
   circuitbreaker:

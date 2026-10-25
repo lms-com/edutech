@@ -53,7 +53,7 @@ public class CertificateServiceImpl implements CertificateService {
     final MinioClient minioClient;
 
     /** Địa chỉ giao diện để sinh link xác thực trong mã QR (trước đây hardcode cổng 8000). */
-    @Value("${application.frontend.base-url:http://localhost:5173}")
+    @Value("${application.frontend.base-url:http://localhost}")
     String frontendBaseUrl;
     final IamServiceClient iamServiceClient;
     final CourseServiceClient courseServiceClient;

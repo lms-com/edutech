@@ -3,6 +3,7 @@ server:
 
 minio:
   uri: http://localhost:9000
+  external-uri: http://localhost:9000
   access-key: admin
   secret-key: admin123
   bucket-name: lms-media-bucket
