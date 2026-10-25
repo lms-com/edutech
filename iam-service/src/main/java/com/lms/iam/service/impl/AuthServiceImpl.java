@@ -279,7 +279,7 @@ public class AuthServiceImpl implements AuthService {
                     RabbitMQConfig.ROUTING_KEY_OTP,
                     SendOtpEvent.builder().email(email).otpCode(otpCode).build()
             );
-            log.info("✔ [IAM] Đã gửi mã OTP đăng ký cho email [{}]", email);
+            log.info("✔ [IAM] Đã gửi sự kiện mã OTP đăng ký cho email [{}] (OTP: {})", email, otpCode);
         } catch (Exception e) {
             log.error("❌ [IAM] Thất bại khi gửi sự kiện OTP đăng ký qua RabbitMQ: {}", e.getMessage());
         }

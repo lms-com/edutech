@@ -9,12 +9,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import lombok.experimental.NonFinal;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +30,10 @@ public class EmailServiceImpl implements EmailService {
     JavaMailSender mailSender;
     TemplateEngine templateEngine; // Thư viện của Spring để đọc và chèn biến vào file HTML
     EmailLogRepository emailLogRepository;
+
+    @NonFinal
+    @Value("${spring.mail.username:}")
+    String senderUsername;
 
     @Override
     @Async
@@ -53,6 +59,9 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            if (senderUsername != null && !senderUsername.isBlank()) {
+                helper.setFrom(senderUsername, "EduTech LMS");
+            }
             helper.setTo(recipientEmail);
             helper.setSubject(emailLog.getSubject());
             helper.setText(htmlContent, true); // true nghĩa là cho phép render HTML
@@ -70,7 +79,7 @@ public class EmailServiceImpl implements EmailService {
             // Admin vào kiểm tra
             emailLog.setStatus(EmailStatus.FAILED);
             emailLog.setErrorMessage(e.getMessage());
-            log.error("Thất bại khi gửi Email OTP cho [{}]. Lý do: {}", recipientEmail, e.getMessage());
+            log.error("Thất bại khi gửi Email OTP cho [{}]. Lý do: {}. (Mã OTP dự phòng: [{}])", recipientEmail, e.getMessage(), otpCode);
         } finally {
             emailLogRepository.save(emailLog);
         }
@@ -100,6 +109,9 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            if (senderUsername != null && !senderUsername.isBlank()) {
+                helper.setFrom(senderUsername, "EduTech LMS");
+            }
             helper.setTo(recipientEmail);
             helper.setSubject(emailLog.getSubject());
             helper.setText(htmlContent, true);
