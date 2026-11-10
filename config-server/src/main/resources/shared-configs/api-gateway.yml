@@ -29,7 +29,7 @@ spring:
         - id: iam-service-public
           uri: lb://iam-service
           predicates:
-            - Path=/iam-service/api/v1/auth/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html, /iam-service/dev/**
+            - Path=/iam-service/api/v1/auth/**, /iam-service/v3/api-docs, /iam-service/v3/swagger-ui.html
           filters:
             - StripPrefix=1
 

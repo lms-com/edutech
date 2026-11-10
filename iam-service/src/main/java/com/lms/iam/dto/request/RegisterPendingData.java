@@ -14,4 +14,5 @@ public class RegisterPendingData {
     String fullName;
     String passwordHash;
     String otpCode;
+    String deviceFingerPrint;
 }

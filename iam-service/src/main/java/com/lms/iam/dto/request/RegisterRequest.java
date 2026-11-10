@@ -17,4 +17,5 @@ public class RegisterRequest {
     String password;
     String fullName;
     LocalDate dob;
+    String deviceFingerPrint;
 }

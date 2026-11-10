@@ -28,4 +28,8 @@ public interface DeviceManagementService {
     List<AdminDeviceResponse> getAllActiveDevices(String search);
 
     void revokeDevice(String userId, String deviceFingerprint);
+
+    boolean isDeviceRegistered(String deviceFingerprint);
+
+    void bindRegisteredDevice(String deviceFingerprint, String userId, String email);
 }

@@ -9,10 +9,10 @@ import com.lms.finance.service.impl.PayoutService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -20,7 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/payouts")
 @RequireJwt
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@PreAuthorize("hasAuthority('PAYOUT_MANAGE') or hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class AdminPayoutController {
     final PayoutService payoutService;
 
@@ -35,7 +36,7 @@ public class AdminPayoutController {
     @PostMapping("/reject")
     public ApiResponse<String> rejectPayoutRequest (@RequestHeader("X-User-Id") String adminId, @Valid @RequestBody ProcessPayoutRequestDto processRequest) {
         payoutService.rejectPayoutRequest(adminId, processRequest);
-        return ApiResponse.success("Approved PayoutRequest with id: " + processRequest.getPayoutId());
+        return ApiResponse.success("Rejected PayoutRequest with id: " + processRequest.getPayoutId());
     }
 
     @Operation(summary = "Get all Payout Request With filter for Admin")

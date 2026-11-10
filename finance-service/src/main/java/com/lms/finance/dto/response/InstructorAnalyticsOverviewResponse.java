@@ -21,4 +21,6 @@ public class InstructorAnalyticsOverviewResponse {
     BigDecimal pendingBalance;   // Số dư ví đang tạm khóa đối soát
     BigDecimal actualBalance;    // Tổng số dư thực tế
     BigDecimal allTimeRevenue;   // Tổng doanh thu trọn đời
+    Double averageRating;        // Điểm đánh giá trung bình các khóa học (VD: 4.9)
+    Long totalReviews;           // Tổng số lượt đánh giá nhận được
 }

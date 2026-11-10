@@ -37,7 +37,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/api/v1/media/secure/key/**", // Xin chìa khóa video
             "/api/v1/user/password/change", // Đổi pass
             "/api/v1/order/checkout",
-            "api/v1/finance/**"
+            "/api/v1/finance/**"
     );
 
     @Override

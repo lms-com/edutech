@@ -40,7 +40,7 @@ public class PayoutFilterRequest {
     BigDecimal maxAmount;
 
     @Schema(description = "Status of Payout request", example = "PENDING")
-    @Pattern(regexp = "PENDING|SUCCESS|REJECTED", message = "Invalid Status")
+    @Pattern(regexp = "PENDING|SUCCESS|APPROVED|REJECTED", message = "Invalid Status")
     String status;
 
     @Schema(description = "Created Date of Payout request starts at", example = "2026-12-31")
