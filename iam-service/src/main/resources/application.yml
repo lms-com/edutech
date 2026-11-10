@@ -5,12 +5,12 @@ spring:
     active: dev
   cloud:
     config:
-      uri: http://localhost:8888
-      fail-fast: true
+      uri: ${CONFIG_SERVER_URL:http://localhost:8888}
+      fail-fast: false
       retry:
         max-attempts: 5
   config:
-    import: "configserver:http://localhost:8888"
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
 # Thêm cái này để chắc chắn log hiện đúng tên kể cả khi chưa kịp lấy config từ server
 logging:
   pattern:

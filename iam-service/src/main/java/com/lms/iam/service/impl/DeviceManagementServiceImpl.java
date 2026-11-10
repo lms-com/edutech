@@ -175,4 +175,41 @@ public class DeviceManagementServiceImpl implements DeviceManagementService {
         addToBlackList(userId, deviceFingerprint);
         log.info("Admin revoked and blacklisted device {} of user {}", deviceFingerprint, userId);
     }
+
+    @Override
+    public boolean isDeviceRegistered(String deviceFingerprint) {
+        if (deviceFingerprint == null || deviceFingerprint.isBlank()) {
+            return false;
+        }
+        String fp = deviceFingerprint.trim();
+        String boundUser = redisTemplate.opsForValue().get("device:registered:" + fp);
+        if (boundUser != null && !boundUser.isBlank()) {
+            return true;
+        }
+
+        try {
+            Set<String> userDeviceKeys = redisTemplate.keys("user:*:device");
+            if (userDeviceKeys != null) {
+                for (String userKey : userDeviceKeys) {
+                    if (userKey.endsWith(":blacklist")) continue;
+                    Double score = redisTemplate.opsForZSet().score(userKey, fp);
+                    if (score != null) {
+                        redisTemplate.opsForValue().set("device:registered:" + fp, userKey, 365, TimeUnit.DAYS);
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Lỗi khi kiểm tra thiết bị qua Redis keys: {}", e.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public void bindRegisteredDevice(String deviceFingerprint, String userId, String email) {
+        if (deviceFingerprint == null || deviceFingerprint.isBlank()) return;
+        String fp = deviceFingerprint.trim();
+        String val = (email != null && !email.isBlank()) ? email : userId;
+        redisTemplate.opsForValue().set("device:registered:" + fp, val, 365, TimeUnit.DAYS);
+    }
 }

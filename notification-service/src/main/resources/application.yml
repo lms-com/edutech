@@ -84,7 +84,7 @@ application:
     internal-key: ${INTERNAL_KEY:RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=}
   frontend:
     # Địa chỉ giao diện, dùng để sinh link trong mã QR trên chứng chỉ
-    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+    base-url: ${FRONTEND_BASE_URL:http://localhost}
 
 resilience4j:
   circuitbreaker:

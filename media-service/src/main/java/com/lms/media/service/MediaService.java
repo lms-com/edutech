@@ -18,6 +18,7 @@ public interface MediaService {
 
     void removeFile (String mediaId);
 
+    MediaFile getMediaFile (String mediaId);
 
     /**
      * Cac Service Learner

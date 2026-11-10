@@ -251,16 +251,14 @@ public class PayoutServiceImpl implements PayoutService {
 
     @Override
     public Page<PayoutRequestResponse> getMyPayoutRequests(String instructorId, PayoutFilterRequest filter) {
-        // Kiem tra hanh dong trai phep -> user dang ngo:
-        if (filter.getInstructorId() != null){
-            throw new RuntimeException("You dont have permission to use this filter. Be careful, You have been added to the suspect/warning list.");
-        }
+        // Luôn ghi đè instructorId của người đăng nhập và xóa adminId để đảm bảo an toàn dữ liệu
+        filter.setInstructorId(instructorId);
+        filter.setAdminId(null);
+
         // Tao Page:
         Sort sort = Sort.by(filter.getSortDir().equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC, filter.getSortBy());
         Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(), sort);
 
-        filter.setInstructorId(instructorId);
-        filter.setAdminId(null);
         Specification<PayoutRequest> spec = PayoutRequestSpecification.buildSpecification(filter);
 
         return payoutRepository.findAll(spec, pageable).map(this::toResponse);
@@ -279,11 +277,14 @@ public class PayoutServiceImpl implements PayoutService {
     private PayoutRequestResponse toResponse (PayoutRequest payoutRequest) {
         return PayoutRequestResponse.builder()
                 .payoutId(payoutRequest.getId())
+                .instructorId(payoutRequest.getInstructorId())
                 .amount(payoutRequest.getAmount())
                 .status(payoutRequest.getStatus().name())
                 .bankCode(payoutRequest.getBankCode())
                 .accountNumber(payoutRequest.getAccountNumber())
                 .accountName(payoutRequest.getAccountName())
+                .rejectReason(payoutRequest.getRejectReason())
+                .bankReferenceNo(payoutRequest.getBankReferenceNo())
                 .createdAt(TimeConverter.toLocalDateTime(payoutRequest.getCreatedAt(), ZoneId.systemDefault()))
                 .processedAt(TimeConverter.toLocalDateTime(payoutRequest.getProcessedAt(), ZoneId.systemDefault()))
                 .build();

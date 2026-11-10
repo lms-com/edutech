@@ -2,33 +2,37 @@ package com.lms.media.service;
 
 import io.minio.*;
 import io.minio.http.Method;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MinioService {
 
     private final MinioClient minioClient;
+    private final MinioClient minioClientExternal;
+
+    public MinioService(MinioClient minioClient, @Qualifier("minioClientExternal") MinioClient minioClientExternal) {
+        this.minioClient = minioClient;
+        this.minioClientExternal = minioClientExternal;
+    }
 
     @Value("${minio.bucket-name}")
     private String bucketName;
 
     public String generatePresignedUploadUrl (String fileName) {
         try {
-            return minioClient.getPresignedObjectUrl(
+            return minioClientExternal.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.PUT)
                             .bucket(bucketName)
                             .object(fileName)
-                            .expiry(15, TimeUnit.MINUTES)
+                            .expiry(60, TimeUnit.MINUTES)
                             .build()
             );
         } catch (Exception e) {
@@ -43,7 +47,6 @@ public class MinioService {
                             .bucket(bucketName)
                             .object(fileName)
                             .build()
-
             );
             return true;
         } catch (Exception e) {
@@ -53,7 +56,7 @@ public class MinioService {
 
     public String generatePresignedGetUrl (String fileName, int expire, TimeUnit timeUnit) {
         try {
-            return minioClient.getPresignedObjectUrl(
+            return minioClientExternal.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(bucketName)

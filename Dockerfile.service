@@ -4,8 +4,8 @@
 # -------------------------------------------------------------
 FROM eclipse-temurin:21-jre-alpine
 
-# Cài đặt curl để hỗ trợ Docker Health Check
-RUN apk add --no-cache curl
+# Cài đặt curl, tzdata và ffmpeg để hỗ trợ Docker Health Check, chuẩn múi giờ và xử lý video HLS
+RUN apk add --no-cache curl tzdata ffmpeg
 
 ENV TZ=Asia/HoChiMinh
 
@@ -18,7 +18,7 @@ ARG JAR_FILE
 COPY ${JAR_FILE} app.jar
 
 # Biến môi trường mặc định giới hạn bộ nhớ JVM để chạy an toàn trên VPS
-ENV JAVA_OPTS="-Xms150m -Xmx300m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/HoChiMinh"
+ENV JAVA_OPTS="-Xms128m -Xmx220m -Xss512k -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=110m -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/HoChiMinh"
 ENV SPRING_PROFILES_ACTIVE="prod"
 
 # Chạy ứng dụng dưới user non-root để tăng cường bảo mật

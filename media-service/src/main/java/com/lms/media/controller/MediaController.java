@@ -5,6 +5,7 @@ import com.lms.common.swagger.annotation.RequireJwt;
 import com.lms.media.client.course.CourseServiceFeignClient;
 import com.lms.media.dto.request.GetUploadUrlRequest;
 import com.lms.media.dto.response.GetUploadUrlResponse;
+import com.lms.media.model.MediaFile;
 import com.lms.media.service.MediaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +40,20 @@ public class MediaController {
     public ApiResponse<Void> confirm (@PathVariable("mediaId") String mediaId){
         mediaService.confirmUploadUrl(mediaId);
         return ApiResponse.success(null, "Confirmed successfully!");
+    }
+
+    @Operation(summary = "Get media processing status")
+    @GetMapping("/{mediaId}/status")
+    @RequireJwt
+    public ApiResponse<MediaFile> getStatus (@PathVariable("mediaId") String mediaId){
+        return ApiResponse.success(mediaService.getMediaFile(mediaId));
+    }
+
+    @Operation(summary = "Get view url for internal or feign client")
+    @GetMapping("/view-url")
+    public ApiResponse<String> getViewUrl (@RequestParam("filePath") String filePath){
+        String playUrl = filePath.startsWith("http") ? filePath : "http://localhost:8080/media-service/api/v1/media/" + filePath + "/view";
+        return ApiResponse.success(playUrl);
     }
 
     @Operation(summary = "Get manifest content", description = "Get manifest content contains paths of .ts files and URL for requesting encryption key in order to decrypt .ts files")

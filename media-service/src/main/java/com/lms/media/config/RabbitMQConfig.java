@@ -1,14 +1,16 @@
 package com.lms.media.config;
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Controller;
+import org.springframework.context.annotation.Configuration;
 
-@Controller
+@Configuration
+@EnableRabbit
 public class RabbitMQConfig {
 
     public static final String VIDEO_PROCESSING_QUEUE = "video.processing.queue";
@@ -22,7 +24,7 @@ public class RabbitMQConfig {
 
     @Bean
     public DirectExchange mediaExchange() {
-        return new DirectExchange(MEDIA_EXCHANGE);
+        return new DirectExchange(MEDIA_EXCHANGE, true, false);
     }
 
     @Bean

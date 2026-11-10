@@ -28,7 +28,7 @@ public class AdminController {
 
     @Operation(summary = "Get all users")
     @GetMapping("/users")
-    @PreAuthorize("USER_MANAGE")
+    @PreAuthorize("hasAuthority('USER_MANAGE') or hasRole('ADMIN')")
     public ApiResponse<Page<UserResponse>> getAllUsers(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Userstatus status,
@@ -48,6 +48,7 @@ public class AdminController {
 
     @Operation(summary = "Lock/Unlock User Account", description = "Change User status and API access of account")
     @PutMapping("/users/{userId}/status")
+    @PreAuthorize("hasAuthority('USER_MANAGE') or hasRole('ADMIN')")
     public ApiResponse<?> updateUserStatus(
             @PathVariable(name = "userId", required = true) String userId,
             @RequestBody UpdateUserStatusRequest request)
@@ -58,6 +59,7 @@ public class AdminController {
 
     @Operation(summary = "Liệt kê tất cả thiết bị phiên đăng nhập", description = "Lấy danh sách thiết bị đang hoạt động trên hệ thống lưu trong Redis")
     @GetMapping("/devices")
+    @PreAuthorize("hasAuthority('USER_MANAGE') or hasRole('ADMIN')")
     public ApiResponse<List<com.lms.iam.dto.response.AdminDeviceResponse>> getAllActiveDevices(
             @RequestParam(required = false) String search
     ) {
@@ -65,8 +67,27 @@ public class AdminController {
         return ApiResponse.success(devices, "Lấy danh sách thiết bị thành công");
     }
 
+    @Operation(summary = "Lấy danh sách thiết bị của một user cụ thể", description = "Dành cho Admin tra cứu thiết bị của user qua userId")
+    @GetMapping("/users/{userId}/devices")
+    @PreAuthorize("hasAuthority('USER_MANAGE') or hasRole('ADMIN')")
+    public ApiResponse<List<com.lms.iam.dto.response.UserDeviceResponse>> getUserDevicesForAdmin(
+            @PathVariable String userId) {
+        return ApiResponse.success(deviceService.getUserDevices(userId), "Lấy danh sách thiết bị thành công");
+    }
+
+    @Operation(summary = "Thu hồi phiên thiết bị theo chuẩn RESTful DELETE", description = "Xóa thiết bị khỏi Redis và chặn đăng nhập")
+    @DeleteMapping("/users/{userId}/devices/{deviceFingerprint}")
+    @PreAuthorize("hasAuthority('USER_MANAGE') or hasRole('ADMIN')")
+    public ApiResponse<String> deleteUserDevice(
+            @PathVariable String userId,
+            @PathVariable String deviceFingerprint) {
+        deviceService.revokeDevice(userId, deviceFingerprint);
+        return ApiResponse.success("Đã thu hồi phiên và chặn thiết bị thành công");
+    }
+
     @Operation(summary = "Thu hồi phiên thiết bị", description = "Xóa thiết bị khỏi Redis và đưa vào danh sách đen")
     @PostMapping("/devices/revoke")
+    @PreAuthorize("hasAuthority('USER_MANAGE') or hasRole('ADMIN')")
     public ApiResponse<String> revokeDevice(
             @RequestParam String userId,
             @RequestParam String deviceFingerprint

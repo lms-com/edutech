@@ -30,6 +30,7 @@ public enum IamErrorCode implements ErrorCode {
     PIN_NOT_SET(2020, "Tài khoản chưa thiết lập mã PIN bảo mật cấp 2.", HttpStatus.BAD_REQUEST),
     PIN_INCORRECT(2021, "Mã PIN bảo mật không chính xác.", HttpStatus.BAD_REQUEST),
     FINANCIAL_SESSION_EXPIRED(2022, "Phiên bảo mật tài chính đã hết hạn hoặc chưa được mở khóa.", HttpStatus.FORBIDDEN),
+    DEVICE_ALREADY_REGISTERED(2023, "Thiết bị này đã được sử dụng để đăng ký một tài khoản khác. Mỗi thiết bị chỉ được phép đăng ký duy nhất 1 tài khoản.", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;

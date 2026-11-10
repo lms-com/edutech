@@ -43,7 +43,7 @@ public class PaymentController {
 
         String targetFrontend = vnPayConfig.getFrontendReturnUrl();
         if (targetFrontend == null || targetFrontend.isBlank()) {
-            targetFrontend = "http://localhost:5173";
+            targetFrontend = "http://localhost";
         }
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(targetFrontend);

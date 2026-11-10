@@ -32,8 +32,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/reviews/courses/**").permitAll()
                         // Secure internal microservice endpoints
                         .requestMatchers("/api/internal/**").hasAuthority("INTERNAL")
-                        // Swagger UI and Docs
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
+                        // Actuator, Swagger UI and Docs
+                        .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
                         // Require authentication for all standard requests
                         .anyRequest().authenticated()
                 )

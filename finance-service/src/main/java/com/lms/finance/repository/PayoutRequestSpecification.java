@@ -42,8 +42,12 @@ public final class PayoutRequestSpecification {
     }
 
     public static Specification<PayoutRequest> hasStatus (String status) {
+        if (status == null || status.isBlank()) {
+            return (root, query, cb) -> cb.conjunction();
+        }
         try {
-            PayoutStatus enumStatus = PayoutStatus.valueOf(status.toUpperCase());
+            String upper = status.trim().toUpperCase();
+            PayoutStatus enumStatus = "APPROVED".equals(upper) ? PayoutStatus.SUCCESS : PayoutStatus.valueOf(upper);
             return (root, query, cb) -> cb.equal(root.get("status"), enumStatus);
         } catch (Exception e) {
             return (root, query, cb) -> cb.conjunction();

@@ -29,7 +29,7 @@ spring:
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}
     port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:}
+    username: ${SMTP_USERNAME:khanhblue06@gmail.com}
     password: ${SMTP_PASSWORD:}
     properties:
       mail:
@@ -73,7 +73,7 @@ application:
   security:
     internal-key: ${INTERNAL_KEY:RI8w5frC3fEGD+Cmr9g1FZta3bLmEkHGQULvCya83Uo=}
   frontend:
-    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+    base-url: ${FRONTEND_BASE_URL:http://localhost}
 
 resilience4j:
   circuitbreaker:

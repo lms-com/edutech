@@ -123,6 +123,17 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(IamErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
+        // Chặn đăng ký nhiều tài khoản trên cùng 1 thiết bị/trình duyệt
+        String deviceFingerprint = registerRequest.getDeviceFingerPrint();
+        if (deviceFingerprint != null && !deviceFingerprint.isBlank()) {
+            if (deviceManagementService.isDeviceRegistered(deviceFingerprint)) {
+                throw new AppException(
+                        IamErrorCode.DEVICE_ALREADY_REGISTERED,
+                        "Thiết bị/trình duyệt này đã được sử dụng để đăng ký một tài khoản khác. Mỗi thiết bị chỉ được phép đăng ký duy nhất 1 tài khoản."
+                );
+            }
+        }
+
         // Luu thong tin nguoi dung
         String passwordHash = passwordEncoder.encode(registerRequest.getPassword());
         User newUser = User.builder()
@@ -133,6 +144,11 @@ public class AuthServiceImpl implements AuthService {
                 .dob(registerRequest.getDob())
                 .build();
         User savedUser = userRepository.save(newUser);
+
+        if (deviceFingerprint != null && !deviceFingerprint.isBlank()) {
+            deviceManagementService.bindRegisteredDevice(deviceFingerprint, savedUser.getId(), savedUser.getEmail());
+            deviceManagementService.registerDevice(savedUser.getId(), deviceFingerprint);
+        }
 
         // Mac dinh role "LEARNER" va luu vao UserRole
         try {
@@ -254,6 +270,17 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(IamErrorCode.EMAIL_ALREADY_EXISTS, "Email này đã được sử dụng. Vui lòng đăng nhập hoặc chọn email khác.");
         }
 
+        // Chặn tạo nhiều tài khoản trên cùng 1 thiết bị/trình duyệt
+        String deviceFingerprint = request.getDeviceFingerPrint();
+        if (deviceFingerprint != null && !deviceFingerprint.isBlank()) {
+            if (deviceManagementService.isDeviceRegistered(deviceFingerprint)) {
+                throw new AppException(
+                        IamErrorCode.DEVICE_ALREADY_REGISTERED,
+                        "Thiết bị/trình duyệt này đã được sử dụng để đăng ký một tài khoản khác. Mỗi thiết bị chỉ được phép đăng ký duy nhất 1 tài khoản."
+                );
+            }
+        }
+
         // Sinh mã OTP 6 số ngẫu nhiên
         String otpCode = String.format("%06d", new SecureRandom().nextInt(1_000_000));
 
@@ -262,6 +289,7 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(request.getFullName().trim())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .otpCode(otpCode)
+                .deviceFingerPrint(deviceFingerprint)
                 .build();
 
         try {
@@ -279,7 +307,7 @@ public class AuthServiceImpl implements AuthService {
                     RabbitMQConfig.ROUTING_KEY_OTP,
                     SendOtpEvent.builder().email(email).otpCode(otpCode).build()
             );
-            log.info("✔ [IAM] Đã gửi mã OTP đăng ký cho email [{}]", email);
+            log.info("✔ [IAM] Đã gửi sự kiện mã OTP đăng ký cho email [{}] (OTP: {})", email, otpCode);
         } catch (Exception e) {
             log.error("❌ [IAM] Thất bại khi gửi sự kiện OTP đăng ký qua RabbitMQ: {}", e.getMessage());
         }
@@ -313,6 +341,21 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(IamErrorCode.EMAIL_ALREADY_EXISTS, "Email này đã được sử dụng.");
         }
 
+        // Chặn tạo nhiều tài khoản trên cùng 1 thiết bị/trình duyệt
+        String deviceFingerPrint = request.getDeviceFingerPrint();
+        if (deviceFingerPrint == null || deviceFingerPrint.isBlank()) {
+            deviceFingerPrint = pendingData.getDeviceFingerPrint();
+        }
+        if (deviceFingerPrint != null && !deviceFingerPrint.isBlank()) {
+            if (deviceManagementService.isDeviceRegistered(deviceFingerPrint)) {
+                redisTemplate.delete(pendingKey);
+                throw new AppException(
+                        IamErrorCode.DEVICE_ALREADY_REGISTERED,
+                        "Thiết bị/trình duyệt này đã được sử dụng để đăng ký một tài khoản khác. Mỗi thiết bị chỉ được phép đăng ký duy nhất 1 tài khoản."
+                );
+            }
+        }
+
         // Tạo User chính thức
         User newUser = User.builder()
                 .email(email)
@@ -321,6 +364,10 @@ public class AuthServiceImpl implements AuthService {
                 .status(Userstatus.ACTIVE)
                 .build();
         User savedUser = userRepository.save(newUser);
+
+        if (deviceFingerPrint != null && !deviceFingerPrint.isBlank()) {
+            deviceManagementService.bindRegisteredDevice(deviceFingerPrint, savedUser.getId(), savedUser.getEmail());
+        }
 
         // Gán role mặc định LEARNER
         try {
@@ -345,7 +392,6 @@ public class AuthServiceImpl implements AuthService {
         log.info("✔ [IAM] Xác thực email thành công! Đã tạo tài khoản chính thức: [{}]", email);
 
         // Tự động đăng nhập nếu có deviceFingerPrint
-        String deviceFingerPrint = request.getDeviceFingerPrint();
         if (deviceFingerPrint != null && !deviceFingerPrint.isBlank()) {
             if (!deviceManagementService.existsInBlackList(savedUser.getId(), deviceFingerPrint)) {
                 CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(email);
@@ -421,6 +467,17 @@ public class AuthServiceImpl implements AuthService {
                 throw new AppException(IamErrorCode.INVALID_PASSWORD_FORMAT, "Mật khẩu phải chứa ít nhất 6 ký tự.");
             }
 
+            // Chặn đăng ký nhiều tài khoản trên cùng 1 thiết bị/trình duyệt
+            String deviceFingerprint = request.getDeviceFingerPrint();
+            if (deviceFingerprint != null && !deviceFingerprint.isBlank()) {
+                if (deviceManagementService.isDeviceRegistered(deviceFingerprint)) {
+                    throw new AppException(
+                            IamErrorCode.DEVICE_ALREADY_REGISTERED,
+                            "Thiết bị/trình duyệt này đã được sử dụng để đăng ký một tài khoản khác. Mỗi thiết bị chỉ được phép đăng ký duy nhất 1 tài khoản."
+                    );
+                }
+            }
+
             // Tạo người dùng mới với mật khẩu do người dùng thiết lập
             User newUser = User.builder()
                     .email(googleEmail)
@@ -429,6 +486,10 @@ public class AuthServiceImpl implements AuthService {
                     .status(Userstatus.ACTIVE)
                     .build();
             user = userRepository.save(newUser);
+
+            if (deviceFingerprint != null && !deviceFingerprint.isBlank()) {
+                deviceManagementService.bindRegisteredDevice(deviceFingerprint, user.getId(), user.getEmail());
+            }
 
             try {
                 Role role = roleService.getRoleDetails("LEARNER");

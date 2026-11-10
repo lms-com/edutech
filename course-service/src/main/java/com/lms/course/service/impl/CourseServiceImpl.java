@@ -14,6 +14,11 @@ import com.lms.course.repository.CourseRepository;
 import com.lms.course.repository.LessonRepository;
 import com.lms.course.repository.SectionRepository;
 import com.lms.course.service.CourseService;
+import com.lms.course.dto.event.CourseStatusChangedEvent;
+import com.lms.course.config.RabbitMQConfig;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import java.util.UUID;
 import com.lms.course.config.CacheConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,6 +33,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CourseServiceImpl implements CourseService {
@@ -36,6 +42,7 @@ public class CourseServiceImpl implements CourseService {
     private final CategoryRepository categoryRepository;
     private final SectionRepository sectionRepository;
     private final LessonRepository lessonRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     @Override
     @Transactional
@@ -332,7 +339,25 @@ public class CourseServiceImpl implements CourseService {
         }
 
         course.setStatus("PUBLISHED");
-        course.setRejectionNote(null); // Xóa ghi chú từ chối khi duyệt thành công
+        course.setRejectionNote(null);
+        courseRepository.save(course);
+
+        // Bắn sự kiện sang RabbitMQ thông báo cho giảng viên
+        try {
+            CourseStatusChangedEvent event = CourseStatusChangedEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .courseId(course.getId())
+                    .courseTitle(course.getTitle())
+                    .instructorId(course.getInstructorId())
+                    .status("APPROVED")
+                    .rejectionNote(null)
+                    .build();
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_COURSE, RabbitMQConfig.ROUTING_KEY_COURSE_STATUS, event);
+            log.info("Đã phát sự kiện phê duyệt khóa học [{}] lên RabbitMQ cho giảng viên [{}]", course.getId(), course.getInstructorId());
+        } catch (Exception e) {
+            log.error("Lỗi khi bắn sự kiện phê duyệt khóa học lên RabbitMQ: {}", e.getMessage(), e);
+        }
+
         courseRepository.save(course);
     }
 
@@ -349,6 +374,24 @@ public class CourseServiceImpl implements CourseService {
 
         course.setStatus("REJECTED");
         course.setRejectionNote(rejectionNote);
+        courseRepository.save(course);
+
+        // Bắn sự kiện sang RabbitMQ thông báo cho giảng viên kèm lý do
+        try {
+            CourseStatusChangedEvent event = CourseStatusChangedEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .courseId(course.getId())
+                    .courseTitle(course.getTitle())
+                    .instructorId(course.getInstructorId())
+                    .status("REJECTED")
+                    .rejectionNote(rejectionNote)
+                    .build();
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_COURSE, RabbitMQConfig.ROUTING_KEY_COURSE_STATUS, event);
+            log.info("Đã phát sự kiện từ chối khóa học [{}] lên RabbitMQ cho giảng viên [{}]", course.getId(), course.getInstructorId());
+        } catch (Exception e) {
+            log.error("Lỗi khi bắn sự kiện từ chối khóa học lên RabbitMQ: {}", e.getMessage(), e);
+        }
+
         courseRepository.save(course);
     }
 

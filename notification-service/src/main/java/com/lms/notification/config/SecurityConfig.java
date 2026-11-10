@@ -29,7 +29,7 @@ public class SecurityConfig {
                         // Cho phép truy cập không cần auth đối với endpoint subscribe SSE, verify certificate hoặc swagger
                         .requestMatchers("/api/v1/notifications/subscribe").permitAll()
                         .requestMatchers("/api/v1/certificates/verify/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
+                        .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
                         // Các request còn lại bắt buộc đã đăng nhập
                         .anyRequest().authenticated()
                 )
