@@ -74,4 +74,11 @@ public class InternalCourseController {
     public ApiResponse<Long> getInstructorCourseCount(@PathVariable String instructorId) {
         return ApiResponse.success(internalCourseService.getInstructorCourseCount(instructorId));
     }
+
+    @Operation(summary = "42. Kiểm tra quyền truy cập video theo mediaId",
+               description = "Media Service gọi để xác minh học viên đã ghi danh khóa học chứa video hoặc là giảng viên sở hữu.")
+    @GetMapping("/users/{userId}/videos/{mediaId}/access")
+    public boolean checkUserVideoAccess(@PathVariable String userId, @PathVariable String mediaId) {
+        return internalCourseService.checkUserVideoAccess(userId, mediaId);
+    }
 }

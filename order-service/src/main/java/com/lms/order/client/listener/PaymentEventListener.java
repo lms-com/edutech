@@ -21,8 +21,8 @@ public class PaymentEventListener {
     public void onPaymentSuccess (PaymentProcessMessage message) {
         log.info("Received PaymentProcessMessage {}", message);
         try {
-            // goi orderService cap nhat status thanh cong
-            orderService.markAsPaid(message.getOrderId());
+            // goi orderService cap nhat status thanh cong kem thong tin giao dich VNPay
+            orderService.markAsPaid(message.getOrderId(), message.getTransactionNo(), message.getPaidAt());
             log.info("✅ Payment successful for order {}",  message.getOrderId());
         } catch (Exception e) {
             log.error("❌ Payment failed for order {}",  message.getOrderId(), e);

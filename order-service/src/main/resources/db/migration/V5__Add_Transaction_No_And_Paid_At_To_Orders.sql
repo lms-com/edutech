@@ -1,0 +1,3 @@
+ALTER TABLE orders
+    ADD COLUMN transaction_no VARCHAR(100) NULL,
+    ADD COLUMN paid_at TIMESTAMP NULL;

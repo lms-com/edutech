@@ -15,6 +15,9 @@ public interface OrderService {
     PendingOrderResponse createOrder (CreateOrderRequest request, String learnerId);
     List<CourseInternalRequest> getCoursesByOrderId (String orderId);
     void markAsPaid (String orderId);
+    void markAsPaid (String orderId, String transactionNo, java.time.Instant paidAt);
+    com.lms.order.dto.response.InternalOrderResponse getInternalOrderById(String orderId);
+    List<com.lms.order.dto.response.InternalOrderCourseResponse> getInternalOrderCourses(String orderId);
     Page<OrderResponse> getMyOrders(String learnerId, Pageable pageable);
     OrderResponse getOrderDetailByLearner(String orderId, String learnerId);
 

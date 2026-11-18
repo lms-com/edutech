@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -74,6 +75,7 @@ public class OrderController {
 
     @Operation(summary = "Admin: Lấy danh sách yêu cầu khiếu nại hoàn tiền")
     @GetMapping("/admin/refund-requests")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<org.springframework.data.domain.Page<com.lms.order.dto.response.RefundRequestResponse>> getAdminRefundRequests(
             @RequestParam(required = false) com.lms.order.model.RefundStatus status,
             @org.springframework.data.web.PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
@@ -84,6 +86,7 @@ public class OrderController {
 
     @Operation(summary = "Admin: Duyệt hoàn tiền đơn hàng")
     @PutMapping("/admin/refund-requests/{requestId}/approve")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<com.lms.order.dto.response.RefundRequestResponse> approveRefund(
             @PathVariable("requestId") String requestId,
             @RequestHeader(value = "X-User-Id", required = false) String adminId,
@@ -94,6 +97,7 @@ public class OrderController {
 
     @Operation(summary = "Admin: Từ chối hoàn tiền đơn hàng")
     @PutMapping("/admin/refund-requests/{requestId}/reject")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<com.lms.order.dto.response.RefundRequestResponse> rejectRefund(
             @PathVariable("requestId") String requestId,
             @RequestHeader(value = "X-User-Id", required = false) String adminId,

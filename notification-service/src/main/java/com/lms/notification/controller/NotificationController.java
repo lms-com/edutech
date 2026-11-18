@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -56,8 +57,9 @@ public class NotificationController {
         return ApiResponse.success(null, "Marked all notifications as read successfully");
     }
 
-    // API gửi thông báo tùy biến từ hệ thống / các microservice
+    // API gửi thông báo tùy biến (chỉ dành cho Admin hoặc Internal Service)
     @PostMapping("/send-custom")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'INTERNAL')")
     public ApiResponse<Void> sendCustomNotification(
             @RequestParam String userId,
             @RequestParam String title,
@@ -76,8 +78,9 @@ public class NotificationController {
         return ApiResponse.success(null, "Sent notification successfully");
     }
 
-    // API tạm thời để test đẩy thông báo real-time
+    // API thử nghiệm đẩy thông báo real-time (chỉ dành cho Admin)
     @PostMapping("/simulate-trigger")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<Void> simulateTrigger(
             @RequestParam String userId,
             @RequestParam String title,

@@ -37,6 +37,12 @@ public class Order extends AuditableEntity {
     @Column(name = "status", length = 20, nullable = false)
     OrderStatus status;
 
+    @Column(name = "transaction_no", length = 100)
+    String transactionNo;
+
+    @Column(name = "paid_at")
+    java.time.Instant paidAt;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     List<OrderDetail> orderDetails = new ArrayList<>();

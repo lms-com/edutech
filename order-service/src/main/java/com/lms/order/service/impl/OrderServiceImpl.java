@@ -226,13 +226,53 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CourseInternalRequest> getCoursesByOrderId(String orderId) {
-        return List.of();
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND, "Order not found for id: " + orderId));
+        return order.getOrderDetails().stream()
+                .map(orderMapper::toCourseInternalDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.lms.order.dto.response.InternalOrderResponse getInternalOrderById(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND, "Order not found for id: " + orderId));
+        return com.lms.order.dto.response.InternalOrderResponse.builder()
+                .orderId(order.getId())
+                .amount(order.getTotalPrice() != null ? order.getTotalPrice().longValue() : 0L)
+                .status(order.getStatus() != null ? order.getStatus().name() : null)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.lms.order.dto.response.InternalOrderCourseResponse> getInternalOrderCourses(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND, "Order not found for id: " + orderId));
+        String currency = order.getCurrencyCode() != null ? order.getCurrencyCode() : DEFAULT_CURRENCY;
+        return order.getOrderDetails().stream()
+                .map(detail -> com.lms.order.dto.response.InternalOrderCourseResponse.builder()
+                        .id(detail.getCourseId())
+                        .paymentCurrency(currency)
+                        .instructorId(detail.getInstructorId())
+                        .commissionRate(detail.getCommissionRate() != null ? detail.getCommissionRate() : BigDecimal.ZERO)
+                        .finalPrice(detail.getFinalPrice())
+                        .build())
+                .toList();
     }
 
     @Override
     @Transactional
     public void markAsPaid(String orderId) {
+        markAsPaid(orderId, null, null);
+    }
+
+    @Override
+    @Transactional
+    public void markAsPaid(String orderId, String transactionNo, Instant paidAt) {
         // Cap nhat order status
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_FOUND,
@@ -242,6 +282,10 @@ public class OrderServiceImpl implements OrderService {
             return;
         }
         order.setStatus(OrderStatus.PAID);
+        if (transactionNo != null && !transactionNo.isBlank()) {
+            order.setTransactionNo(transactionNo);
+        }
+        order.setPaidAt(paidAt != null ? paidAt : Instant.now());
         orderRepository.save(order);
 
         // Lay danh sach promotion

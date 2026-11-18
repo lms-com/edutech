@@ -6,8 +6,10 @@ import com.lms.course.entity.Answer;
 import com.lms.course.entity.Course;
 import com.lms.course.entity.Lesson;
 import com.lms.course.entity.Question;
+import com.lms.course.entity.VideoLesson;
 import com.lms.course.exception.CourseErrorCode;
 import com.lms.course.repository.*;
+import com.lms.course.service.CourseAccessService;
 import com.lms.course.service.InternalCourseService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class InternalCourseServiceImpl implements InternalCourseService {
     LessonRepository lessonRepository;
     QuestionRepository questionRepository;
     AnswerRepository answerRepository;
+    CourseAccessService courseAccessService;
 
     // ======================== API 35 ========================
     /**
@@ -190,5 +193,31 @@ public class InternalCourseServiceImpl implements InternalCourseService {
     @Transactional(readOnly = true)
     public long getInstructorCourseCount(String instructorId) {
         return courseRepository.countByInstructorIdAndDeletedFalse(instructorId);
+    }
+
+    // ======================== API 42 ========================
+    /**
+     * Kiểm tra người dùng có quyền phát mediaId (học thử miễn phí, giảng viên sở hữu khóa học, hoặc học viên có enrollment ACTIVE).
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public boolean checkUserVideoAccess(String userId, String mediaId) {
+        if (userId == null || userId.isBlank() || mediaId == null || mediaId.isBlank()) {
+            return false;
+        }
+        List<VideoLesson> lessons = lessonRepository.findVideoLessonsByMediaId(mediaId.trim());
+        for (VideoLesson lesson : lessons) {
+            if (Boolean.TRUE.equals(lesson.getFreePreview())) {
+                return true;
+            }
+            Course course = lesson.getSection().getCourse();
+            if (course.getInstructorId() != null && course.getInstructorId().equals(userId)) {
+                return true;
+            }
+            if (courseAccessService.hasActiveEnrollment(course.getId(), userId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

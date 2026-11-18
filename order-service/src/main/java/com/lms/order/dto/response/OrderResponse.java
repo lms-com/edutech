@@ -22,6 +22,10 @@ public class OrderResponse {
 
     OrderStatus status;
 
+    String transactionNo;
+
+    java.time.Instant paidAt;
+
     java.time.Instant createdAt;
 
     List<OrderDetailResponse> orderDetails;

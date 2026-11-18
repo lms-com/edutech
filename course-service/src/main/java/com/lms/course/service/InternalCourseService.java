@@ -29,4 +29,7 @@ public interface InternalCourseService {
 
     /** API 41: Đếm tổng số khóa học của một giảng viên */
     long getInstructorCourseCount(String instructorId);
+
+    /** API 42: Kiểm tra quyền truy cập video của người dùng dựa theo mediaId */
+    boolean checkUserVideoAccess(String userId, String mediaId);
 }
